@@ -356,45 +356,39 @@ Roles:
 # 📦 Project Structure (Proposed)
 
  ```
- /backend
-  /app
-    /modules
-      /hotel
-      /events
-      /guests
-      /rooms
-      /tables
-      /schedule
-      /tasks
-      /kashrut
-      /logistics
-      /rules
-      /lost_found
-    /core
-    /api
-    /models
-    /services
-
-
-/frontend
-  /src
-    /components
-    /modules
-    /pages
-    /services
-    /hooks
-
-
-/infrastructure
-  docker-compose.yml
-  captain-definition
-
-
-/docs
-  README_business.md
-  README_technical.md
-  README_database.md
-  README_api.md
+├── backend
+│ └── app
+│ ├── modules
+│ │ ├── hotel
+│ │ ├── events
+│ │ ├── guests
+│ │ ├── rooms
+│ │ ├── tables
+│ │ ├── schedule
+│ │ ├── tasks
+│ │ ├── kashrut
+│ │ ├── logistics
+│ │ ├── rules
+│ │ └── lost_found
+│ ├── core
+│ ├── api
+│ ├── models
+│ └── services
+├── frontend
+│ └── src
+│ ├── components
+│ ├── modules
+│ ├── pages
+│ ├── services
+│ └── hooks
+├── infrastructure
+│ ├── docker-compose.yml
+│ └── captain-definition
+└── docs
+├── README_business.md
+├── README_technical.md
+├── README_database.md
+└── README_api.md
 
 ```
  
