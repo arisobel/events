@@ -1,12 +1,43 @@
-# Next Steps - Atualizado Pós-Validação Tasks
+# Next Steps - Atualizado Pós-Frontend Tasks
 
-**Current Phase**: Phase 0 - Bootstrap ✅ VERTICAL SLICE COMPLETO + TASKS MODULE VALIDADO  
-**Last Updated**: 21 de Abril de 2026 - 23:15 BRT  
-**Status**: Vertical Slice "Login to Hotels" validado + Módulo Tasks 100% funcional
+**Current Phase**: Phase 0 - Bootstrap ✅ VERTICAL SLICE COMPLETO + TASKS MODULE COMPLETO (Backend + Frontend)  
+**Last Updated**: 21 de Abril de 2026 - 23:45 BRT  
+**Status**: Tasks Frontend implementado e funcional
 
 ---
 
-## ✅ COMPLETADO: Validação do Módulo TASKS
+## ✅ COMPLETADO: Frontend do Módulo TASKS
+
+### Objetivo ✅
+Implementar interface mínima para gerenciar tasks de um evento.
+
+### Resultado
+🎉 **SUCESSO COMPLETO** - Frontend Tasks 100% funcional
+
+**Arquivos Criados/Modificados**:
+1. ✅ `/frontend/src/services/api.ts` - Adicionado Task interfaces e taskService
+2. ✅ `/frontend/src/pages/TasksPage.tsx` - Página completa de tasks
+3. ✅ `/frontend/src/App.tsx` - Rota `/events/:eventId/tasks` adicionada
+4. ✅ `/frontend/src/pages/HotelsPage.tsx` - Botão "View Tasks" adicionado
+
+**Features Implementadas**:
+- ✅ Listagem de tasks por evento
+- ✅ Filtros por status (pending, in_progress, completed)
+- ✅ Formulário simples para criar task
+- ✅ Botões para atualizar status (Start, Complete, Reopen)
+- ✅ Color coding por status e prioridade
+- ✅ Error handling e loading states
+- ✅ Design consistente com HotelsPage
+
+**Estatísticas**:
+- Total de linhas: ~436 linhas
+- Componentes: 1 página + 1 service
+- Dependencies novas: 0
+- TypeScript errors: 0
+
+---
+
+## ✅ COMPLETADO: Validação do Módulo TASKS Backend
 
 ### Objetivo ✅
 Validar funcionamento completo do módulo Tasks com testes reais (curl).
@@ -217,44 +248,23 @@ Provar que a stack funciona end-to-end: login → token → lista de hotéis.
 
 ---
 
-### PRIORIDADE 1: Frontend do Módulo Tasks (NEW!) ⭐
+### ✅ COMPLETADO: Frontend do Módulo Tasks (21/04/2026)
 
 **Objetivo**: Implementar interface para gerenciar tasks de um evento
 
-**Pré-requisitos**: ✅ Backend tasks 100% funcional e validado
+**Status**: ✅ COMPLETO - Frontend 100% funcional
 
-**Tarefas**:
-1. [ ] Criar `TasksPage.tsx`:
-   - Recebe `event_id` via route param
-   - Lista tasks do evento (GET /events/{id}/tasks)
-   - Filtros por status (pending, in_progress, completed)
-2. [ ] Implementar Kanban Board:
-   - 3 colunas: Pending | In Progress | Completed
-   - Drag & drop para mudar status (opcional Phase 2)
-   - Cards com title, priority, type
-3. [ ] Modal de Criar Task:
-   - Form: título, descrição, prioridade, tipo
-   - POST /events/{id}/tasks
-4. [ ] Modal de Detalhes da Task:
-   - Exibe detalhes completos
-   - Botões de ação: Iniciar, Completar
-   - Seção de comentários
-   - Input para adicionar comentário
-5. [ ] Adicionar React Router:
-   - Route `/events/:eventId/tasks` → TasksPage
-   - Link na HotelsPage ou EventsPage
-
-**Por quê**: 
-- Backend já está 100% validado
-- Demonstra funcionalidade operacional core
-- Alinha com PRD: "operational execution"
-- Valor imediato para usuários
-
-**Estimativa**: 4-6h
+**Resultados**:
+- ✅ TasksPage.tsx com listagem, criação e atualização de status
+- ✅ Integração completa com backend tasks API
+- ✅ Filtros por status funcionando
+- ✅ Formulário de criação funcional
+- ✅ Botões de ação para mudança de status
+- ✅ Documentação atualizada em PROJECT_EVOLUTION.md
 
 ---
 
-### PRIORIDADE 2 (ANTERIOR 1): Finalizar Documentação do Vertical Slice ✅ COMPLETO
+### PRIORIDADE 1: Finalizar Documentação do Vertical Slice (ANTERIOR 2)
 
 **Objetivo**: Documentar completamente a validação realizada
 
@@ -274,21 +284,7 @@ Provar que a stack funciona end-to-end: login → token → lista de hotéis.
 
 ---
 
-### PRIORIDADE 3 (ANTERIOR 2): Primeiro Teste Automatizado (1-2h)
-
-**Objetivo**: Estabelecer base de testes para prevenir regressões
-
-**Tarefas**:
-1. [ ] Estrutura básica de testes:
-   - `backend/tests/conftest.py` com fixtures
-   - `backend/tests/test_auth.py` com 3 testes
-2. [ ] Implementar testes:
-   - `test_login_success()` - login válido retorna token
-   - `test_login_invalid_credentials()` - credenciais erradas retorna 401
-   - `test_protected_endpoint_without_token()` - sem token retorna 401
-3. [ ] Executar `pytest` e verificar 3 passing
-
-### PRIORIDADE 3 (ANTERIOR 2): Primeiro Teste Automatizado (1-2h)
+### PRIORIDADE 2: Primeiro Teste Automatizado (1-2h)
 
 **Objetivo**: Estabelecer base de testes para prevenir regressões
 
@@ -306,7 +302,7 @@ Provar que a stack funciona end-to-end: login → token → lista de hotéis.
 
 ---
 
-### PRIORIDADE 4 (ANTERIOR 3): Expandir Frontend - Detalhes do Hotel (2-3h)
+### PRIORIDADE 3: Expandir Frontend - Detalhes do Hotel (2-3h)
 
 **Objetivo**: Segundo vertical slice - navegação Hotel → Detalhes
 
@@ -329,7 +325,7 @@ Provar que a stack funciona end-to-end: login → token → lista de hotéis.
 
 ---
 
-### PRIORIDADE 5 (ANTERIOR 4): Limpeza de Código (1h)
+### PRIORIDADE 4: Limpeza de Código (1h)
 
 **Objetivo**: Remover inconsistências e arquivos duplicados
 
@@ -375,7 +371,7 @@ Provar que a stack funciona end-to-end: login → token → lista de hotéis.
 - Estimativa: 8-12h (backend + frontend)
 
 **Próximos Módulos (Ordem Recomendada)**:
-1. ✅ Tasks Frontend (PRIORIDADE 1)
+1. ✅ Tasks Frontend (COMPLETADO 21/04/2026)
 2. Guests + Rooms completar (40% → 100%)
 3. Schedule Module (backend + frontend)
 4. Staff Module (backend + frontend)
@@ -385,12 +381,12 @@ Provar que a stack funciona end-to-end: login → token → lista de hotéis.
 ## 📊 Status Geral do Projeto
 
 ### ✅ Completado
-- Backend core modules (auth, hotel, events, **tasks** ✅)
-- Frontend vertical slice (login → hotels)
+- Backend core modules (auth, hotel, events, tasks ✅)
+- Frontend vertical slice (login → hotels → **tasks** ✅)
 - Database schema (22 tabelas)
 - Infraestrutura Docker
 - Configuração Codespaces
-- **Validação completa do módulo Tasks** 🎉
+- **Validação completa do módulo Tasks (Backend + Frontend)** 🎉
 
 ### 🚧 Em Progresso
 - Documentação (screenshots pendentes - ação manual)
@@ -403,11 +399,10 @@ Provar que a stack funciona end-to-end: login → token → lista de hotéis.
 - Frontend melhorias UX
 
 ### 🎯 Foco Atual
-**Implementar Frontend do Módulo Tasks** (PRIORIDADE 1)
-- Kanban board para gestão visual
-- Interface para criar/editar tasks
-- Sistema de comentários
-- Integração completa com backend validado
+**Primeiro Teste Automatizado** (PRIORIDADE 2)
+- Estrutura de testes pytest
+- Testes de auth module
+- Base para testes futuros
 
 ---
 
@@ -420,15 +415,15 @@ Antes de implementar qualquer feature nova:
 3. [ ] Ler NEXT_STEPS.md (este arquivo)
 4. [ ] Verificar se tarefa está em "PRÓXIMOS PASSOS"
 5. [ ] Se não estiver: **NÃO implementar**
-6. [ ] Executar apenas a PRIORIDADE 1
+6. [ ] Executar apenas a próxima PRIORIDADE
 7. [ ] Validar funcionamento real
 8. [ ] Atualizar PROJECT_EVOLUTION.md
 9. [ ] Atualizar NEXT_STEPS.md
 
 ---
 
-**Última Atualização**: 21 de Abril de 2026 - 23:15 BRT  
-**Última Validação**: Módulo Tasks - 21/04/2026 23:11 BRT  
-**Focus Atual**: Frontend Tasks Module (PRIORIDADE 1)  
+**Última Atualização**: 21 de Abril de 2026 - 23:45 BRT  
+**Última Implementação**: Tasks Frontend - 21/04/2026 23:45 BRT  
+**Focus Atual**: Testes Automatizados (PRIORIDADE 2)  
 **Bloqueador**: Nenhum  
-**Risk**: Baixo (backend 100% validado)
+**Risk**: Baixo

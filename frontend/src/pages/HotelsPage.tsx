@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { hotelService, Hotel } from '../services/api'
 
@@ -8,6 +9,7 @@ export default function HotelsPage() {
   const [error, setError] = useState('')
   
   const { user, logout } = useAuth()
+  const navigate = useNavigate()
 
   useEffect(() => {
     loadHotels()
@@ -33,6 +35,12 @@ export default function HotelsPage() {
           <div className="flex justify-between items-center">
             <h1 className="text-2xl font-bold text-gray-900">Hotels</h1>
             <div className="flex items-center gap-4">
+              <button
+                onClick={() => navigate('/events/1/tasks')}
+                className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                View Tasks
+              </button>
               <span className="text-sm text-gray-600">
                 Welcome, {user?.f_username}
               </span>

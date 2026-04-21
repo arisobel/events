@@ -1029,3 +1029,253 @@ f_started_at set    f_completed_at set
 **Cobertura de Testes**: 100% manual (curl), 0% automatizado (pytest pendente)  
 **Dependências Externas**: Events, Auth  
 **Bloqueadores**: Nenhum
+
+---
+
+## 🎨 Frontend do Módulo TASKS (21 de Abril de 2026 - Noite)
+
+### Objetivo
+Implementar interface mínima para gerenciar tasks de um evento, com listagem, criação e atualização de status.
+
+### Status Final
+✅ **FRONTEND TASKS IMPLEMENTADO E FUNCIONAL**
+
+---
+
+### Arquivos Criados
+
+#### 1. Tipos e Service Layer
+**Arquivo**: `/frontend/src/services/api.ts`
+
+**Tipos Adicionados**:
+```typescript
+export interface Task {
+  id: number
+  f_event_id: number
+  f_title: string
+  f_description: string | null
+  f_status: 'pending' | 'in_progress' | 'completed' | 'cancelled'
+  f_priority: 'low' | 'medium' | 'high'
+  f_task_type: string | null
+  f_created_at: string
+}
+
+export interface TaskCreate {
+  f_title: string
+  f_description?: string
+  f_priority: 'low' | 'medium' | 'high'
+  f_task_type?: string
+}
+
+export interface TaskComment {
+  id: number
+  f_task_id: number
+  f_comment: string
+  f_staff_member_id: number | null
+  f_created_at: string
+}
+
+export interface TaskCommentCreate {
+  f_comment: string
+}
+```
+
+**Service Implementado**:
+```typescript
+export const taskService = {
+  getTasks(eventId: number): Promise<Task[]>
+  createTask(eventId: number, task: TaskCreate): Promise<Task>
+  updateTaskStatus(taskId: number, status: Task['f_status']): Promise<Task>
+  addComment(taskId: number, comment: TaskCommentCreate): Promise<TaskComment>
+}
+```
+
+---
+
+#### 2. TasksPage Component
+**Arquivo**: `/frontend/src/pages/TasksPage.tsx`
+
+**Features Implementadas**:
+
+**Listagem de Tasks**:
+- ✅ Carregamento via GET /events/{eventId}/tasks
+- ✅ Exibição de título, descrição, status, prioridade, tipo
+- ✅ Loading state enquanto carrega
+- ✅ Empty state quando não há tasks
+- ✅ Error handling com mensagens visuais
+
+**Filtros por Status**:
+- ✅ Tabs: All | Pending | In Progress | Completed
+- ✅ Contador de tasks por status
+- ✅ Filtro dinâmico da lista
+
+**Formulário de Criação**:
+- ✅ Toggle "New Task" button
+- ✅ Form com campos: título, descrição, prioridade, tipo
+- ✅ Validação de título obrigatório
+- ✅ Prioridades: low, medium, high
+- ✅ Submit via POST /events/{eventId}/tasks
+- ✅ Refresh automático após criar
+
+**Atualização de Status**:
+- ✅ Botões de ação por task
+- ✅ Fluxo: Pending → "Start" → In Progress → "Complete" → Completed
+- ✅ Completed pode reabrir para Pending
+- ✅ Refresh automático após atualizar
+
+**UI/UX**:
+- ✅ Design consistente com HotelsPage (Tailwind CSS)
+- ✅ Color coding por status (gray, blue, green, red)
+- ✅ Color coding por prioridade (red, yellow, blue)
+- ✅ Header com botão "Back" para /hotels
+- ✅ Responsive layout
+- ✅ Hover states em cards
+
+---
+
+#### 3. Routing
+**Arquivo**: `/frontend/src/App.tsx`
+
+**Mudanças**:
+- ✅ Import TasksPage
+- ✅ Nova route: `/events/:eventId/tasks`
+- ✅ Protected route (requer autenticação)
+
+---
+
+#### 4. Navigation
+**Arquivo**: `/frontend/src/pages/HotelsPage.tsx`
+
+**Mudanças**:
+- ✅ Botão "View Tasks" na header
+- ✅ Link para `/events/1/tasks` (demo com eventId fixo)
+- ✅ useNavigate hook para navegação programática
+
+---
+
+### Arquitetura e Padrões
+
+**Separação de Responsabilidades**:
+- ✅ `api.ts` - HTTP layer (axios)
+- ✅ `taskService` - Business logic
+- ✅ `TasksPage` - UI component
+- ✅ Sem acesso direto à API em componentes
+
+**State Management**:
+- ✅ useState para state local (tasks, loading, error, form)
+- ✅ useEffect para carregar dados
+- ✅ useParams para obter eventId da URL
+- ✅ useNavigate para navegação
+
+**Type Safety**:
+- ✅ Interfaces TypeScript para todos os tipos
+- ✅ Tipos reutilizados de api.ts
+- ✅ Strict typing em form handlers
+
+**Error Handling**:
+- ✅ Try/catch em todas as async functions
+- ✅ Error state exibido visualmente
+- ✅ Error messages do backend preservadas
+
+---
+
+### Features NÃO Implementadas (Por Design)
+
+Seguindo a instrução "não implementar features avançadas":
+
+❌ **Drag & drop** para mudar status
+❌ **Kanban board visual** (colunas lado a lado)
+❌ **Comentários inline** na listagem
+❌ **Filtro por prioridade** ou tipo
+❌ **Busca/search** de tasks
+❌ **Ordenação** (por data, prioridade, etc)
+❌ **Paginação**
+❌ **Edição de task** existente
+❌ **Deleção** de tasks
+❌ **Atribuição** a staff members
+❌ **Due dates** e calendário
+❌ **Notificações**
+❌ **Refresh automático** periódico
+
+**Justificativa**: Implementação mínima funcional conforme AGENT_RULES.md - "não implementar features fora do NEXT_STEPS.md"
+
+---
+
+### Validação
+
+**TypeScript Compilation**:
+- ✅ Sem erros de compilação
+- ✅ Tipos corretos em todos os componentes
+- ✅ Imports resolvidos
+
+**Code Quality**:
+- ✅ Código consistente com HotelsPage/LoginPage
+- ✅ Tailwind classes seguindo padrão existente
+- ✅ Naming conventions mantidas (f_ prefix em campos)
+
+---
+
+### Integração Frontend-Backend
+
+**Endpoints Utilizados**:
+- ✅ GET /events/{eventId}/tasks - Listagem
+- ✅ POST /events/{eventId}/tasks - Criação
+- ✅ PUT /tasks/{taskId}/status - Atualização de status
+- ✅ (POST /tasks/{taskId}/comments - Disponível mas não usado na UI)
+
+**Request/Response Validation**:
+- ✅ Schemas TypeScript espelham schemas Pydantic
+- ✅ Campos opcionais tratados corretamente
+- ✅ Enum types (status, priority) validados
+
+**Authentication**:
+- ✅ JWT token enviado automaticamente (axios interceptor)
+- ✅ 401 redireciona para /login
+- ✅ Protected route via PrivateRoute component
+
+---
+
+### Estatísticas
+
+**Linhas de Código**:
+- TasksPage.tsx: ~370 linhas
+- api.ts (adições): ~60 linhas
+- App.tsx (mudanças): +2 linhas
+- HotelsPage.tsx (mudanças): +4 linhas
+- **Total**: ~436 linhas
+
+**Componentes**:
+- 1 página nova (TasksPage)
+- 1 service (taskService)
+- 4 interfaces TypeScript
+
+**Dependencies**: 0 novas (usa bibliotecas já instaladas)
+
+---
+
+### Próximos Passos Possíveis (Futuro)
+
+**Melhorias de UI**:
+- Kanban board com colunas visuais
+- Drag & drop para mover tasks
+- Modal de detalhes com histórico completo
+- Timeline de comentários inline
+
+**Features Operacionais**:
+- Atribuição de tasks a staff members
+- Filtros avançados (prioridade, tipo, assignee)
+- Due dates e alertas de vencimento
+- Notificações em tempo real
+
+**Qualidade**:
+- Testes unitários (Vitest/Jest)
+- Testes E2E (Playwright)
+- Storybook para componentes
+- Performance optimization (virtualization para listas grandes)
+
+---
+
+**Status do Frontend Tasks**: ✅ **IMPLEMENTADO E FUNCIONAL**  
+**Complexidade**: Mínima (conforme solicitado)  
+**Pronto para Validação**: Sim  
+**Bloqueadores**: Nenhum

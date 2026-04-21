@@ -78,6 +78,36 @@ export interface Hotel {
   f_updated_at: string
 }
 
+export interface Task {
+  id: number
+  f_event_id: number
+  f_title: string
+  f_description: string | null
+  f_status: 'pending' | 'in_progress' | 'completed' | 'cancelled'
+  f_priority: 'low' | 'medium' | 'high'
+  f_task_type: string | null
+  f_created_at: string
+}
+
+export interface TaskCreate {
+  f_title: string
+  f_description?: string
+  f_priority: 'low' | 'medium' | 'high'
+  f_task_type?: string
+}
+
+export interface TaskComment {
+  id: number
+  f_task_id: number
+  f_comment: string
+  f_staff_member_id: number | null
+  f_created_at: string
+}
+
+export interface TaskCommentCreate {
+  f_comment: string
+}
+
 export const authService = {
   async login(credentials: LoginCredentials): Promise<LoginResponse> {
     const formData = new URLSearchParams()
@@ -120,6 +150,33 @@ export const hotelService = {
 
   async getHotel(id: number): Promise<Hotel> {
     const response = await api.get<Hotel>(`/hotels/${id}`)
+    return response.data
+  },
+}
+
+export const taskService = {
+  async getTasks(eventId: number): Promise<Task[]> {
+    const response = await api.get<Task[]>(`/events/${eventId}/tasks`)
+    return response.data
+  },
+
+  async createTask(eventId: number, task: TaskCreate): Promise<Task> {
+    const response = await api.post<Task>(`/events/${eventId}/tasks`, {
+      ...task,
+      f_event_id: eventId,
+    })
+    return response.data
+  },
+
+  async updateTaskStatus(taskId: number, status: Task['f_status']): Promise<Task> {
+    const response = await api.put<Task>(`/tasks/${taskId}/status`, {
+      new_status: status,
+    })
+    return response.data
+  },
+
+  async addComment(taskId: number, comment: TaskCommentCreate): Promise<TaskComment> {
+    const response = await api.post<TaskComment>(`/tasks/${taskId}/comments`, comment)
     return response.data
   },
 }
