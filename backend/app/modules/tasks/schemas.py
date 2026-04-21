@@ -16,6 +16,9 @@ class TaskUpdate(BaseModel):
     f_status: Optional[str] = None
     f_description: Optional[str] = None
 
+class TaskStatusUpdate(BaseModel):
+    new_status: str
+
 class TaskResponse(TaskBase):
     id: int
     f_event_id: int

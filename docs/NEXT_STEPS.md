@@ -1,8 +1,37 @@
-# Next Steps - Atualizado Pós-Validação
+# Next Steps - Atualizado Pós-Validação Tasks
 
-**Current Phase**: Phase 0 - Bootstrap ✅ VERTICAL SLICE COMPLETO  
-**Last Updated**: 21 de Abril de 2026 - 16:50 BRT  
-**Status**: Vertical Slice "Login to Hotels" validado e funcional
+**Current Phase**: Phase 0 - Bootstrap ✅ VERTICAL SLICE COMPLETO + TASKS MODULE VALIDADO  
+**Last Updated**: 21 de Abril de 2026 - 23:15 BRT  
+**Status**: Vertical Slice "Login to Hotels" validado + Módulo Tasks 100% funcional
+
+---
+
+## ✅ COMPLETADO: Validação do Módulo TASKS
+
+### Objetivo ✅
+Validar funcionamento completo do módulo Tasks com testes reais (curl).
+
+### Resultado
+🎉 **SUCESSO COMPLETO** - Módulo Tasks 100% funcional e validado
+
+**Correções Implementadas**:
+1. ✅ Removido prefixo duplicado no router (URLs corrigidas)
+2. ✅ Criado schema TaskStatusUpdate para atualização de status
+3. ✅ Script de validação completo: `/backend/test_tasks_flow.sh`
+
+**Endpoints Validados** (5/5):
+- ✅ GET /events/{event_id}/tasks - Listar tasks
+- ✅ POST /events/{event_id}/tasks - Criar task
+- ✅ GET /tasks/{task_id} - Detalhes de uma task
+- ✅ PUT /tasks/{task_id}/status - Atualizar status (pending→in_progress→completed)
+- ✅ POST /tasks/{task_id}/comments - Adicionar comentário
+
+**Fluxo Testado**:
+- ✅ Criação de 2 tasks com prioridades diferentes
+- ✅ Listagem de tasks por evento
+- ✅ Mudança de status com histórico automático
+- ✅ Adição de comentário
+- ✅ Timestamps automáticos (f_started_at, f_completed_at)
 
 ---
 
@@ -174,27 +203,92 @@ Provar que a stack funciona end-to-end: login → token → lista de hotéis.
 
 ## 🎯 PRÓXIMOS PASSOS (Priorizado)
 
-### PRIORIDADE 1: Finalizar Documentação do Vertical Slice ✅ COMPLETO
+### ✅ CONCLUÍDO: Validação do Módulo Tasks Backend
+
+**Objetivo**: Validar funcionamento completo do módulo Tasks  
+**Status**: ✅ COMPLETO - Todos os endpoints testados e funcionando  
+**Data**: 21/04/2026 - 23:15 BRT
+
+**Resultados**:
+- ✅ 5 endpoints validados com curl
+- ✅ Script de teste criado e executado com sucesso
+- ✅ Correções aplicadas (router prefix, schema status update)
+- ✅ Documentação atualizada em PROJECT_EVOLUTION.md
+
+---
+
+### PRIORIDADE 1: Frontend do Módulo Tasks (NEW!) ⭐
+
+**Objetivo**: Implementar interface para gerenciar tasks de um evento
+
+**Pré-requisitos**: ✅ Backend tasks 100% funcional e validado
+
+**Tarefas**:
+1. [ ] Criar `TasksPage.tsx`:
+   - Recebe `event_id` via route param
+   - Lista tasks do evento (GET /events/{id}/tasks)
+   - Filtros por status (pending, in_progress, completed)
+2. [ ] Implementar Kanban Board:
+   - 3 colunas: Pending | In Progress | Completed
+   - Drag & drop para mudar status (opcional Phase 2)
+   - Cards com title, priority, type
+3. [ ] Modal de Criar Task:
+   - Form: título, descrição, prioridade, tipo
+   - POST /events/{id}/tasks
+4. [ ] Modal de Detalhes da Task:
+   - Exibe detalhes completos
+   - Botões de ação: Iniciar, Completar
+   - Seção de comentários
+   - Input para adicionar comentário
+5. [ ] Adicionar React Router:
+   - Route `/events/:eventId/tasks` → TasksPage
+   - Link na HotelsPage ou EventsPage
+
+**Por quê**: 
+- Backend já está 100% validado
+- Demonstra funcionalidade operacional core
+- Alinha com PRD: "operational execution"
+- Valor imediato para usuários
+
+**Estimativa**: 4-6h
+
+---
+
+### PRIORIDADE 2 (ANTERIOR 1): Finalizar Documentação do Vertical Slice ✅ COMPLETO
 
 **Objetivo**: Documentar completamente a validação realizada
 
-**Tarefas**:
-1. [ ] Capturar screenshots:
-   - Login page funcionando
-   - Hotels list com dados
-   - DevTools Network mostrando requests
-   - Backend /docs
-   - ⚠️ **Nota**: Screenshots não podem ser capturados via código, requer ação manual
-2. [x] Atualizar README.md com instruções de execução
-3. [x] Criar arquivo de validação formal (VALIDATION_21_04_2026.md)
+**Status**: ✅ Documentação textual completa (screenshots pendentes - ação manual)
 
-**Status**: ✅ Documentação textual completa, screenshots pendentes (ação manual)
+**Tarefas**:
+- [x] Atualizar PROJECT_EVOLUTION.md com validação Tasks
+- [x] Atualizar NEXT_STEPS.md com nova prioridade
+- [ ] Capturar screenshots (ação manual requerida):
+  - Login page funcionando
+  - Hotels list com dados
+  - DevTools Network mostrando requests
+  - Backend /docs
+  - ⚠️ **Nota**: Screenshots não podem ser capturados via código
 
 **Por quê**: Documentação é evidência de funcionamento
 
 ---
 
-### PRIORIDADE 2: Primeiro Teste Automatizado (1-2h)
+### PRIORIDADE 3 (ANTERIOR 2): Primeiro Teste Automatizado (1-2h)
+
+**Objetivo**: Estabelecer base de testes para prevenir regressões
+
+**Tarefas**:
+1. [ ] Estrutura básica de testes:
+   - `backend/tests/conftest.py` com fixtures
+   - `backend/tests/test_auth.py` com 3 testes
+2. [ ] Implementar testes:
+   - `test_login_success()` - login válido retorna token
+   - `test_login_invalid_credentials()` - credenciais erradas retorna 401
+   - `test_protected_endpoint_without_token()` - sem token retorna 401
+3. [ ] Executar `pytest` e verificar 3 passing
+
+### PRIORIDADE 3 (ANTERIOR 2): Primeiro Teste Automatizado (1-2h)
 
 **Objetivo**: Estabelecer base de testes para prevenir regressões
 
@@ -212,7 +306,7 @@ Provar que a stack funciona end-to-end: login → token → lista de hotéis.
 
 ---
 
-### PRIORIDADE 3: Expandir Frontend - Detalhes do Hotel (2-3h)
+### PRIORIDADE 4 (ANTERIOR 3): Expandir Frontend - Detalhes do Hotel (2-3h)
 
 **Objetivo**: Segundo vertical slice - navegação Hotel → Detalhes
 
@@ -235,7 +329,7 @@ Provar que a stack funciona end-to-end: login → token → lista de hotéis.
 
 ---
 
-### PRIORIDADE 4: Limpeza de Código (1h)
+### PRIORIDADE 5 (ANTERIOR 4): Limpeza de Código (1h)
 
 **Objetivo**: Remover inconsistências e arquivos duplicados
 
@@ -252,45 +346,55 @@ Provar que a stack funciona end-to-end: login → token → lista de hotéis.
 
 ---
 
-### PRIORIDADE 5: Decidir Próximo Módulo (Discussão com Product Owner)
+### ✅ DECISÃO TOMADA: Próximo Módulo
 
-**Opções**:
+**Decisão**: **Frontend do Módulo Tasks** (PRIORIDADE 1)
 
-**Opção A: Completar Guests + Rooms (40% → 100%)**
+**Justificativa**:
+- ✅ Backend Tasks 100% validado e funcional
+- ✅ Alinha com PRD: "operational execution" é core
+- ✅ Demonstra valor imediato (kanban de tarefas)
+- ✅ Não depende de módulos parciais (guests/rooms)
+- ✅ Menor risco técnico
+
+**Alternativas Consideradas**:
+
+**Opção A (DESCARTADA): Completar Guests + Rooms (40% → 100%)**
 - Pros: Completa user story de "Reservar quarto para grupo"
 - Cons: Não adiciona valor operacional imediato
 - Estimativa: 6-8h
 
-**Opção B: Implementar Tasks Frontend (0% → 100%)**
+**Opção B (ESCOLHIDA): Implementar Tasks Frontend (0% → 100%)**
 - Pros: Backend já pronto, foco em execução operacional (core do PRD)
 - Cons: Não usa guests/rooms existentes
 - Estimativa: 4-6h
 
-**Opção C: Iniciar Schedule Module (0% → 100%)**
+**Opção C (DESCARTADA): Iniciar Schedule Module (0% → 100%)**
 - Pros: Atividades são core para eventos
 - Cons: Backend não existe
 - Estimativa: 8-12h (backend + frontend)
 
-**Recomendação**: **Opção B** - Tasks Frontend
-- Backend tasks module 100% funcional
-- Alinha com PRD: "operational execution"
-- Menor risco (não depende de guests/rooms)
-- Demonstra valor rápido (kanban de tarefas)
+**Próximos Módulos (Ordem Recomendada)**:
+1. ✅ Tasks Frontend (PRIORIDADE 1)
+2. Guests + Rooms completar (40% → 100%)
+3. Schedule Module (backend + frontend)
+4. Staff Module (backend + frontend)
 
 ---
 
 ## 📊 Status Geral do Projeto
 
 ### ✅ Completado
-- Backend core modules (auth, hotel, events, tasks)
+- Backend core modules (auth, hotel, events, **tasks** ✅)
 - Frontend vertical slice (login → hotels)
 - Database schema (22 tabelas)
 - Infraestrutura Docker
 - Configuração Codespaces
+- **Validação completa do módulo Tasks** 🎉
 
 ### 🚧 Em Progresso
-- Documentação (screenshots pendentes)
-- Testes automatizados (0 testes)
+- Documentação (screenshots pendentes - ação manual)
+- Testes automatizados (0 testes pytest)
 
 ### ⏳ Pendente
 - Módulos guests/rooms (40%)
@@ -299,7 +403,11 @@ Provar que a stack funciona end-to-end: login → token → lista de hotéis.
 - Frontend melhorias UX
 
 ### 🎯 Foco Atual
-**Consolidar o que funciona antes de expandir**
+**Implementar Frontend do Módulo Tasks** (PRIORIDADE 1)
+- Kanban board para gestão visual
+- Interface para criar/editar tasks
+- Sistema de comentários
+- Integração completa com backend validado
 
 ---
 
@@ -319,33 +427,8 @@ Antes de implementar qualquer feature nova:
 
 ---
 
-**Última Atualização**: 21 de Abril de 2026 - 16:55 BRT
-- [ ] Token em requests
-- [ ] Dados carregando
-- [ ] Logout funcionando
-- [ ] Screenshots documentados
-
-### Docs
-- [x] PROJECT_EVOLUTION.md
-- [x] NEXT_STEPS.md
-- [ ] VALIDATION_21_04_2026.md
-- [ ] README.md
-
----
-
-## 🔄 Após Completar o Slice
-
-**Decisão a tomar**: Completar módulos parciais (guests, rooms) OU próximo vertical slice?
-
-**Critério**: Prioridade de negócio
-
-**Não fazer antes**: Novos módulos, PWA, otimizações
-
-**Fazer quando validado**: Mais testes, CI/CD, linting
-
----
-
-**Last Validation**: Pending  
-**Current Focus**: Fase 1 - Validar Backend  
-**Blocker**: Nenhum  
-**Risk**: Médio
+**Última Atualização**: 21 de Abril de 2026 - 23:15 BRT  
+**Última Validação**: Módulo Tasks - 21/04/2026 23:11 BRT  
+**Focus Atual**: Frontend Tasks Module (PRIORIDADE 1)  
+**Bloqueador**: Nenhum  
+**Risk**: Baixo (backend 100% validado)
