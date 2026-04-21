@@ -129,7 +129,7 @@ Tem:
            Fazer com que o evento funcione como:
 
            uma operação bem coordenada, onde cada pessoa sabe exatamente o que fazer, quando e onde.
-           
+
 ---
 
 ## 📌 Overview
@@ -574,34 +574,141 @@ Roles:
 
 ---
 
-# � Getting Started
+# 🚀 Getting Started
 
-The backend is ready! To run the system locally:
+## ✅ Current Status
+
+🎉 **Vertical Slice "Login to Hotels" is LIVE and VALIDATED!**
+
+The system is fully functional with:
+- ✅ Backend API (FastAPI + PostgreSQL)
+- ✅ Frontend PWA (React + TypeScript + Vite)
+- ✅ Authentication (JWT)
+- ✅ End-to-end flow working
+
+## 🏃 Quick Start (Local Development)
+
+### Prerequisites
+- Docker & Docker Compose
+- Python 3.11+
+- Node.js 18+
+
+### 1. Start Infrastructure
 
 ```bash
-cd infrastructure
-cp .env.example .env
-docker-compose up -d
+# Start PostgreSQL
+docker ps | grep postgres  # Check if already running
+# If not running:
+docker-compose up -d postgres
 ```
 
-Access the API documentation at: **http://localhost:8000/docs**
+### 2. Setup & Run Backend
 
-**📖 Full Setup Guide**: See [SETUP.md](SETUP.md) for detailed installation, development, and deployment instructions.
+```bash
+cd backend
 
-## Project Status
+# Install dependencies
+pip install -r requirements.txt
 
-✅ **Backend API** - Fully functional with 6 core modules  
-✅ **Docker Infrastructure** - PostgreSQL, Redis, backend  
-✅ **Database Migrations** - Alembic configured  
-⏳ **Frontend PWA** - Planned (React + TypeScript + Vite)  
+# Apply database migrations
+alembic upgrade head
 
-## Documentation
+# Start backend server
+python -m uvicorn app.main:app --host 0.0.0.0 --port 8000
+```
+
+✅ Backend running at: **http://localhost:8000**  
+✅ API Docs at: **http://localhost:8000/docs**
+
+### 3. Setup & Run Frontend
+
+```bash
+cd frontend
+
+# Install dependencies
+npm install
+
+# Start development server
+npm run dev
+```
+
+✅ Frontend running at: **http://localhost:5173** (or 5175 if port is busy)
+
+### 4. Login
+
+Open the frontend URL and login with:
+- **Username**: `admin`
+- **Password**: `admin123`
+
+You should see the hotels list!
+
+## 🌐 Running in GitHub Codespaces
+
+The system is configured to work automatically in Codespaces:
+
+1. **Ports are auto-detected**: Frontend detects backend URL dynamically
+2. **CORS is configured**: Accepts `*.app.github.dev` origins
+3. **URLs**: Access via the PORTS tab in VS Code
+
+### Make Ports Public
+
+```bash
+# Set backend port as public
+gh codespace ports visibility 8000:public -c $CODESPACE_NAME
+
+# Set frontend port as public  
+gh codespace ports visibility 5173:public -c $CODESPACE_NAME
+```
+
+Then access via:
+- **Backend**: `https://{codespace-name}-8000.app.github.dev`
+- **Frontend**: `https://{codespace-name}-5173.app.github.dev`
+
+## 📖 Full Documentation
 
 - [SETUP.md](SETUP.md) - Complete setup and development guide
+- [docs/PROJECT_EVOLUTION.md](docs/PROJECT_EVOLUTION.md) - Implementation history and validation
+- [docs/NEXT_STEPS.md](docs/NEXT_STEPS.md) - Current priorities and roadmap
+
+## 📊 Project Status
+
+✅ **Backend API** - 4 core modules validated (auth, hotel, events, tasks)  
+✅ **Frontend PWA** - Login and Hotels list implemented  
+✅ **Docker Infrastructure** - PostgreSQL running  
+✅ **Database Migrations** - 22 tables created and validated  
+✅ **Authentication** - JWT flow working end-to-end  
+✅ **Deployment** - Codespaces configuration validated  
+⏳ **Testing** - First automated tests pending  
+⏳ **Additional Modules** - guests (40%), rooms (20%), others planned  
+
+## 🎯 What Works Now
+
+1. **User Authentication**:
+   - Login with username/password
+   - JWT token generation
+   - Protected routes
+
+2. **Hotels Management**:
+   - List all hotels
+   - View hotel details
+   - Create new hotels (via API)
+
+3. **Infrastructure**:
+   - PostgreSQL database
+   - Alembic migrations
+   - Docker containerization
+   - Codespaces deployment
+
+## 🐛 Known Issues
+
+All critical issues have been resolved! See [docs/PROJECT_EVOLUTION.md](docs/PROJECT_EVOLUTION.md) for details on fixes.
+
+## 📚 Additional Documentation
+
 - [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) - Technical architecture
 - [docs/PRD.md](docs/PRD.md) - Product requirements
 - [docs/API_PLAN.md](docs/API_PLAN.md) - API endpoint planning
-- [docs/AGENT_INSTRUCTIONS.md](docs/AGENT_INSTRUCTIONS.md) - Development guidelines
+- [docs/AGENT_RULES.md](docs/AGENT_RULES.md) - Development guidelines
 
 ---
 
