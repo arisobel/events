@@ -1,232 +1,229 @@
-# Next Steps
+# Next Steps - Reorganizado Após Auditoria
 
-Current project phase: **Phase 0 - Bootstrap**
-
-Last Updated: **April 21, 2026**
-
----
-
-## Backend Tasks
-
-### Infrastructure Setup
-- [x] Create backend folder structure
-- [ ] Complete requirements.txt with all dependencies
-- [ ] Create backend/Dockerfile
-- [ ] Create backend/.dockerignore
-- [ ] Create backend/.gitignore
-
-### Core Configuration
-- [ ] Implement app/core/config.py (Pydantic Settings)
-- [ ] Implement app/core/security.py (JWT + password hashing)
-- [ ] Implement app/db/session.py (SQLAlchemy engine + SessionLocal)
-- [ ] Implement app/db/base.py (Base + model imports)
-
-### Database Migrations
-- [ ] Initialize Alembic (alembic init)
-- [ ] Configure alembic.ini
-- [ ] Update alembic/env.py
-- [ ] Create initial migration structure
-
-### Module: auth
-- [ ] models.py - User, Role, UserRole, AuditLog
-- [ ] schemas.py - UserCreate, UserLogin, Token, UserResponse
-- [ ] service.py - authenticate_user, create_user, log_audit
-- [ ] router.py - POST /auth/login, GET /auth/me
-- [ ] dependencies.py - get_current_user, require_role
-
-### Module: hotel
-- [ ] models.py - Hotel, HotelSpace, HotelRoom, HotelKitchen, HotelTable
-- [ ] schemas.py - HotelCreate/Update/Response, etc.
-- [ ] service.py - CRUD operations
-- [ ] router.py - GET/POST /hotels, GET /hotels/{id}/spaces, etc.
-
-### Module: events
-- [ ] models.py - Event, EventPeriod, EventSpace, EventConfiguration
-- [ ] schemas.py - EventCreate/Update/Response, etc.
-- [ ] service.py - CRUD + period management
-- [ ] router.py - GET/POST /events, periods endpoints
-
-### Module: guests
-- [ ] models.py - GuestGroup, Guest, Reservation, SpecialRequest
-- [ ] schemas.py - full schema set
-- [ ] service.py - group/guest/reservation management
-- [ ] router.py - event-scoped endpoints
-
-### Module: rooms
-- [ ] models.py - RoomAllocation
-- [ ] schemas.py - RoomAllocationCreate/Response
-- [ ] service.py - allocate_room, check_availability
-- [ ] router.py - allocation endpoints
-
-### Module: tasks
-- [ ] models.py - Task, TaskComment, TaskStatusHistory
-- [ ] schemas.py - TaskCreate/Update/Response
-- [ ] service.py - task management, status transitions
-- [ ] router.py - task CRUD + comments
-
-### Main Application
-- [ ] Create app/main.py
-- [ ] Configure CORS middleware
-- [ ] Include all routers
-- [ ] Add healthcheck endpoint
-- [ ] Add root endpoint
-
-### Database Migration
-- [ ] Generate initial migration (alembic revision --autogenerate)
-- [ ] Review migration
-- [ ] Test migration up/down
-
-### Testing
-- [ ] Create tests/ structure
-- [ ] Write conftest.py
-- [ ] Write test_auth.py
-- [ ] Write test_health.py
+**Current Phase**: Phase 0 - Bootstrap (70% backend implementado, 0% validado)  
+**Last Updated**: 21 de Abril de 2026 (Pós-auditoria)  
+**Strategy**: Vertical Slice "First Login to First Hotel"
 
 ---
 
-## Frontend Tasks
+## 🎯 PRIORIDADE MÁXIMA: Vertical Slice "First Login to First Hotel"
 
-### Project Setup
-- [x] Create frontend folder structure
-- [ ] Create package.json
-- [ ] Create frontend/Dockerfile (multi-stage)
-- [ ] Create frontend/.dockerignore
-- [ ] Create frontend/.gitignore
+### Objetivo
+Provar que a stack funciona end-to-end antes de continuar implementando features.
 
-### Configuration Files
-- [ ] vite.config.ts (with PWA plugin)
-- [ ] tsconfig.json (strict mode)
+### Escopo
+Um fluxo completo funcional do início ao fim:
+1. Usuário acessa aplicação frontend
+2. Faz login com credenciais
+3. Recebe token JWT
+4. Vê lista de hotéis autenticado
+5. Visualiza detalhes de um hotel
+
+### Por que este slice?
+- ✅ Valida **toda** a infraestrutura (PostgreSQL, Redis, Backend, Frontend)
+- ✅ Testa autenticação JWT end-to-end
+- ✅ Demonstra valor imediato (aplicação funcional)
+- ✅ Usa 100% código já existente no backend (auth + hotel modules)
+- ✅ Não depende de módulos parciais (guests, rooms)
+- ✅ Reduz risco técnico massivamente
+
+---
+
+## 📋 FASE 1: Validar Backend Existente (1-2h) - CRÍTICO
+
+### Objetivo
+Provar que o backend implementado realmente funciona.
+
+### Checklist de Validação
+
+#### 1.1 Subir Infraestrutura Docker
+- [ ] Executar docker-compose up -d postgres redis
+- [ ] Verificar logs do PostgreSQL
+- [ ] Verificar logs do Redis
+- [ ] Confirmar que ambos estão healthy
+
+#### 1.2 Aplicar Migração Alembic
+- [ ] Instalar dependências Python (pip install -r requirements.txt)
+- [ ] Executar alembic upgrade head
+- [ ] Verificar 22 tabelas criadas no PostgreSQL
+- [ ] Confirmar naming convention (t_, f_)
+
+#### 1.3 Criar Usuário Seed
+- [ ] Criar script seed_data.py
+- [ ] Executar e criar usuário admin
+- [ ] Verificar registro em t_user
+
+#### 1.4 Iniciar Backend
+- [ ] Executar uvicorn app.main:app --reload
+- [ ] Verificar startup sem erros
+- [ ] Acessar http://localhost:8000
+- [ ] Acessar http://localhost:8000/health
+- [ ] Acessar http://localhost:8000/docs
+
+#### 1.5 Testar Autenticação
+- [ ] curl POST /auth/login com admin/admin123
+- [ ] Verificar token JWT retornado
+- [ ] Validar token em jwt.io
+
+#### 1.6 Testar Endpoint Autenticado
+- [ ] curl POST /hotels (criar hotel)
+- [ ] curl GET /hotels (listar)
+- [ ] curl GET /hotels/1 (detalhes)
+- [ ] Verificar 401 sem token
+
+#### 1.7 Documentar Resultados
+- [ ] Criar VALIDATION_BACKEND_21_04_2026.md
+- [ ] Screenshots de /docs
+- [ ] Output dos comandos curl
+- [ ] Logs do backend
+- [ ] Problemas encontrados e soluções
+
+---
+
+## 📋 FASE 2: Frontend Mínimo (3-4h) - CRÍTICO
+
+### 2.1 Inicializar Projeto
+- [ ] npm create vite - React + TypeScript
+- [ ] npm install
+- [ ] Verificar build funciona
+
+### 2.2 Instalar Dependências
+- [ ] axios
+- [ ] react-router-dom
+- [ ] @tanstack/react-query
+- [ ] tailwindcss (dev)
+
+### 2.3 Configurar Tailwind
 - [ ] tailwind.config.js
-- [ ] postcss.config.js
+- [ ] src/index.css com @tailwind
 
-### Core Application
-- [ ] src/main.tsx
+### 2.4 Implementar Services
+- [ ] src/services/api.ts (axios + interceptors)
+- [ ] Interceptor adiciona token
+- [ ] Interceptor redireciona em 401
+
+### 2.5 Implementar Auth Context
+- [ ] src/hooks/useAuth.tsx
+- [ ] AuthProvider component
+- [ ] login(), logout() functions
+- [ ] isAuthenticated state
+
+### 2.6 Implementar LoginPage
+- [ ] src/pages/LoginPage.tsx
+- [ ] Form com username/password
+- [ ] Submit chama login()
+- [ ] Redirect para /hotels
+- [ ] Error handling
+
+### 2.7 Implementar HotelsPage
+- [ ] src/pages/HotelsPage.tsx
+- [ ] useQuery para carregar hotéis
+- [ ] Renderizar lista com Tailwind
+- [ ] Button de logout
+- [ ] Loading e error states
+
+### 2.8 Configurar Router
 - [ ] src/App.tsx
-- [ ] src/styles/index.css
+- [ ] BrowserRouter
+- [ ] Route /login
+- [ ] Protected Route /hotels
+- [ ] PrivateRoute component
 
-### Routing
-- [ ] src/routes/index.tsx
-- [ ] Public routes (login)
-- [ ] Protected routes
-- [ ] 404 fallback
-
-### Authentication
-- [ ] src/hooks/useAuth.tsx (AuthContext + provider)
-- [ ] src/services/api.ts (axios instance)
-- [ ] src/services/auth.service.ts
-
-### API Services
-- [ ] src/services/hotel.service.ts
-- [ ] src/services/event.service.ts
-- [ ] src/services/task.service.ts
-
-### TypeScript Types
-- [ ] src/types/auth.ts
-- [ ] src/types/hotel.ts
-- [ ] src/types/event.ts
-- [ ] src/types/task.ts
-- [ ] src/types/common.ts
-
-### Layout Components
-- [ ] src/components/Layout.tsx
-- [ ] src/components/Header.tsx
-- [ ] src/components/Sidebar.tsx
-- [ ] src/components/Button.tsx
-- [ ] src/components/Input.tsx
-- [ ] src/components/Loading.tsx
-
-### Pages
-- [ ] src/pages/Login.tsx
-- [ ] src/pages/Dashboard.tsx
-- [ ] src/pages/Hotels/HotelList.tsx
-- [ ] src/pages/Events/EventList.tsx
-- [ ] src/pages/Tasks/TaskList.tsx (Staff PWA)
-
-### PWA Configuration
-- [ ] public/manifest.json
-- [ ] public/icons/ (app icons)
-- [ ] src/pwa/registerServiceWorker.ts
-
-### Custom Hooks
-- [ ] src/hooks/useApi.ts
-- [ ] src/hooks/useLocalStorage.ts
+### 2.9 Executar Frontend
+- [ ] npm run dev
+- [ ] Verificar :5173 acessível
+- [ ] Sem erros no console
 
 ---
 
-## Infrastructure Tasks
+## 📋 FASE 3: Validação End-to-End (1h)
 
-### Docker Setup
-- [ ] infrastructure/docker-compose.yml
-  - [ ] postgres service
-  - [ ] redis service
-  - [ ] backend service
-  - [ ] frontend service
-- [ ] infrastructure/.env.example
+### 3.1 Testar Fluxo Completo
+- [ ] Backend :8000 + Frontend :5173 rodando
+- [ ] Acessar http://localhost:5173
+- [ ] Login com admin/admin123
+- [ ] Verificar redirect para /hotels
+- [ ] Ver lista de hotéis
+- [ ] Abrir DevTools Network
+- [ ] Confirmar POST /auth/login → 200
+- [ ] Confirmar GET /hotels com Authorization
+- [ ] Verificar token em localStorage
 
-### CapRover Deployment
-- [ ] infrastructure/captain-definition
+### 3.2 Screenshots
+- [ ] 01_login_page.png
+- [ ] 02_hotels_list.png
+- [ ] 03_devtools_network.png
+- [ ] 04_backend_docs.png
 
-### Documentation
-- [x] docs/PROJECT_EVOLUTION.md
-- [x] docs/NEXT_STEPS.md
-- [x] docs/AGENT_INSTRUCTIONS.md
-- [ ] Update main README.md with setup instructions
-- [ ] Create backend/README.md
-- [ ] Create frontend/README.md
-
----
-
-## Verification Checklist
-
-### Backend Verification
-- [ ] Backend starts without errors
-- [ ] Database connection successful
-- [ ] API docs accessible at /docs
-- [ ] Healthcheck returns 200
-- [ ] Can create user via API
-- [ ] Can login and receive JWT
-- [ ] Protected endpoints work
-- [ ] Migrations execute
-
-### Frontend Verification
-- [ ] Frontend builds without errors
-- [ ] Frontend accessible at localhost
-- [ ] Login page renders
-- [ ] Can login successfully
-- [ ] Dashboard renders after login
-- [ ] PWA manifest detected
-- [ ] Service worker registers
-
-### Integration Verification
-- [ ] Frontend calls backend API
-- [ ] CORS configured correctly
-- [ ] Auth flow end-to-end
-- [ ] Can CRUD hotels via UI
-- [ ] Can CRUD events via UI
-- [ ] Can CRUD tasks via UI
-
-### Infrastructure Verification
-- [ ] Docker Compose starts all services
-- [ ] Services communicate
-- [ ] PostgreSQL data persists
-- [ ] Hot reload works (backend)
-- [ ] Hot reload works (frontend)
+### 3.3 Escrever 1 Teste
+- [ ] backend/tests/conftest.py
+- [ ] backend/tests/test_auth.py
+- [ ] pytest executando com sucesso
 
 ---
 
-## Phase 0 Completion Criteria
+## 📋 FASE 4: Documentação (30min)
 
-✅ Phase 0 complete when:
+### 4.1 Atualizar Docs
+- [x] PROJECT_EVOLUTION.md com auditoria
+- [x] NEXT_STEPS.md reorganizado
+- [ ] VALIDATION_21_04_2026.md criado
+- [ ] README.md seção "Running"
 
-1. All backend core tasks completed
-2. All frontend core tasks completed
-3. All infrastructure tasks completed
-4. All verification items pass
-5. Documentation updated
-6. Single command startup: `docker-compose up`
-7. End-to-end user flow works (login → view → create)
+### 4.2 Limpar Código
+- [ ] Investigar app/api/routes/hotel.py
+- [ ] .gitkeep em pastas vazias
 
 ---
 
-**Current Progress**: 5% (documentation + basic structure)  
-**Est. Completion**: End of Week 1
+## ✅ Definition of Done - Vertical Slice
+
+### Backend
+- [ ] Docker Compose rodando
+- [ ] Migration aplicada (22 tabelas)
+- [ ] Backend sem erros
+- [ ] /docs acessível
+- [ ] Login retornando token
+- [ ] GET /hotels funcionando
+- [ ] 1 teste passando
+
+### Frontend
+- [ ] Vite + React inicializado
+- [ ] Dependencies instaladas
+- [ ] LoginPage renderizando
+- [ ] HotelsPage listando
+- [ ] Auth context funcionando
+- [ ] Token em localStorage
+- [ ] Protected route OK
+
+### Integração
+- [ ] Login end-to-end
+- [ ] Token em requests
+- [ ] Dados carregando
+- [ ] Logout funcionando
+- [ ] Screenshots documentados
+
+### Docs
+- [x] PROJECT_EVOLUTION.md
+- [x] NEXT_STEPS.md
+- [ ] VALIDATION_21_04_2026.md
+- [ ] README.md
+
+---
+
+## 🔄 Após Completar o Slice
+
+**Decisão a tomar**: Completar módulos parciais (guests, rooms) OU próximo vertical slice?
+
+**Critério**: Prioridade de negócio
+
+**Não fazer antes**: Novos módulos, PWA, otimizações
+
+**Fazer quando validado**: Mais testes, CI/CD, linting
+
+---
+
+**Last Validation**: Pending  
+**Current Focus**: Fase 1 - Validar Backend  
+**Blocker**: Nenhum  
+**Risk**: Médio
