@@ -41,9 +41,9 @@ def login(
     # Get user roles
     user_roles = service.get_user_roles(db, user.id)
     
-    # Create tokens
+    # Create tokens (sub must be string as per JWT spec)
     token_data = {
-        "sub": user.id,
+        "sub": str(user.id),
         "username": user.f_username,
         "roles": user_roles
     }

@@ -14,6 +14,15 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from app.core.config import settings
 from app.db.base import Base
 
+# Import all models for Alembic autogenerate
+# Import AFTER Base to avoid circular imports
+from app.modules.auth.models import User, Role, UserRole, AuditLog  # noqa
+from app.modules.hotel.models import Hotel, HotelSpace, HotelRoom, HotelKitchen, HotelTable  # noqa
+from app.modules.events.models import Event, EventPeriod, EventSpace, EventConfiguration  # noqa
+from app.modules.guests.models import GuestGroup, Guest, Reservation, SpecialRequest  # noqa
+from app.modules.rooms.models import RoomAllocation  # noqa
+from app.modules.tasks.models import Task, TaskComment, TaskStatusHistory  # noqa
+
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
 config = context.config

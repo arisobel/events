@@ -9,127 +9,127 @@ Imagine que um evento de Pessach em hotel funciona como uma pequena cidade tempo
 Tem:
 
  - centenas de pessoas entrando e saindo em dias diferentes
- - quartos sendo ocupados e liberados o tempo todo
- - refeições com horários e lugares definidos
- - rezas em diferentes estilos (ashkenazi, sefaradi)
- - aulas, shows, atividades infantis
- - regras específicas (ex.: piscina pode ou não pode, horários separados)
- - equipes trabalhando em várias áreas ao mesmo tempo
+  - quartos sendo ocupados e liberados o tempo todo
+   - refeições com horários e lugares definidos
+    - rezas em diferentes estilos (ashkenazi, sefaradi)
+     - aulas, shows, atividades infantis
+      - regras específicas (ex.: piscina pode ou não pode, horários separados)
+       - equipes trabalhando em várias áreas ao mesmo tempo
 
-Hoje, grande parte disso é coordenado com:
+       Hoje, grande parte disso é coordenado com:
 
- - planilhas
- - papel
- - grupos de WhatsApp
- - comunicação verbal
+        - planilhas
+         - papel
+          - grupos de WhatsApp
+           - comunicação verbal
 
-👉 Resultado: confusão, retrabalho e erros.
+           👉 Resultado: confusão, retrabalho e erros.
 
-🧠 O que esse projeto faz
+           🧠 O que esse projeto faz
 
-Esse projeto é um sistema para organizar tudo isso em um só lugar.
+           Esse projeto é um sistema para organizar tudo isso em um só lugar.
 
-Ele funciona como um “cérebro digital” do evento.
+           Ele funciona como um “cérebro digital” do evento.
 
-🧭 Explicando de forma simples
-📅 1. Ele organiza o que está acontecendo
+           🧭 Explicando de forma simples
+           📅 1. Ele organiza o que está acontecendo
 
-Em vez de um papel com horários, o sistema mostra:
+           Em vez de um papel com horários, o sistema mostra:
 
-o que está acontecendo agora
-o que vai acontecer depois
-onde está acontecendo
-para quem é (crianças, adultos, etc.)
-🏨 2. Ele controla quem está no hotel
-quem chegou
-quem vai embora
-quem está em qual quarto
-quando o quarto precisa ser limpo
-🍽️ 3. Ele organiza as refeições
-quem senta em qual mesa
-mudanças de pessoas ao longo dos dias
-ajustes conforme entram e saem famílias
-👨‍🍳 4. Ele ajuda a equipe a trabalhar melhor
+           o que está acontecendo agora
+           o que vai acontecer depois
+           onde está acontecendo
+           para quem é (crianças, adultos, etc.)
+           🏨 2. Ele controla quem está no hotel
+           quem chegou
+           quem vai embora
+           quem está em qual quarto
+           quando o quarto precisa ser limpo
+           🍽️ 3. Ele organiza as refeições
+           quem senta em qual mesa
+           mudanças de pessoas ao longo dos dias
+           ajustes conforme entram e saem famílias
+           👨‍🍳 4. Ele ajuda a equipe a trabalhar melhor
 
-Cada funcionário abre um aplicativo simples no celular e vê:
+           Cada funcionário abre um aplicativo simples no celular e vê:
 
-👉 “o que eu preciso fazer agora”
+           👉 “o que eu preciso fazer agora”
 
-Por exemplo:
+           Por exemplo:
 
-limpar quarto 214
-preparar sala para palestra
-organizar jantar
+           limpar quarto 214
+           preparar sala para palestra
+           organizar jantar
 
-E pode marcar quando terminou.
+           E pode marcar quando terminou.
 
-🕍 5. Ele organiza a parte religiosa
-horários de reza
-diferentes minianim
-quem vai receber aliá
-aulas (shiurim)
-🏊 6. Ele controla regras do evento
+           🕍 5. Ele organiza a parte religiosa
+           horários de reza
+           diferentes minianim
+           quem vai receber aliá
+           aulas (shiurim)
+           🏊 6. Ele controla regras do evento
 
-Por exemplo:
+           Por exemplo:
 
-piscina aberta ou fechada
-horários separados para homens e mulheres
-o que pode ou não pode em cada momento
+           piscina aberta ou fechada
+           horários separados para homens e mulheres
+           o que pode ou não pode em cada momento
 
-O sistema consegue dizer:
+           O sistema consegue dizer:
 
-👉 “agora pode usar isso”
-👉 “agora não pode”
+           👉 “agora pode usar isso”
+           👉 “agora não pode”
 
-📱 7. Funciona no celular (sem instalar app)
+           📱 7. Funciona no celular (sem instalar app)
 
-O sistema abre como um site, mas funciona como aplicativo.
+           O sistema abre como um site, mas funciona como aplicativo.
 
-Então qualquer funcionário pode usar rapidamente.
+           Então qualquer funcionário pode usar rapidamente.
 
-🧳 8. Tem até achados e perdidos
+           🧳 8. Tem até achados e perdidos
 
-Se alguém perder algo:
+           Se alguém perder algo:
 
-registra no sistema
-alguém que encontrou também registra
-o sistema ajuda a conectar
-💡 Resumindo em uma frase
+           registra no sistema
+           alguém que encontrou também registra
+           o sistema ajuda a conectar
+           💡 Resumindo em uma frase
 
-É um sistema que organiza pessoas, horários, espaços e tarefas para que um evento complexo funcione sem caos.
+           É um sistema que organiza pessoas, horários, espaços e tarefas para que um evento complexo funcione sem caos.
 
-🧠 Analogia simples
+           🧠 Analogia simples
 
-Pense nisso como:
+           Pense nisso como:
 
-um pouco de agenda
-um pouco de mapa do hotel
-um pouco de lista de tarefas
-um pouco de central de controle
+           um pouco de agenda
+           um pouco de mapa do hotel
+           um pouco de lista de tarefas
+           um pouco de central de controle
 
-Tudo junto.
+           Tudo junto.
 
-🎯 Por que isso é importante
+           🎯 Por que isso é importante
 
-Sem isso:
+           Sem isso:
 
-atrasos
-erros
-estresse
-má experiência para os hóspedes
+           atrasos
+           erros
+           estresse
+           má experiência para os hóspedes
 
-Com isso:
+           Com isso:
 
-organização
-previsibilidade
-melhor atendimento
-menos dependência de improviso
-🚀 O objetivo final
+           organização
+           previsibilidade
+           melhor atendimento
+           menos dependência de improviso
+           🚀 O objetivo final
 
-Fazer com que o evento funcione como:
+           Fazer com que o evento funcione como:
 
-uma operação bem coordenada, onde cada pessoa sabe exatamente o que fazer, quando e onde.
-
+           uma operação bem coordenada, onde cada pessoa sabe exatamente o que fazer, quando e onde.
+           
 ---
 
 ## 📌 Overview
