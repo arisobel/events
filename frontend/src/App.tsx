@@ -3,6 +3,7 @@ import { AuthProvider } from './contexts/AuthContext'
 import LoginPage from './pages/LoginPage'
 import HotelsPage from './pages/HotelsPage'
 import TasksPage from './pages/TasksPage'
+import TasksPageSimple from './pages/TasksPage_Simple'
 import PrivateRoute from './components/PrivateRoute'
 
 function App() {
@@ -14,6 +15,11 @@ function App() {
           <Route path="/hotels" element={
             <PrivateRoute>
               <HotelsPage />
+            </PrivateRoute>
+          } />
+          <Route path="/tasks" element={
+            <PrivateRoute>
+              <TasksPageSimple />
             </PrivateRoute>
           } />
           <Route path="/events/:eventId/tasks" element={

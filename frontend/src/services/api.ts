@@ -20,6 +20,10 @@ const getApiBaseUrl = () => {
 
 const API_BASE_URL = getApiBaseUrl()
 
+// Debug: log da URL do backend
+console.log('🔗 Backend URL:', API_BASE_URL)
+console.log('🌐 Current hostname:', window.location.hostname)
+
 export const api = axios.create({
   baseURL: API_BASE_URL,
 })

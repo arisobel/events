@@ -112,6 +112,23 @@ Se não estiver:
 → NÃO implementar
 
 ---
+## 🚫 NEXT_STEPS PROTECTION RULE
+
+O agente NÃO deve:
+
+- reescrever completamente o NEXT_STEPS.md
+- alterar estrutura macro de prioridades
+- remover tarefas existentes
+- reorganizar roadmap sem instrução explícita
+
+O agente PODE:
+
+- marcar tarefas como concluídas
+- adicionar subtarefas pequenas
+- sugerir mudanças (mas não aplicar automaticamente)
+
+Qualquer mudança estrutural deve ser proposta no chat, não aplicada diretamente.
+
 
 ## 🏁 Regra final
 

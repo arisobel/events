@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Frontend URL Detection</title>
+</head>
+<body>
+    <h1>URL Detection Test</h1>
+    <div id="result"></div>
+    
+    <script>
+        const getApiBaseUrl = () => {
+          // Se estamos em desenvolvimento local
+          if (window.location.hostname === 'localhost') {
+            return 'http://localhost:8000'
+          }
+          
+          // Se estamos no Codespaces, usar a mesma base mas porta 8000
+          if (window.location.hostname.includes('app.github.dev')) {
+            // Substituir qualquer porta (-XXXX) por -8000
+            const hostname = window.location.hostname.replace(/-\d+\.app\.github\.dev$/, '-8000.app.github.dev')
+            return `https://${hostname}`
+          }
+          
+          // Fallback
+          return 'http://localhost:8000'
+        }
+        
+        const currentHostname = window.location.hostname;
+        const detectedUrl = getApiBaseUrl();
+        
+        document.getElementById('result').innerHTML = `
+            <p><strong>Current Hostname:</strong> ${currentHostname}</p>
+            <p><strong>Detected Backend URL:</strong> ${detectedUrl}</p>
+            <p><strong>Expected Backend URL:</strong> https://symmetrical-space-orbit-7v97p96xxp9fp744-8000.app.github.dev</p>
+            <p><strong>Match:</strong> ${detectedUrl === 'https://symmetrical-space-orbit-7v97p96xxp9fp744-8000.app.github.dev' ? '✅ YES' : '❌ NO'}</p>
+        `;
+        
+        console.log('Current Hostname:', currentHostname);
+        console.log('Detected Backend URL:', detectedUrl);
+    </script>
+</body>
+</html>
