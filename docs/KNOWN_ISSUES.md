@@ -63,6 +63,16 @@ cd backend && bash test_login_flow.sh
 ✅ Sempre validar login antes de considerar frontend funcional.
 ✅ Verificar que portas 5173 e 8000 estão públicas no Codespaces.
 
+### 🧠 Rule for Future
+
+If login fails:
+1. Check ports visibility
+2. Check API URL mapping
+3. Validate CORS config
+4. Test backend with curl BEFORE frontend
+
+Never debug frontend before backend is validated.
+
 ### Última Resolução
 **Data**: 22/04/2026  
 **Status**: ✅ Resolvido  
