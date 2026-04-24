@@ -2,8 +2,8 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider } from './contexts/AuthContext'
 import LoginPage from './pages/LoginPage'
 import HotelsPage from './pages/HotelsPage'
+import EventsPage from './pages/EventsPage'
 import TasksPage from './pages/TasksPage'
-import TasksPageSimple from './pages/TasksPage_Simple'
 import PrivateRoute from './components/PrivateRoute'
 
 function App() {
@@ -17,9 +17,9 @@ function App() {
               <HotelsPage />
             </PrivateRoute>
           } />
-          <Route path="/tasks" element={
+          <Route path="/events" element={
             <PrivateRoute>
-              <TasksPageSimple />
+              <EventsPage />
             </PrivateRoute>
           } />
           <Route path="/events/:eventId/tasks" element={

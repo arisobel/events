@@ -36,10 +36,10 @@ export default function HotelsPage() {
             <h1 className="text-2xl font-bold text-gray-900">Hotels</h1>
             <div className="flex items-center gap-4">
               <button
-                onClick={() => navigate('/events/1/tasks')}
+                onClick={() => navigate('/events')}
                 className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
-                View Tasks
+                View Events →
               </button>
               <span className="text-sm text-gray-600">
                 Welcome, {user?.f_username}

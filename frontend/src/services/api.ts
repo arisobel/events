@@ -82,6 +82,18 @@ export interface Hotel {
   f_updated_at: string
 }
 
+export interface Event {
+  id: number
+  f_hotel_id: number
+  f_name: string
+  f_event_type: string | null
+  f_start_date: string
+  f_end_date: string
+  f_status: string
+  f_created_at: string
+  f_updated_at: string
+}
+
 export interface Task {
   id: number
   f_event_id: number
@@ -143,6 +155,18 @@ export const authService = {
 
   isAuthenticated(): boolean {
     return !!localStorage.getItem('access_token')
+  },
+}
+
+export const eventService = {
+  async getEvents(): Promise<Event[]> {
+    const response = await api.get<Event[]>('/events')
+    return response.data
+  },
+
+  async getEvent(id: number): Promise<Event> {
+    const response = await api.get<Event>(`/events/${id}`)
+    return response.data
   },
 }
 

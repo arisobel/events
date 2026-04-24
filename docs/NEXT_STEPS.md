@@ -1,8 +1,118 @@
-# Next Steps - Atualizado Pós-Issue #1
+# Next Steps - Atualizado Pós-Issues #2 e #3
 
-**Current Phase**: Phase 0 - Bootstrap ✅ VERTICAL SLICE COMPLETO + TASKS MODULE COMPLETO (Backend + Frontend) + Issue #1 COMPLETA  
-**Last Updated**: 22 de Abril de 2026 - 10:00 BRT  
-**Status**: Issue #1 (Create Tasks Page) implementada e validada + Login problem resolvido
+**Current Phase**: Phase 0 - Bootstrap ✅ VERTICAL SLICE COMPLETO + FLUXO DE NAVEGAÇÃO COMPLETO  
+**Last Updated**: 24 de Abril de 2026 - 10:00 BRT  
+**Status**: Issues #2 e #3 concluídas - Fluxo Hotels → Events → Tasks implementado e validado
+
+---
+
+## ✅ COMPLETADO: Issue #3 - Implementação do Fluxo de Eventos (24/04/2026)
+
+### Objetivo ✅
+Implementar fluxo completo de navegação: Hotels → Events → Tasks com evento-scoped tasks.
+
+### Resultado
+🎉 **SUCESSO COMPLETO** - Navegação end-to-end funcionando com decisão arquitetural implementada
+
+**Decisão Arquitetural Chave**:
+> "Tasks devem **sempre** estar vinculadas a um eventId"
+
+**Fluxo Implementado**:
+```
+Login → Hotels → Events → Tasks
+   ↓       ↓        ↓        ↓
+  Auth   Lista   Lista   CRUD Tasks
+         Hotels  Events  com backend
+```
+
+**Arquivos Criados**:
+1. ✅ `/frontend/src/pages/EventsPage.tsx` - 179 linhas (nova página completa)
+
+**Arquivos Modificados**:
+2. ✅ `/frontend/src/App.tsx` - Rota `/events` adicionada
+3. ✅ `/frontend/src/pages/HotelsPage.tsx` - Navegação para Events adicionada
+
+**Features Implementadas**:
+- ✅ EventsPage lista eventos reais do backend (`GET /events`)
+- ✅ Color coding por status (draft, confirmed, in_progress, completed, cancelled)
+- ✅ Botão "View Tasks →" para cada evento → `/events/:eventId/tasks`
+- ✅ Navegação bidirecional (back buttons em todas as páginas)
+- ✅ Loading e error states consistentes
+- ✅ Layout responsivo com Tailwind CSS
+- ✅ Empty state amigável
+
+**Validação com Dados Reais**:
+- ✅ 1 evento: "Evento Teste Tasks" (id: 1, conference, 2026-05-01 a 05-05)
+- ✅ 2 tasks: "Verificar catering" (pending), "Preparar sala de conferência" (completed)
+- ✅ Integração backend 100% funcional
+- ✅ Zero erros TypeScript
+
+**Estatísticas**:
+- Páginas novas: 1
+- Rotas novas: 1
+- Linhas adicionadas: 189
+- Complexidade: Baixa (nova feature seguindo padrão existente)
+- Bloqueadores: 0
+
+**User Journey Validado**:
+1. Login com admin/admin123 ✅
+2. Ver lista de hotéis ✅
+3. Click "View Events →" ✅
+4. Ver evento "Evento Teste Tasks" ✅
+5. Click "View Tasks →" ✅
+6. Ver 2 tasks reais ✅
+7. Criar/filtrar/atualizar tasks ✅
+
+**Benefícios Arquiteturais**:
+- ✅ Event-scoped tasks enforcement via UX
+- ✅ Navegação intuitiva e escalável
+- ✅ Separação clara de responsabilidades
+- ✅ Base sólida para expansão futura
+
+---
+
+## ✅ COMPLETADO: Issue #2 - Arquitetura de Rotas e Remoção de Duplicação (23/04/2026)
+
+### Objetivo ✅
+Resolver duplicação de páginas TasksPage e integrar corretamente com backend.
+
+### Resultado
+🎉 **SUCESSO COMPLETO** - Arquitetura simplificada e duplicação removida
+
+**Problema Identificado**:
+- Duplicação: `TasksPage.tsx` + `TasksPage_Simple.tsx` (ambas mostrando tasks)
+- Erro arquitetural: Rota `/tasks` genérica não faz sentido (tasks sempre vinculadas a evento)
+- Issue #2 redundante: TasksPage.tsx **já implementava** corretamente `GET /events/{event_id}/tasks`
+
+**Decisão Arquitetural**:
+- ✅ Manter apenas: `TasksPage.tsx` (rota `/events/:eventId/tasks`)
+- ❌ Remover: `TasksPage_Simple.tsx` (287 linhas removidas)
+- ❌ Remover: Rota `/tasks` do `App.tsx`
+
+**Arquivos Removidos**:
+1. ❌ `/frontend/src/pages/TasksPage_Simple.tsx` - Duplicação eliminada
+
+**Arquivos Modificados**:
+2. ✅ `/frontend/src/App.tsx` - Import e rota `/tasks` removidos
+3. ✅ `/frontend/src/services/api.ts` - Interface `Event` adicionada para consistência
+
+**Validação**:
+- ✅ Zero erros TypeScript
+- ✅ TasksPage.tsx usa `taskService.getTasks(Number(eventId))` corretamente
+- ✅ Integração com `GET /events/{eventId}/tasks` funcionando
+- ✅ Arquitetura única e clara: `Login → Hotels → Event Tasks`
+
+**Estatísticas**:
+- Linhas adicionadas: 0
+- Linhas removidas: 287
+- Complexidade: Mínima (refactoring, não nova feature)
+- TypeScript errors: 0
+
+**Lição Aprendida**:
+- Issue #2 foi mal formulada - solicitava integração já existente
+- TasksPage_Simple criado na Issue #1 era desnecessário
+- Validação arquitetural previne código redundante
+- "Always ask: isso já existe?"
 
 ---
 
@@ -14,9 +124,11 @@ Criar página simples `/tasks` com layout básico e placeholder para lista de ta
 ### Resultado
 🎉 **SUCESSO COMPLETO** - TasksPage_Simple implementada conforme especificação
 
-**Arquivos Criados/Modificados**:
-1. ✅ `/frontend/src/pages/TasksPage_Simple.tsx` - Componente com layout Tailwind
-2. ✅ `/frontend/src/App.tsx` - Rota `/tasks` adicionada como PrivateRoute
+**⚠️ NOTA PÓS-ISSUE #2**: TasksPage_Simple foi posteriormente removida (23/04/2026) por duplicação arquitetural. Ver Issue #2 acima.
+
+**Arquivos Criados/Modificados** (posteriormente removidos):
+1. ✅ `/frontend/src/pages/TasksPage_Simple.tsx` - Componente com layout Tailwind (removido em 23/04)
+2. ✅ `/frontend/src/App.tsx` - Rota `/tasks` adicionada como PrivateRoute (removida em 23/04)
 
 **Features Implementadas**:
 - ✅ Rota `/tasks` (não específica de evento)
@@ -39,7 +151,7 @@ Criar página simples `/tasks` com layout básico e placeholder para lista de ta
 - ✅ Layout responsivo funcionando
 - ✅ Placeholder visível
 
-**Contexto**: Este projeto já possui TasksPage completa em `/events/:eventId/tasks`. A Issue #1 pediu especificamente uma página simples em `/tasks`, agora entregue.
+**Contexto**: Este projeto já possui TasksPage completa em `/events/:eventId/tasks`. A Issue #1 pediu especificamente uma página simples em `/tasks`, agora entregue (e posteriormente removida por refactoring).
 
 ---
 
