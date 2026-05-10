@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
-import { useAuth } from '../contexts/AuthContext'
 import {
   Hotel,
   HotelCreate,
@@ -9,6 +8,7 @@ import {
   HotelRoomCreate,
   hotelService,
 } from '../services/api'
+import AdminLayout from '../components/AdminLayout'
 
 export default function HotelsPage() {
   const [hotels, setHotels] = useState<Hotel[]>([])
@@ -39,7 +39,6 @@ export default function HotelsPage() {
     f_notes: '',
   })
 
-  const { user, logout } = useAuth()
   const navigate = useNavigate()
 
   useEffect(() => {
@@ -152,48 +151,34 @@ export default function HotelsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-100">
-      <header className="bg-white shadow">
-        <div className="max-w-7xl mx-auto px-4 py-4 sm:px-6 lg:px-8">
-          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">Hotels</h1>
-              <p className="text-sm text-gray-500 mt-1">
-                Create hotels, seed rooms, and prepare infrastructure for events.
-              </p>
-            </div>
-            <div className="flex flex-wrap items-center gap-3">
-              <button
-                onClick={() => setShowHotelForm((current) => !current)}
-                className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
-              >
-                {showHotelForm ? 'Hide Hotel Form' : '+ New Hotel'}
-              </button>
-              <button
-                onClick={() => setShowRoomForm((current) => !current)}
-                className="bg-emerald-600 text-white px-4 py-2 rounded-md hover:bg-emerald-700"
-              >
-                {showRoomForm ? 'Hide Room Form' : '+ Add Room'}
-              </button>
-              <button
-                onClick={() => navigate('/events')}
-                className="bg-gray-900 text-white px-4 py-2 rounded-md hover:bg-black"
-              >
-                View Events →
-              </button>
-              <span className="text-sm text-gray-600">Welcome, {user?.f_username}</span>
-              <button
-                onClick={logout}
-                className="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700"
-              >
-                Logout
-              </button>
-            </div>
+    <AdminLayout title="Hotels">
+      <div className="max-w-7xl mx-auto">
+        {/* Page actions */}
+        <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
+          <p className="text-sm text-slate-500">
+            Create hotels, seed rooms, and prepare infrastructure for events.
+          </p>
+          <div className="flex flex-wrap items-center gap-3">
+            <button
+              onClick={() => setShowHotelForm((current) => !current)}
+              className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 text-sm"
+            >
+              {showHotelForm ? 'Hide Hotel Form' : '+ New Hotel'}
+            </button>
+            <button
+              onClick={() => setShowRoomForm((current) => !current)}
+              className="bg-emerald-600 text-white px-4 py-2 rounded-md hover:bg-emerald-700 text-sm"
+            >
+              {showRoomForm ? 'Hide Room Form' : '+ Add Room'}
+            </button>
+            <button
+              onClick={() => navigate('/events')}
+              className="bg-slate-900 text-white px-4 py-2 rounded-md hover:bg-black text-sm"
+            >
+              View Events →
+            </button>
           </div>
         </div>
-      </header>
-
-      <main className="max-w-7xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
         {error && (
           <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-6">
             {error}
@@ -437,7 +422,7 @@ export default function HotelsPage() {
             })}
           </div>
         )}
-      </main>
-    </div>
+      </div>
+    </AdminLayout>
   )
 }

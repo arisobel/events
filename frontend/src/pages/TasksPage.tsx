@@ -1,12 +1,11 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { useAuth } from '../contexts/AuthContext'
 import { taskService, Task, TaskCreate } from '../services/api'
+import AdminLayout from '../components/AdminLayout'
 
 export default function TasksPage() {
   const { eventId } = useParams<{ eventId: string }>()
   const navigate = useNavigate()
-  const { user } = useAuth()
 
   const [tasks, setTasks] = useState<Task[]>([])
   const [loading, setLoading] = useState(true)
@@ -138,51 +137,38 @@ export default function TasksPage() {
   })
 
   return (
-    <div className="min-h-screen bg-gray-100">
-      {/* Header */}
-      <header className="bg-white shadow">
-        <div className="max-w-7xl mx-auto px-4 py-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center">
-            <div className="flex items-center gap-4">
-              <button
-                onClick={() => navigate('/events')}
-                className="text-gray-600 hover:text-gray-900"
-              >
-                ← Events
-              </button>
-              <h1 className="text-2xl font-bold text-gray-900">
-                Event Tasks
-              </h1>
-            </div>
-            <div className="flex items-center gap-4">
-              <button
-                onClick={() => navigate(`/events/${eventId}/guests`)}
-                className="text-sm text-indigo-700 hover:text-indigo-900"
-              >
-                Guests
-              </button>
-              <button
-                onClick={() => navigate(`/events/${eventId}/rooms`)}
-                className="text-sm text-emerald-700 hover:text-emerald-900"
-              >
-                Rooms
-              </button>
-              <span className="text-sm text-gray-600">
-                {user?.f_username}
-              </span>
-              <button
-                onClick={() => setShowCreateForm(!showCreateForm)}
-                className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                {showCreateForm ? 'Cancel' : '+ New Task'}
-              </button>
-            </div>
+    <AdminLayout title="Event Tasks">
+      <div className="max-w-7xl mx-auto">
+        {/* Breadcrumb / sub-page navigation */}
+        <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
+          <div className="flex flex-wrap items-center gap-2 text-sm">
+            <button
+              onClick={() => navigate('/events')}
+              className="text-slate-600 hover:text-slate-900 border border-slate-300 px-3 py-1.5 rounded-md hover:bg-slate-50"
+            >
+              ← Events
+            </button>
+            <button
+              onClick={() => navigate(`/events/${eventId}/guests`)}
+              className="bg-indigo-600 text-white px-3 py-1.5 rounded-md hover:bg-indigo-700"
+            >
+              Guests
+            </button>
+            <button
+              onClick={() => navigate(`/events/${eventId}/rooms`)}
+              className="bg-emerald-600 text-white px-3 py-1.5 rounded-md hover:bg-emerald-700"
+            >
+              Rooms
+            </button>
           </div>
+          <button
+            onClick={() => setShowCreateForm(!showCreateForm)}
+            className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 text-sm"
+          >
+            {showCreateForm ? 'Cancel' : '+ New Task'}
+          </button>
         </div>
-      </header>
 
-      {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
         {/* Error Message */}
         {error && (
           <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-4">
@@ -374,7 +360,7 @@ export default function TasksPage() {
             ))}
           </div>
         )}
-      </main>
-    </div>
+      </div>
+    </AdminLayout>
   )
 }
