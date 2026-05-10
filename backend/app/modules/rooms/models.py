@@ -16,3 +16,5 @@ class RoomAllocation(Base):
     f_checkin_status = Column(String(30), default='planned')
     f_checkout_status = Column(String(30), default='planned')
     f_notes = Column(Text)
+
+    reservation = relationship("Reservation", back_populates="allocations")

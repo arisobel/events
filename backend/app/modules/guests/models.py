@@ -51,6 +51,7 @@ class Reservation(Base):
     f_notes = Column(Text)
     
     group = relationship("GuestGroup", back_populates="reservations")
+    allocations = relationship("RoomAllocation", back_populates="reservation")
 
 
 class SpecialRequest(Base):

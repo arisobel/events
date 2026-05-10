@@ -145,16 +145,28 @@ export default function TasksPage() {
           <div className="flex justify-between items-center">
             <div className="flex items-center gap-4">
               <button
-                onClick={() => navigate('/hotels')}
+                onClick={() => navigate('/events')}
                 className="text-gray-600 hover:text-gray-900"
               >
-                ← Back
+                ← Events
               </button>
               <h1 className="text-2xl font-bold text-gray-900">
                 Event Tasks
               </h1>
             </div>
             <div className="flex items-center gap-4">
+              <button
+                onClick={() => navigate(`/events/${eventId}/guests`)}
+                className="text-sm text-indigo-700 hover:text-indigo-900"
+              >
+                Guests
+              </button>
+              <button
+                onClick={() => navigate(`/events/${eventId}/rooms`)}
+                className="text-sm text-emerald-700 hover:text-emerald-900"
+              >
+                Rooms
+              </button>
               <span className="text-sm text-gray-600">
                 {user?.f_username}
               </span>

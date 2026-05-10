@@ -1,26 +1,20 @@
 import axios from 'axios'
 
-// Detectar automaticamente a URL do backend baseado no ambiente
 const getApiBaseUrl = () => {
-  // Se estamos em desenvolvimento local
   if (window.location.hostname === 'localhost') {
     return 'http://localhost:8000'
   }
-  
-  // Se estamos no Codespaces, usar a mesma base mas porta 8000
+
   if (window.location.hostname.includes('app.github.dev')) {
-    // Substituir qualquer porta (-XXXX) por -8000
     const hostname = window.location.hostname.replace(/-\d+\.app\.github\.dev$/, '-8000.app.github.dev')
     return `https://${hostname}`
   }
-  
-  // Fallback
+
   return 'http://localhost:8000'
 }
 
 const API_BASE_URL = getApiBaseUrl()
 
-// Debug: log da URL do backend
 console.log('🔗 Backend URL:', API_BASE_URL)
 console.log('🌐 Current hostname:', window.location.hostname)
 
@@ -28,7 +22,6 @@ export const api = axios.create({
   baseURL: API_BASE_URL,
 })
 
-// Interceptor para adicionar token em todas as requisições
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem('access_token')
   if (token) {
@@ -37,7 +30,6 @@ api.interceptors.request.use((config) => {
   return config
 })
 
-// Interceptor para lidar com erros de autenticação
 api.interceptors.response.use(
   (response) => response,
   (error) => {
@@ -74,12 +66,47 @@ export interface Hotel {
   id: number
   f_name: string
   f_trade_name: string | null
+  f_document?: string | null
+  f_phone?: string | null
+  f_email?: string | null
+  f_address?: string | null
   f_city: string | null
   f_state: string | null
   f_country: string | null
+  f_notes?: string | null
   f_is_active: string
   f_created_at: string
   f_updated_at: string
+}
+
+export interface HotelCreate {
+  f_name: string
+  f_trade_name?: string
+  f_city?: string
+  f_state?: string
+  f_country?: string
+  f_notes?: string
+}
+
+export interface HotelRoom {
+  id: number
+  f_hotel_id: number
+  f_room_number: string
+  f_room_type: string | null
+  f_floor: string | null
+  f_block: string | null
+  f_capacity: number
+  f_status: string
+  f_notes?: string | null
+}
+
+export interface HotelRoomCreate {
+  f_room_number: string
+  f_room_type?: string
+  f_floor?: string
+  f_block?: string
+  f_capacity: number
+  f_notes?: string
 }
 
 export interface Event {
@@ -89,9 +116,23 @@ export interface Event {
   f_event_type: string | null
   f_start_date: string
   f_end_date: string
+  f_expected_guests?: number | null
+  f_expected_families?: number | null
+  f_notes?: string | null
   f_status: string
   f_created_at: string
   f_updated_at: string
+}
+
+export interface EventCreate {
+  f_hotel_id: number
+  f_name: string
+  f_event_type?: string
+  f_start_date: string
+  f_end_date: string
+  f_expected_guests?: number
+  f_expected_families?: number
+  f_notes?: string
 }
 
 export interface Task {
@@ -124,6 +165,91 @@ export interface TaskCommentCreate {
   f_comment: string
 }
 
+export interface Reservation {
+  id: number
+  f_event_id: number
+  f_group_id: number
+  f_start_date: string
+  f_end_date: string
+  f_package_type: string | null
+  f_status: string
+  f_total_guests: number | null
+  f_notes: string | null
+}
+
+export interface ReservationCreate {
+  f_start_date: string
+  f_end_date: string
+  f_package_type?: string
+  f_status?: string
+  f_total_guests?: number
+  f_notes?: string
+}
+
+export interface ReservationUpdate {
+  f_start_date?: string
+  f_end_date?: string
+  f_package_type?: string
+  f_status?: string
+  f_total_guests?: number
+  f_notes?: string
+}
+
+export interface GuestGroup {
+  id: number
+  f_event_id: number
+  f_name: string
+  f_group_type: string | null
+  f_phone: string | null
+  f_email: string | null
+  f_notes: string | null
+  reservations: Reservation[]
+}
+
+export interface GuestGroupCreate {
+  f_name: string
+  f_group_type?: string
+  f_phone?: string
+  f_email?: string
+  f_notes?: string
+}
+
+export interface GuestGroupUpdate {
+  f_name?: string
+  f_group_type?: string
+  f_phone?: string
+  f_email?: string
+  f_notes?: string
+}
+
+export interface RoomAllocation {
+  id: number
+  f_reservation_id: number
+  f_room_id: number
+  f_start_date: string
+  f_end_date: string
+  f_checkin_status: string
+  f_checkout_status: string
+  f_notes: string | null
+}
+
+export interface RoomAllocationCreate {
+  f_reservation_id: number
+  f_room_id: number
+  f_start_date: string
+  f_end_date: string
+  f_notes?: string
+}
+
+export interface RoomAllocationUpdate {
+  f_room_id?: number
+  f_start_date?: string
+  f_end_date?: string
+  f_checkin_status?: string
+  f_checkout_status?: string
+  f_notes?: string
+}
+
 export const authService = {
   async login(credentials: LoginCredentials): Promise<LoginResponse> {
     const formData = new URLSearchParams()
@@ -136,7 +262,6 @@ export const authService = {
       },
     })
 
-    // Salvar tokens no localStorage
     localStorage.setItem('access_token', response.data.access_token)
     localStorage.setItem('refresh_token', response.data.refresh_token)
 
@@ -158,6 +283,33 @@ export const authService = {
   },
 }
 
+export const hotelService = {
+  async getHotels(): Promise<Hotel[]> {
+    const response = await api.get<Hotel[]>('/hotels')
+    return response.data
+  },
+
+  async getHotel(id: number): Promise<Hotel> {
+    const response = await api.get<Hotel>(`/hotels/${id}`)
+    return response.data
+  },
+
+  async createHotel(hotel: HotelCreate): Promise<Hotel> {
+    const response = await api.post<Hotel>('/hotels', hotel)
+    return response.data
+  },
+
+  async getHotelRooms(hotelId: number): Promise<HotelRoom[]> {
+    const response = await api.get<HotelRoom[]>(`/hotels/${hotelId}/rooms`)
+    return response.data
+  },
+
+  async createHotelRoom(hotelId: number, room: HotelRoomCreate): Promise<HotelRoom> {
+    const response = await api.post<HotelRoom>(`/hotels/${hotelId}/rooms`, room)
+    return response.data
+  },
+}
+
 export const eventService = {
   async getEvents(): Promise<Event[]> {
     const response = await api.get<Event[]>('/events')
@@ -168,16 +320,86 @@ export const eventService = {
     const response = await api.get<Event>(`/events/${id}`)
     return response.data
   },
+
+  async createEvent(event: EventCreate): Promise<Event> {
+    const response = await api.post<Event>('/events', event)
+    return response.data
+  },
 }
 
-export const hotelService = {
-  async getHotels(): Promise<Hotel[]> {
-    const response = await api.get<Hotel[]>('/hotels')
+export const guestGroupService = {
+  async getGroups(eventId: number): Promise<GuestGroup[]> {
+    const response = await api.get<GuestGroup[]>(`/events/${eventId}/groups`)
     return response.data
   },
 
-  async getHotel(id: number): Promise<Hotel> {
-    const response = await api.get<Hotel>(`/hotels/${id}`)
+  async getGroup(eventId: number, groupId: number): Promise<GuestGroup> {
+    const response = await api.get<GuestGroup>(`/events/${eventId}/groups/${groupId}`)
+    return response.data
+  },
+
+  async createGroup(eventId: number, group: GuestGroupCreate): Promise<GuestGroup> {
+    const response = await api.post<GuestGroup>(`/events/${eventId}/groups`, group)
+    return response.data
+  },
+
+  async updateGroup(eventId: number, groupId: number, group: GuestGroupUpdate): Promise<GuestGroup> {
+    const response = await api.put<GuestGroup>(`/events/${eventId}/groups/${groupId}`, group)
+    return response.data
+  },
+
+  async deleteGroup(eventId: number, groupId: number): Promise<void> {
+    await api.delete(`/events/${eventId}/groups/${groupId}`)
+  },
+}
+
+export const reservationService = {
+  async getGroupReservations(eventId: number, groupId: number): Promise<Reservation[]> {
+    const response = await api.get<Reservation[]>(`/events/${eventId}/groups/${groupId}/reservations`)
+    return response.data
+  },
+
+  async createReservation(
+    eventId: number,
+    groupId: number,
+    reservation: ReservationCreate,
+  ): Promise<Reservation> {
+    const response = await api.post<Reservation>(`/events/${eventId}/groups/${groupId}/reservations`, reservation)
+    return response.data
+  },
+
+  async getReservation(reservationId: number): Promise<Reservation> {
+    const response = await api.get<Reservation>(`/reservations/${reservationId}`)
+    return response.data
+  },
+
+  async updateReservation(reservationId: number, reservation: ReservationUpdate): Promise<Reservation> {
+    const response = await api.put<Reservation>(`/reservations/${reservationId}`, reservation)
+    return response.data
+  },
+}
+
+export const roomAllocationService = {
+  async createAllocation(allocation: RoomAllocationCreate): Promise<RoomAllocation> {
+    const response = await api.post<RoomAllocation>('/room-allocations', allocation)
+    return response.data
+  },
+
+  async getAllocation(allocationId: number): Promise<RoomAllocation> {
+    const response = await api.get<RoomAllocation>(`/room-allocations/${allocationId}`)
+    return response.data
+  },
+
+  async updateAllocation(
+    allocationId: number,
+    allocation: RoomAllocationUpdate,
+  ): Promise<RoomAllocation> {
+    const response = await api.put<RoomAllocation>(`/room-allocations/${allocationId}`, allocation)
+    return response.data
+  },
+
+  async getReservationAllocations(reservationId: number): Promise<RoomAllocation[]> {
+    const response = await api.get<RoomAllocation[]>(`/reservations/${reservationId}/room-allocations`)
     return response.data
   },
 }

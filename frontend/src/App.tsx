@@ -3,6 +3,8 @@ import { AuthProvider } from './contexts/AuthContext'
 import LoginPage from './pages/LoginPage'
 import HotelsPage from './pages/HotelsPage'
 import EventsPage from './pages/EventsPage'
+import GuestsPage from './pages/GuestsPage'
+import RoomsPage from './pages/RoomsPage'
 import TasksPage from './pages/TasksPage'
 import PrivateRoute from './components/PrivateRoute'
 
@@ -20,6 +22,16 @@ function App() {
           <Route path="/events" element={
             <PrivateRoute>
               <EventsPage />
+            </PrivateRoute>
+          } />
+          <Route path="/events/:eventId/guests" element={
+            <PrivateRoute>
+              <GuestsPage />
+            </PrivateRoute>
+          } />
+          <Route path="/events/:eventId/rooms" element={
+            <PrivateRoute>
+              <RoomsPage />
             </PrivateRoute>
           } />
           <Route path="/events/:eventId/tasks" element={

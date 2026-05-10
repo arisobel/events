@@ -1,18 +1,64 @@
 """Guests module - schemas, service, router."""
-from pydantic import BaseModel, ConfigDict
-from typing import Optional
 from datetime import date
+from typing import List, Optional
+
+from pydantic import BaseModel, ConfigDict
+
+
+class ReservationBase(BaseModel):
+    f_start_date: date
+    f_end_date: date
+    f_package_type: Optional[str] = None
+    f_status: str = "confirmed"
+    f_total_guests: Optional[int] = None
+    f_notes: Optional[str] = None
+
+
+class ReservationCreate(ReservationBase):
+    f_event_id: int
+    f_group_id: int
+
+
+class ReservationUpdate(BaseModel):
+    f_start_date: Optional[date] = None
+    f_end_date: Optional[date] = None
+    f_package_type: Optional[str] = None
+    f_status: Optional[str] = None
+    f_total_guests: Optional[int] = None
+    f_notes: Optional[str] = None
+
+
+class ReservationResponse(ReservationBase):
+    id: int
+    f_event_id: int
+    f_group_id: int
+
+    model_config = ConfigDict(from_attributes=True)
+
 
 class GuestGroupBase(BaseModel):
     f_name: str
     f_group_type: Optional[str] = None
     f_phone: Optional[str] = None
     f_email: Optional[str] = None
+    f_notes: Optional[str] = None
+
 
 class GuestGroupCreate(GuestGroupBase):
     f_event_id: int
 
+
+class GuestGroupUpdate(BaseModel):
+    f_name: Optional[str] = None
+    f_group_type: Optional[str] = None
+    f_phone: Optional[str] = None
+    f_email: Optional[str] = None
+    f_notes: Optional[str] = None
+
+
 class GuestGroupResponse(GuestGroupBase):
     id: int
     f_event_id: int
+    reservations: List[ReservationResponse] = []
+
     model_config = ConfigDict(from_attributes=True)
