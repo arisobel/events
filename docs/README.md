@@ -113,7 +113,7 @@ Documentos do sistema anterior de documentação, mantidos para referência hist
 
 **Phase**: Phase 1 - Core Backend + Internal MVP ✅ **IMPLEMENTADO**  
 **Last Update**: 10 de Maio de 2026  
-**Status**: Fluxo MVP interno disponível de ponta a ponta
+**Status**: Fluxo MVP interno disponível de ponta a ponta, com próxima expansão planejada para `Guest` individual dentro de `GuestGroup`
 
 **Quick Stats**:
 - Backend Modules: 6/6 completos
@@ -122,9 +122,9 @@ Documentos do sistema anterior de documentação, mantidos para referência hist
 - Tests: 6 backend tests passing + frontend build passing
 
 **Next Actions**:
-1. Estabilizar testes HTTP/integration
-2. Capturar screenshots e relatório de validação
-3. Refinar UX (HotelDetailPage)
+1. Expandir módulo de hóspedes: `GuestGroup` + `Guest`
+2. Estabilizar testes HTTP/integration
+3. Capturar screenshots e relatório de validação
 
 Para detalhes completos: [07_progress.md](02_execution/07_progress.md)
 

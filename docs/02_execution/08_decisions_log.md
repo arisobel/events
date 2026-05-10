@@ -1,5 +1,34 @@
 # Decisions Log
 
+## [2026-05-10] Guest Expansion Strategy: Group First, Guest Second
+
+**Context:**  
+O MVP interno atual opera corretamente no nível de `GuestGroup -> Reservation -> RoomAllocation`, mas a operação real já evidenciou a próxima lacuna: líderes de grupo e membros individuais ainda precisam ser registrados em observações textuais. O domínio já possui entidade `Guest`, porém ela ainda não está exposta na UI/API principal.
+
+**Decision:**  
+- Manter `GuestGroup` como unidade operacional principal
+- Expandir o módulo de hóspedes abrindo `Guest` como subentidade de grupo
+- Manter `Reservation` vinculada ao grupo, não ao hóspede individual
+- Introduzir conceito explícito de líder do grupo
+- Tratar esta expansão como próxima fase funcional antes de outros refinamentos opcionais de UX
+
+**Rationale:**
+- Preserva o fluxo operacional já validado no MVP
+- Resolve a principal ambiguidade atual do módulo de hóspedes
+- Evita modelar reservas pessoa a pessoa cedo demais
+- Cria base melhor para check-in, documentação e requests futuros
+
+**Impact:**  
+- ⏳ Backlog imediato passa a incluir CRUD de hóspedes individuais
+- ⏳ `GuestsPage` deverá evoluir de tela de grupos/reservas para grupos + membros
+- ⏳ Notas livres deixam de ser o único lugar para registrar líder e composição do grupo
+- ✅ O desenho central do MVP permanece estável
+
+**Participants:** Product + Agent  
+**Status:** ⏳ Planejado
+
+---
+
 ## [2026-04-24] Tasks Event-Scoped Architecture
 
 **Context:**  

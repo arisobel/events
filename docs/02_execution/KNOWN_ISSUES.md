@@ -32,6 +32,27 @@
 
 ---
 
+## 👥 Individual Guest Management Not Yet Exposed
+
+### Status: ℹ️ **KNOWN LIMITATION**
+
+### Problem
+- O domínio já possui entidade `Guest`, mas a superfície principal do MVP ainda opera apenas com `GuestGroup` + `Reservation`
+- Operadores conseguem registrar quantidade total de hóspedes, mas não conseguem cadastrar formalmente os membros do grupo
+- Informações como líder do grupo acabam indo para `notes`/`observações`
+
+### Impact
+- Fluxo operacional principal continua funcionando
+- Estrutura detalhada de composição do grupo ainda fica implícita
+- Não há liderança de grupo estruturada na UI atual
+
+### Planned Resolution
+- Expandir `GuestsPage` para incluir CRUD de hóspedes individuais
+- Adicionar campo/regra de líder do grupo
+- Preservar `Reservation` no nível do grupo
+
+---
+
 ## 📸 Documentation Screenshots
 
 ### Status: ⏳ **PENDING (Manual Action)**
@@ -56,6 +77,7 @@
 ✅ Fluxo MVP interno implementado  
 ✅ Guests/Reservations/Room Allocations funcionando  
 ✅ Zero bugs críticos conhecidos no fluxo principal
+ℹ️ Lacuna atual de hóspedes individuais tratada como evolução funcional planejada, não bug
 
 ---
 
