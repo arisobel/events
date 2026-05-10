@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 
-import { useAuth } from '../contexts/AuthContext'
 import {
   Event,
   GuestGroup,
@@ -14,11 +13,11 @@ import {
   guestGroupService,
   reservationService,
 } from '../services/api'
+import AdminLayout from '../components/AdminLayout'
 
 export default function GuestsPage() {
   const { eventId } = useParams<{ eventId: string }>()
   const navigate = useNavigate()
-  const { user } = useAuth()
 
   const [event, setEvent] = useState<Event | null>(null)
   const [groups, setGroups] = useState<GuestGroup[]>([])
@@ -185,48 +184,41 @@ export default function GuestsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-100">
-      <header className="bg-white shadow">
-        <div className="max-w-7xl mx-auto px-4 py-4 sm:px-6 lg:px-8">
-          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">Guests & Reservations</h1>
-              <p className="text-sm text-gray-500 mt-1">
-                {event ? `${event.f_name} · event #${event.id}` : 'Loading event...'}
-              </p>
-            </div>
-            <div className="flex flex-wrap items-center gap-3">
-              <button
-                onClick={() => navigate('/events')}
-                className="text-gray-700 px-4 py-2 rounded-md border border-gray-300 hover:bg-gray-50"
-              >
-                ← Events
-              </button>
-              <button
-                onClick={() => navigate(`/events/${eventId}/rooms`)}
-                className="bg-emerald-600 text-white px-4 py-2 rounded-md hover:bg-emerald-700"
-              >
-                Room Allocations
-              </button>
-              <button
-                onClick={() => navigate(`/events/${eventId}/tasks`)}
-                className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
-              >
-                Tasks
-              </button>
-              <button
-                onClick={() => setShowGroupForm((current) => !current)}
-                className="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700"
-              >
-                {showGroupForm ? 'Hide Group Form' : '+ New Group'}
-              </button>
-              <span className="text-sm text-gray-600">{user?.f_username}</span>
-            </div>
+    <AdminLayout title="Guests & Reservations">
+      <div className="max-w-7xl mx-auto">
+        {/* Breadcrumb / sub-page navigation */}
+        <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
+          <div className="flex flex-wrap items-center gap-2 text-sm">
+            <button
+              onClick={() => navigate('/events')}
+              className="text-slate-600 hover:text-slate-900 border border-slate-300 px-3 py-1.5 rounded-md hover:bg-slate-50"
+            >
+              ← Events
+            </button>
+            {event && (
+              <span className="text-slate-500">{event.f_name}</span>
+            )}
+            <button
+              onClick={() => navigate(`/events/${eventId}/rooms`)}
+              className="bg-emerald-600 text-white px-3 py-1.5 rounded-md hover:bg-emerald-700"
+            >
+              Rooms
+            </button>
+            <button
+              onClick={() => navigate(`/events/${eventId}/tasks`)}
+              className="bg-blue-600 text-white px-3 py-1.5 rounded-md hover:bg-blue-700"
+            >
+              Tasks
+            </button>
           </div>
+          <button
+            onClick={() => setShowGroupForm((current) => !current)}
+            className="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 text-sm"
+          >
+            {showGroupForm ? 'Hide Group Form' : '+ New Group'}
+          </button>
         </div>
-      </header>
 
-      <main className="max-w-7xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
         {error && (
           <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-6">
             {error}
@@ -628,7 +620,7 @@ export default function GuestsPage() {
             ))}
           </div>
         )}
-      </main>
-    </div>
+      </div>
+    </AdminLayout>
   )
 }
