@@ -1,6 +1,5 @@
 import { ReactNode } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
-import { Hotel, CalendarDays, LogOut } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 
 interface AdminLayoutProps {
@@ -8,10 +7,53 @@ interface AdminLayoutProps {
   title: string
 }
 
+interface IconProps {
+  className?: string
+}
+
 const navLinks = [
-  { label: 'Hotels', path: '/hotels', icon: Hotel },
-  { label: 'Events', path: '/events', icon: CalendarDays },
+  { label: 'Hotels', path: '/hotels', icon: HotelIcon },
+  { label: 'Events', path: '/events', icon: CalendarDaysIcon },
 ]
+
+function HotelIcon({ className }: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className={className}>
+      <path d="M4 20V7a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v13" />
+      <path d="M16 10h2a2 2 0 0 1 2 2v8" />
+      <path d="M8 9h2" />
+      <path d="M8 13h2" />
+      <path d="M12 9h2" />
+      <path d="M12 13h2" />
+      <path d="M10 20v-3h4v3" />
+      <path d="M3 20h18" />
+    </svg>
+  )
+}
+
+function CalendarDaysIcon({ className }: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className={className}>
+      <path d="M8 3v3" />
+      <path d="M16 3v3" />
+      <path d="M4 9h16" />
+      <rect x="4" y="5" width="16" height="15" rx="2" />
+      <path d="M8 13h3" />
+      <path d="M13 13h3" />
+      <path d="M8 17h3" />
+    </svg>
+  )
+}
+
+function LogOutIcon({ className }: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className={className}>
+      <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+      <path d="M16 17l5-5-5-5" />
+      <path d="M21 12H9" />
+    </svg>
+  )
+}
 
 export default function AdminLayout({ children, title }: AdminLayoutProps) {
   const { user, logout } = useAuth()
@@ -64,7 +106,7 @@ export default function AdminLayout({ children, title }: AdminLayoutProps) {
               title="Logout"
               className="text-slate-400 hover:text-white transition-colors flex-shrink-0"
             >
-              <LogOut className="w-4 h-4" />
+              <LogOutIcon className="w-4 h-4" />
             </button>
           </div>
         </div>
