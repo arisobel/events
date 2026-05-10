@@ -41,7 +41,7 @@ export default function AdminLayout({ children, title }: AdminLayoutProps) {
               key={path}
               href="#"
               onClick={(e) => { e.preventDefault(); navigate(path) }}
-              className={`sidebar-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm${isActive(path) ? ' active' : ''}`}
+              className={['sidebar-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm', isActive(path) ? 'active' : ''].filter(Boolean).join(' ')}
             >
               <Icon className="w-4 h-4 flex-shrink-0" />
               {label}
