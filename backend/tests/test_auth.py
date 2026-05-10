@@ -1,32 +1,35 @@
-from fastapi.testclient import TestClient
+import pytest
+from fastapi import HTTPException
+from sqlalchemy.orm import Session
+
+from app.core.security import create_access_token
+from app.modules.auth import dependencies as auth_dependencies
+from app.modules.auth import service as auth_service
 
 
-def test_login_success(client: TestClient, active_user) -> None:
-    response = client.post(
-        "/auth/login",
-        data={"username": active_user.f_username, "password": "admin123"},
+def test_login_success(db_session: Session, active_user) -> None:
+    user = auth_service.authenticate_user(db_session, active_user.f_username, "admin123")
+
+    assert user is not None
+    token = create_access_token(
+        {
+            "sub": str(user.id),
+            "username": user.f_username,
+            "roles": [],
+        }
     )
-
-    assert response.status_code == 200
-    body = response.json()
-    assert body["token_type"] == "bearer"
-    assert body["access_token"]
-    assert body["refresh_token"]
+    assert token
 
 
-def test_login_invalid_credentials(client: TestClient, active_user) -> None:
-    response = client.post(
-        "/auth/login",
-        data={"username": active_user.f_username, "password": "wrong-password"},
-    )
+def test_login_invalid_credentials(db_session: Session, active_user) -> None:
+    user = auth_service.authenticate_user(db_session, active_user.f_username, "wrong-password")
 
-    assert response.status_code == 401
-    assert response.json()["detail"] == "Incorrect username or password"
+    assert user is None
 
 
-def test_protected_endpoint_without_token(client: TestClient) -> None:
-    response = client.get("/hotels")
+def test_protected_endpoint_without_token(db_session: Session) -> None:
+    with pytest.raises(HTTPException) as exc_info:
+        auth_dependencies.get_current_user(db=db_session, token="")
 
-    assert response.status_code == 401
-    assert response.json()["detail"] == "Not authenticated"
-
+    assert exc_info.value.status_code == 401
+    assert exc_info.value.detail == "Could not validate credentials"

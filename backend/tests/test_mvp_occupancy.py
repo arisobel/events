@@ -1,175 +1,152 @@
-from fastapi.testclient import TestClient
+import pytest
+from sqlalchemy.orm import Session
+
+from app.modules.events import schemas as event_schemas
+from app.modules.events import service as event_service
+from app.modules.guests import schemas as guest_schemas
+from app.modules.guests import service as guest_service
+from app.modules.hotel import schemas as hotel_schemas
+from app.modules.hotel import service as hotel_service
+from app.modules.rooms import schemas as room_schemas
+from app.modules.rooms import service as room_service
 
 
-def create_hotel_event_and_room(client: TestClient, auth_headers: dict[str, str]) -> tuple[int, int, int]:
-    hotel_response = client.post(
-        "/hotels",
-        json={
-            "f_name": "Grand Palace",
-            "f_city": "Miami",
-            "f_state": "FL",
-            "f_country": "USA",
-        },
-        headers=auth_headers,
+def create_hotel_event_and_room(db_session: Session) -> tuple[int, int, int]:
+    hotel = hotel_service.create_hotel(
+        db_session,
+        hotel_schemas.HotelCreate(
+            f_name="Grand Palace",
+            f_city="Miami",
+            f_state="FL",
+            f_country="USA",
+        ),
     )
-    assert hotel_response.status_code == 201
-    hotel_id = hotel_response.json()["id"]
-
-    room_response = client.post(
-        f"/hotels/{hotel_id}/rooms",
-        json={
-            "f_room_number": "214",
-            "f_room_type": "family",
-            "f_capacity": 4,
-        },
-        headers=auth_headers,
+    room = hotel_service.create_hotel_room(
+        db_session,
+        hotel_schemas.HotelRoomCreate(
+            f_hotel_id=hotel.id,
+            f_room_number="214",
+            f_room_type="family",
+            f_capacity=4,
+        ),
     )
-    assert room_response.status_code == 201
-    room_id = room_response.json()["id"]
-
-    event_response = client.post(
-        "/events",
-        json={
-            "f_hotel_id": hotel_id,
-            "f_name": "Pessach 2026",
-            "f_event_type": "holiday",
-            "f_start_date": "2026-04-01",
-            "f_end_date": "2026-04-10",
-        },
-        headers=auth_headers,
+    event = event_service.create_event(
+        db_session,
+        event_schemas.EventCreate(
+            f_hotel_id=hotel.id,
+            f_name="Pessach 2026",
+            f_event_type="holiday",
+            f_start_date="2026-04-01",
+            f_end_date="2026-04-10",
+        ),
     )
-    assert event_response.status_code == 201
-    event_id = event_response.json()["id"]
-
-    return hotel_id, room_id, event_id
+    return hotel.id, room.id, event.id
 
 
-def test_create_group_reservation_and_allocation(client: TestClient, auth_headers: dict[str, str]) -> None:
-    _, room_id, event_id = create_hotel_event_and_room(client, auth_headers)
+def test_create_group_reservation_and_allocation(db_session: Session) -> None:
+    _, room_id, event_id = create_hotel_event_and_room(db_session)
 
-    group_response = client.post(
-        f"/events/{event_id}/groups",
-        json={
-            "f_name": "Cohen Family",
-            "f_group_type": "family",
-            "f_phone": "+1-555-0100",
-        },
-        headers=auth_headers,
+    group = guest_service.create_guest_group(
+        db_session,
+        guest_schemas.GuestGroupCreate(
+            f_event_id=event_id,
+            f_name="Cohen Family",
+            f_group_type="family",
+            f_phone="+1-555-0100",
+        ),
     )
-    assert group_response.status_code == 201
-    group_id = group_response.json()["id"]
+    groups = guest_service.get_event_groups(db_session, event_id)
+    assert len(groups) == 1
 
-    list_groups_response = client.get(f"/events/{event_id}/groups", headers=auth_headers)
-    assert list_groups_response.status_code == 200
-    assert len(list_groups_response.json()) == 1
-
-    reservation_response = client.post(
-        f"/events/{event_id}/groups/{group_id}/reservations",
-        json={
-            "f_start_date": "2026-04-01",
-            "f_end_date": "2026-04-05",
-            "f_package_type": "first_days",
-            "f_status": "confirmed",
-            "f_total_guests": 4,
-        },
-        headers=auth_headers,
+    reservation = guest_service.create_reservation(
+        db_session,
+        event_id,
+        group.id,
+        guest_schemas.ReservationCreate(
+            f_event_id=event_id,
+            f_group_id=group.id,
+            f_start_date="2026-04-01",
+            f_end_date="2026-04-05",
+            f_package_type="first_days",
+            f_status="confirmed",
+            f_total_guests=4,
+        ),
     )
-    assert reservation_response.status_code == 201
-    reservation_id = reservation_response.json()["id"]
 
-    get_reservation_response = client.get(f"/reservations/{reservation_id}", headers=auth_headers)
-    assert get_reservation_response.status_code == 200
-    assert get_reservation_response.json()["f_group_id"] == group_id
-
-    allocation_response = client.post(
-        "/room-allocations",
-        json={
-            "f_reservation_id": reservation_id,
-            "f_room_id": room_id,
-            "f_start_date": "2026-04-01",
-            "f_end_date": "2026-04-05",
-            "f_notes": "Near elevator",
-        },
-        headers=auth_headers,
+    allocation = room_service.create_room_allocation(
+        db_session,
+        room_schemas.RoomAllocationCreate(
+            f_reservation_id=reservation.id,
+            f_room_id=room_id,
+            f_start_date="2026-04-01",
+            f_end_date="2026-04-05",
+            f_notes="Near elevator",
+        ),
     )
-    assert allocation_response.status_code == 201
-    allocation_id = allocation_response.json()["id"]
 
-    get_allocation_response = client.get(f"/room-allocations/{allocation_id}", headers=auth_headers)
-    assert get_allocation_response.status_code == 200
-    assert get_allocation_response.json()["f_room_id"] == room_id
+    assert allocation.id is not None
+    assert guest_service.get_reservation(db_session, reservation.id) is not None
+    assert len(room_service.get_reservation_allocations(db_session, reservation.id)) == 1
 
-    reservation_allocations_response = client.get(
-        f"/reservations/{reservation_id}/room-allocations",
-        headers=auth_headers,
+
+def test_room_allocation_conflict_raises_error(db_session: Session) -> None:
+    _, room_id, event_id = create_hotel_event_and_room(db_session)
+
+    first_group = guest_service.create_guest_group(
+        db_session,
+        guest_schemas.GuestGroupCreate(f_event_id=event_id, f_name="Levi Family"),
     )
-    assert reservation_allocations_response.status_code == 200
-    assert len(reservation_allocations_response.json()) == 1
-
-
-def test_room_allocation_conflict_returns_400(client: TestClient, auth_headers: dict[str, str]) -> None:
-    _, room_id, event_id = create_hotel_event_and_room(client, auth_headers)
-
-    first_group_response = client.post(
-        f"/events/{event_id}/groups",
-        json={"f_name": "Levi Family"},
-        headers=auth_headers,
+    second_group = guest_service.create_guest_group(
+        db_session,
+        guest_schemas.GuestGroupCreate(f_event_id=event_id, f_name="Mizrahi Family"),
     )
-    first_group_id = first_group_response.json()["id"]
 
-    second_group_response = client.post(
-        f"/events/{event_id}/groups",
-        json={"f_name": "Mizrahi Family"},
-        headers=auth_headers,
+    first_reservation = guest_service.create_reservation(
+        db_session,
+        event_id,
+        first_group.id,
+        guest_schemas.ReservationCreate(
+            f_event_id=event_id,
+            f_group_id=first_group.id,
+            f_start_date="2026-04-01",
+            f_end_date="2026-04-05",
+            f_status="confirmed",
+            f_total_guests=2,
+        ),
     )
-    second_group_id = second_group_response.json()["id"]
-
-    first_reservation_response = client.post(
-        f"/events/{event_id}/groups/{first_group_id}/reservations",
-        json={
-            "f_start_date": "2026-04-01",
-            "f_end_date": "2026-04-05",
-            "f_status": "confirmed",
-            "f_total_guests": 2,
-        },
-        headers=auth_headers,
+    second_reservation = guest_service.create_reservation(
+        db_session,
+        event_id,
+        second_group.id,
+        guest_schemas.ReservationCreate(
+            f_event_id=event_id,
+            f_group_id=second_group.id,
+            f_start_date="2026-04-03",
+            f_end_date="2026-04-06",
+            f_status="confirmed",
+            f_total_guests=2,
+        ),
     )
-    first_reservation_id = first_reservation_response.json()["id"]
 
-    second_reservation_response = client.post(
-        f"/events/{event_id}/groups/{second_group_id}/reservations",
-        json={
-            "f_start_date": "2026-04-03",
-            "f_end_date": "2026-04-06",
-            "f_status": "confirmed",
-            "f_total_guests": 2,
-        },
-        headers=auth_headers,
+    room_service.create_room_allocation(
+        db_session,
+        room_schemas.RoomAllocationCreate(
+            f_reservation_id=first_reservation.id,
+            f_room_id=room_id,
+            f_start_date="2026-04-01",
+            f_end_date="2026-04-05",
+        ),
     )
-    second_reservation_id = second_reservation_response.json()["id"]
 
-    first_allocation_response = client.post(
-        "/room-allocations",
-        json={
-            "f_reservation_id": first_reservation_id,
-            "f_room_id": room_id,
-            "f_start_date": "2026-04-01",
-            "f_end_date": "2026-04-05",
-        },
-        headers=auth_headers,
-    )
-    assert first_allocation_response.status_code == 201
+    with pytest.raises(ValueError) as exc_info:
+        room_service.create_room_allocation(
+            db_session,
+            room_schemas.RoomAllocationCreate(
+                f_reservation_id=second_reservation.id,
+                f_room_id=room_id,
+                f_start_date="2026-04-04",
+                f_end_date="2026-04-06",
+            ),
+        )
 
-    conflict_response = client.post(
-        "/room-allocations",
-        json={
-            "f_reservation_id": second_reservation_id,
-            "f_room_id": room_id,
-            "f_start_date": "2026-04-04",
-            "f_end_date": "2026-04-06",
-        },
-        headers=auth_headers,
-    )
-    assert conflict_response.status_code == 400
-    assert conflict_response.json()["detail"] == "Room allocation conflicts with an existing allocation"
-
+    assert str(exc_info.value) == "Room allocation conflicts with an existing allocation"

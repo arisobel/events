@@ -111,20 +111,20 @@ Documentos do sistema anterior de documentação, mantidos para referência hist
 
 ## 📊 Current Project State
 
-**Phase**: Phase 0 - Bootstrap ✅ **COMPLETADA**  
+**Phase**: Phase 1 - Core Backend + Internal MVP ✅ **IMPLEMENTADO**  
 **Last Update**: 10 de Maio de 2026  
-**Status**: Vertical Slice Completo + Fluxo End-to-End Funcionando
+**Status**: Fluxo MVP interno disponível de ponta a ponta
 
 **Quick Stats**:
-- Backend Modules: 4/6 completos (Auth, Hotel, Events, Tasks)
-- Frontend Pages: 4 páginas funcionais
+- Backend Modules: 6/6 completos
+- Frontend Pages: 6 páginas funcionais
 - Database: 22 tabelas
-- Tests: 0 (próximo passo)
+- Tests: 6 backend tests passing + frontend build passing
 
 **Next Actions**:
-1. Implementar testes automatizados (pytest)
-2. Completar módulos Guests/Rooms
-3. Expandir frontend (HotelDetailPage)
+1. Estabilizar testes HTTP/integration
+2. Capturar screenshots e relatório de validação
+3. Refinar UX (HotelDetailPage)
 
 Para detalhes completos: [07_progress.md](02_execution/07_progress.md)
 

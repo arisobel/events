@@ -114,8 +114,8 @@ Para futuros relatórios de validação, use:
 | Hotel | ✅ | ✅ | ✅ | 2026-04-21 |
 | Events | ✅ | ✅ | ✅ | 2026-04-24 |
 | Tasks | ✅ | ✅ | ✅ | 2026-04-24 |
-| Guests | ⏳ | ❌ | ❌ | - |
-| Rooms | ⏳ | ❌ | ❌ | - |
+| Guests | ✅ | ✅ | ⏳ | 2026-05-10 |
+| Rooms | ✅ | ✅ | ⏳ | 2026-05-10 |
 
 **Legend**:
 - ✅ Validated
@@ -127,8 +127,7 @@ Para futuros relatórios de validação, use:
 
 ## Next Validations Needed
 
-1. **Guests Module** (when backend completed)
-2. **Rooms Module** (when backend completed)
-3. **Automated Tests** (pytest implementation)
-4. **Performance Testing** (load tests)
-5. **Security Audit** (auth, permissions)
+1. **HTTP/API integration coverage** for the MVP routes
+2. **Manual screenshots** of the full internal MVP flow
+3. **Performance Testing** (load tests)
+4. **Security Audit** (auth, permissions)

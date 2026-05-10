@@ -2,253 +2,103 @@
 
 ## Immediate (Next Cycle) - 1-2 semanas
 
-### Testes Automatizados (PRIORITY 1)
-- [ ] Criar estrutura pytest básica
-  - [ ] backend/tests/conftest.py com fixtures
-  - [ ] backend/tests/test_auth.py com 3 testes
-- [ ] Validar execução: `pytest` deve passar com 3 testes verdes
-- [ ] Documentar como rodar testes no README.md
+### CI + Automated Verification
+- [ ] Configurar GitHub Actions para `pytest backend/tests`
+- [ ] Configurar GitHub Actions para `npm run build`
+- [ ] Adicionar execução combinada de backend + frontend no pipeline
 
-**Estimativa**: 2-4h  
-**Valor**: Base para prevenir regressões
+**Estimativa**: 3-5h  
+**Valor**: endurece o MVP interno recém-fechado
 
 ---
 
-### Completar Módulos Guests/Rooms (PRIORITY 2)
-- [ ] Backend: Implementar endpoints faltantes em Guests
-  - [ ] GET /guests/{id}
-  - [ ] PUT /guests/{id}
-  - [ ] DELETE /guests/{id}
-- [ ] Backend: Implementar endpoints faltantes em Rooms
-  - [ ] GET /rooms/{id}
-  - [ ] PUT /rooms/{id}
-  - [ ] POST /rooms (alocação)
-- [ ] Frontend: Criar GuestsPage.tsx
-- [ ] Frontend: Criar RoomsPage.tsx
-- [ ] Validar fluxo de reservas end-to-end
+### API-Level Integration Tests
+- [ ] Investigar e estabilizar harness de testes HTTP/ASGI
+- [ ] Cobrir login, grupos, reservas, alocações e tasks via API
+- [ ] Manter testes de serviço como baseline rápida
 
-**Estimativa**: 6-8h  
-**Valor**: Permite gestão completa de reservas
+**Estimativa**: 4-6h  
+**Valor**: reduz risco entre regra de negócio e camada HTTP
 
 ---
 
-### Expandir Frontend - Hotel Details (PRIORITY 3)
-- [ ] Implementar HotelDetailPage.tsx
-  - [ ] Route /hotels/:id
-  - [ ] Fetch hotel data via API
-  - [ ] Exibir nome, cidade, espaços, quartos
-  - [ ] Botão "Voltar para lista"
-- [ ] Adicionar link em HotelCard
-- [ ] Validar navegação bidirecional
+### Validation Package
+- [ ] Capturar screenshots do fluxo MVP
+- [ ] Criar relatório de validação do MVP interno
+- [ ] Validar fluxo completo em Codespaces
 
 **Estimativa**: 2-3h  
-**Valor**: Expande UX sem adicionar backend
+**Valor**: transforma implementação em evidência demonstrável
 
 ---
 
-### Limpeza de Código (PRIORITY 4)
-- [ ] Investigar /backend/app/api/routes/hotel.py
-  - [ ] Verificar se é duplicado de modules/hotel/router.py
-  - [ ] Deletar se duplicado
-- [ ] Adicionar .gitkeep em módulos vazios (Phase 2+)
-  - [ ] kashrut/, logistics/, lost_found/, rules/, schedule/
-- [ ] Verificar imports não utilizados (pylint/flake8)
-- [ ] Atualizar README.md com seção "Running the Project"
+### UX Polish
+- [ ] Implementar `HotelDetailPage.tsx`
+- [ ] Melhorar a visualização entre reservas e alocações
+- [ ] Adicionar mais contexto de hotel/evento nas telas do fluxo
 
-**Estimativa**: 1-2h  
-**Valor**: Manutenibilidade
+**Estimativa**: 3-5h  
+**Valor**: melhora usabilidade sem reabrir o core do MVP
 
 ---
 
 ## Short Term - 3-6 semanas
 
-### Schedule Module (Backend + Frontend)
-- [ ] Backend: Criar models para Activities, Categories
-- [ ] Backend: Implementar CRUD de Activities
-- [ ] Backend: Implementar timeline queries
-- [ ] Frontend: Criar SchedulePage.tsx com visualização de agenda
-- [ ] Frontend: Adicionar filtros por categoria, audiência
+### Schedule Module
+- [ ] Backend: models e CRUD de atividades
+- [ ] Frontend: `SchedulePage.tsx`
+- [ ] Timeline queries e filtros básicos
 
-**Estimativa**: 8-12h  
-**Valor**: Feature core para eventos
-
----
-
-### Staff Module (Backend + Frontend)
-- [ ] Backend: Completar models de Teams, Members, Shifts
-- [ ] Backend: Implementar CRUD de Staff
-- [ ] Backend: Implementar lógica de turnos
-- [ ] Frontend: Criar StaffPage.tsx
-- [ ] Frontend: Visualização de turnos/disponibilidade
-
-**Estimativa**: 8-12h  
-**Valor**: Gestão de equipes operacionais
-
----
+### Staff Module
+- [ ] Backend: teams, members, shifts
+- [ ] Frontend: `StaffPage.tsx`
+- [ ] Visualização de turnos/disponibilidade
 
 ### Tables Module
-- [ ] Backend: Implementar alocação de mesas por período
-- [ ] Backend: Queries de disponibilidade
-- [ ] Frontend: TablesPage.tsx com drag-and-drop
-- [ ] Frontend: Visualização por refeição/período
-
-**Estimativa**: 10-14h  
-**Valor**: Organização de refeições
-
----
-
-### CI/CD Pipeline
-- [ ] Configurar GitHub Actions
-  - [ ] Job de testes (pytest)
-  - [ ] Job de linting (flake8, black)
-  - [ ] Job de build frontend
-- [ ] Configurar deploy automático para CapRover
-- [ ] Adicionar badges no README.md
-
-**Estimativa**: 4-6h  
-**Valor**: Qualidade e deployment automatizado
+- [ ] Backend: alocação de mesas por período
+- [ ] Frontend: `TablesPage.tsx`
+- [ ] Disponibilidade por refeição/período
 
 ---
 
 ## Mid Term - 2-3 meses
 
-### Religious Module
-- [ ] Backend: Models para Minyanim, Prayers, Aliyot, Shiurim
-- [ ] Backend: CRUD + scheduling logic
-- [ ] Frontend: ReligiousPage.tsx com agenda de atividades religiosas
-- [ ] Frontend: Gestão de aliyot assignments
-
-**Estimativa**: 12-16h  
-**Valor**: Feature específica para eventos religiosos
-
----
-
-### Kashrut Module (Phase 2)
-- [ ] Backend: Models para Mashguichim, Shifts, Checklists
-- [ ] Backend: Lógica de cobertura de cozinhas
-- [ ] Frontend: KashrutPage.tsx
-- [ ] Frontend: Dashboard de supervisão
-
-**Estimativa**: 16-20h  
-**Valor**: Compliance kasher
-
----
-
-### Logistics Module
-- [ ] Backend: Suppliers, Deliveries, Equipment
-- [ ] Backend: Tracking de movimentação de equipamentos
-- [ ] Frontend: LogisticsPage.tsx
-- [ ] Frontend: Timeline de entregas
-
-**Estimativa**: 12-16h  
-**Valor**: Gestão de fornecedores e equipamentos
-
----
+### Supervision Dashboard
+- [ ] Queries agregadas de workload
+- [ ] Kanban view melhorada
+- [ ] Métricas operacionais
 
 ### Rules Engine
-- [ ] Backend: Models para Space Rules, Time Restrictions
-- [ ] Backend: Validation engine para aplicar regras
-- [ ] Backend: Integração com módulos de alocação
-- [ ] Frontend: RulesPage.tsx para configuração
+- [ ] Regras de espaço e restrições de tempo
+- [ ] Integração com alocação
+- [ ] Configuração de regras via frontend
 
-**Estimativa**: 16-24h  
-**Valor**: Automação de validações
-
----
-
-### Supervision Dashboard
-- [ ] Backend: Queries agregadas de workload
-- [ ] Backend: WebSocket para updates em tempo real
-- [ ] Frontend: Kanban view melhorada
-- [ ] Frontend: Métricas e gráficos
-
-**Estimativa**: 12-16h  
-**Valor**: Visibilidade para gestores
+### Logistics / Kashrut / Religious
+- [ ] Completar módulos específicos do domínio
+- [ ] Fechar fluxos especializados por operação
 
 ---
 
 ## Long Term - 3-6 meses
 
 ### PWA Features
-- [ ] Configurar Service Worker
-- [ ] Implementar offline support
-- [ ] Background sync de tasks
+- [ ] Offline support
+- [ ] Background sync
 - [ ] Push notifications
-- [ ] Add to homescreen prompt
-
-**Estimativa**: 20-30h  
-**Valor**: UX mobile-first para staff
-
----
-
-### Lost & Found Module
-- [ ] Backend: Items, Claims, Matching logic
-- [ ] Backend: Estado de itens (lost, found, claimed, returned)
-- [ ] Frontend: LostFoundPage.tsx
-- [ ] Frontend: Interface de matching
-
-**Estimativa**: 10-14h  
-**Valor**: Feature adicional útil
-
----
 
 ### Multi-tenancy Preparation
-- [ ] Database: Adicionar tenant_id em tabelas relevantes
-- [ ] Backend: Filtros automáticos por tenant
-- [ ] Backend: Isolação de dados
-- [ ] Authentication: Tenant selection
+- [ ] `tenant_id` em entidades relevantes
+- [ ] Isolação de dados
+- [ ] Seleção de tenant em auth
 
-**Estimativa**: 30-40h  
-**Valor**: Preparação para SaaS
-
----
-
-### Intelligence Layer (AI/Automation)
-- [ ] Auto-prioritization de tasks (ML)
-- [ ] Sugestões de alocação (rooms, tables)
-- [ ] Detecção de conflitos automática
-- [ ] Chatbot para consultas
-
-**Estimativa**: 40-60h  
-**Valor**: Diferenciação competitiva
-
----
-
-## Parked / Future Considerations
-
-### Mobile App Nativo (React Native)
-- Substituir PWA se necessário
-- Acesso a features nativas (câmera, GPS)
-- App store distribution
-
-**Decisão**: Avaliar após validação PWA
-
----
-
-### Integrações Externas
-- [ ] PMS (Property Management System) integration
-- [ ] Payment gateways
-- [ ] Email/SMS providers
-- [ ] Calendar sync (Google/Outlook)
-
-**Decisão**: Avaliar demanda de clientes
-
----
-
-### Reporting & Analytics
-- [ ] Dashboard executivo
-- [ ] Exportação de relatórios (PDF, Excel)
-- [ ] Histórico de eventos
-- [ ] Métricas de performance
-
-**Estimativa**: 20-30h  
-**Decisão**: Após MVP validado
+### Intelligence Layer
+- [ ] Sugestões de alocação
+- [ ] Detecção automática de conflitos
+- [ ] Automação assistida
 
 ---
 
 ## Notes
 
-- Prioridades baseadas em PRD.md e valor incremental
-- Estimativas são aproximadas, podem variar com descobertas técnicas
-- Backlog será refinado continuamente baseado em feedback
-- Foco atual: **Completar Phase 1 (Core Backend)** antes de expandir para Phase 2
+- O foco imediato mudou de “completar o core” para “estabilizar e validar o MVP”
+- O core de ocupação já está entregue; próximos passos devem favorecer robustez e demonstração

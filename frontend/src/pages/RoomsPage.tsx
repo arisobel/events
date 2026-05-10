@@ -6,7 +6,6 @@ import {
   Event,
   GuestGroup,
   HotelRoom,
-  Reservation,
   RoomAllocation,
   RoomAllocationCreate,
   RoomAllocationUpdate,

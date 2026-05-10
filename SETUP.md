@@ -101,7 +101,7 @@ events/
 │   ├── requirements.txt    # Python dependencies
 │   └── Dockerfile          # Backend container definition
 │
-├── frontend/               # React + TypeScript frontend (TODO)
+├── frontend/               # React + TypeScript frontend
 │   └── src/
 │
 ├── infrastructure/         # Deployment configuration
@@ -109,15 +109,13 @@ events/
 │   ├── .env.example        # Environment variables template
 │   └── captain-definition  # CapRover deployment config
 │
-└── docs/                   # Documentation
-    ├── ARCHITECTURE.md     # Technical architecture
-    ├── PRD.md             # Product requirements
-    ├── ROADMAP.md         # Development roadmap
-    ├── API_PLAN.md        # API endpoint planning
-    ├── DATABASE_PHASE1.sql # Database schema
-    ├── AGENT_INSTRUCTIONS.md # Development guidelines
-    ├── PROJECT_EVOLUTION.md  # Evolution log
-    └── NEXT_STEPS.md      # Current task list
+└── docs/                   # Structured documentation
+    ├── 00_meta/           # Agent rules and orchestration
+    ├── 01_definition/     # Product and architecture definition
+    ├── 02_execution/      # Progress, backlog, decisions, issues
+    ├── 03_validation/     # Validation reports and screenshots
+    ├── 04_technical/      # Technical reference
+    └── legacy/            # Historical archive
 ```
 
 ---
@@ -158,7 +156,16 @@ alembic upgrade head
 #### Run Tests
 ```bash
 cd backend
-pytest
+pytest tests
+```
+
+#### MVP Verification
+```bash
+cd backend
+pytest tests
+
+cd ../frontend
+npm run build
 ```
 
 ### Database Management
@@ -211,9 +218,19 @@ docker exec -it events_backend alembic upgrade head
 ### Guests
 - `GET /events/{id}/groups` - List guest groups for event
 - `POST /events/{id}/groups` - Create guest group
+- `GET /events/{event_id}/groups/{group_id}` - Get guest group
+- `PUT /events/{event_id}/groups/{group_id}` - Update guest group
+- `DELETE /events/{event_id}/groups/{group_id}` - Delete guest group when empty
+- `GET /events/{event_id}/groups/{group_id}/reservations` - List reservations for a group
+- `POST /events/{event_id}/groups/{group_id}/reservations` - Create reservation for a group
+- `GET /reservations/{reservation_id}` - Get reservation
+- `PUT /reservations/{reservation_id}` - Update reservation
 
 ### Room Allocations
 - `POST /room-allocations` - Allocate room to reservation
+- `GET /room-allocations/{allocation_id}` - Get allocation
+- `PUT /room-allocations/{allocation_id}` - Update allocation
+- `GET /reservations/{reservation_id}/room-allocations` - List allocations for reservation
 
 ### Tasks
 - `GET /events/{event_id}/tasks` - List tasks for event

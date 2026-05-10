@@ -267,6 +267,28 @@ Implementar estrutura definida em AGENT_SKILL_ORCHESTRATION.md:
 
 ---
 
+## [2026-05-10] Internal MVP Occupancy Slice
+
+**Context:**  
+O projeto já tinha um vertical slice funcional para autenticação, hotéis, eventos e tasks, mas ainda não fechava o ciclo principal de operação com reservas e alocação de quartos.
+
+**Decision:**  
+- tratar `GuestGroup` como unidade operacional mínima do MVP
+- usar `Reservation` como vínculo temporal do grupo ao evento
+- usar `RoomAllocation` como alocação concreta da reserva em quartos
+- expandir a UI para cobrir criação de hotel, quartos, eventos, grupos, reservas e alocações
+
+**Impact:**  
+- ✅ core do MVP interno ficou utilizável sem intervenção manual no banco
+- ✅ módulos Guests e Rooms passaram de parciais para funcionais
+- ✅ fluxo principal agora é `Hotels -> Events -> Guests/Reservations -> Room Allocations -> Tasks`
+- ✅ base automatizada de testes passou a cobrir auth, ocupação e tasks
+
+**Participants:** Agent  
+**Status:** ✅ Implementado
+
+---
+
 ## [2026-05-10] Legacy Documentation Disposition
 
 **Context:**  

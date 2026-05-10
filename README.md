@@ -1,6 +1,24 @@
 # 🏨 Event Operations Platform  
 ### Hospitality, Kosher & Complex Event Management System
 
+## Current MVP Status
+
+- Internal MVP slice implemented
+- Core flow available: `Hotels -> Events -> Guests/Reservations -> Room Allocations -> Tasks`
+- Backend validation: `pytest backend/tests`
+- Frontend validation: `cd frontend && npm run build`
+
+## Running The MVP
+
+1. Start infrastructure and backend
+2. Login with an existing admin user
+3. Create a hotel
+4. Add rooms to the hotel
+5. Create an event
+6. Create a guest group and reservation
+7. Allocate a room
+8. Operate event tasks
+
 
 PT-br para leigos:
 

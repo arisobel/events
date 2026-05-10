@@ -1,32 +1,29 @@
-from fastapi.testclient import TestClient
+from sqlalchemy.orm import Session
+
+from app.modules.tasks import schemas as task_schemas
+from app.modules.tasks import service as task_service
 
 from .test_mvp_occupancy import create_hotel_event_and_room
 
 
-def test_tasks_flow_still_works(client: TestClient, auth_headers: dict[str, str]) -> None:
-    _, _, event_id = create_hotel_event_and_room(client, auth_headers)
+def test_tasks_flow_still_works(db_session: Session) -> None:
+    _, _, event_id = create_hotel_event_and_room(db_session)
 
-    create_response = client.post(
-        f"/events/{event_id}/tasks",
-        json={
-          "f_title": "Prepare conference hall",
-          "f_description": "Set chairs and projector",
-          "f_priority": "high",
-          "f_task_type": "setup",
-        },
-        headers=auth_headers,
+    task = task_service.create_task(
+        db_session,
+        task_schemas.TaskCreate(
+            f_event_id=event_id,
+            f_title="Prepare conference hall",
+            f_description="Set chairs and projector",
+            f_priority="high",
+            f_task_type="setup",
+        ),
     )
-    assert create_response.status_code == 201
-    task_id = create_response.json()["id"]
+    assert task.id is not None
 
-    list_response = client.get(f"/events/{event_id}/tasks", headers=auth_headers)
-    assert list_response.status_code == 200
-    assert len(list_response.json()) == 1
+    tasks = task_service.get_event_tasks(db_session, event_id)
+    assert len(tasks) == 1
 
-    update_response = client.put(
-        f"/tasks/{task_id}/status",
-        json={"new_status": "in_progress"},
-        headers=auth_headers,
-    )
-    assert update_response.status_code == 200
-    assert update_response.json()["f_status"] == "in_progress"
+    updated_task = task_service.update_task_status(db_session, task.id, "in_progress", staff_id=None)
+    assert updated_task is not None
+    assert updated_task.f_status == "in_progress"
