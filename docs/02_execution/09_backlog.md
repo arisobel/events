@@ -2,19 +2,6 @@
 
 ## Immediate (Next Cycle) - 1-2 semanas
 
-### Group -> Guest Expansion
-- [ ] Definir contrato funcional: `GuestGroup` continua como contêiner operacional, `Guest` entra como subentidade
-- [ ] Backend: criar schemas e serviços mínimos para CRUD de hóspedes individuais por grupo
-- [ ] Backend: permitir marcar um `Guest` como líder do grupo
-- [ ] Frontend: adicionar gestão de hóspedes dentro de `GuestsPage`
-- [ ] Frontend: exibir membros do grupo sem quebrar o fluxo atual de reservas
-- [ ] Testes: cobrir criação de grupo, inclusão de hóspedes e definição de líder
-
-**Estimativa**: 6-10h  
-**Valor**: fecha a principal lacuna funcional percebida no módulo de hóspedes sem reabrir o desenho do MVP
-
----
-
 ### CI + Automated Verification
 - [ ] Configurar GitHub Actions para `pytest backend/tests`
 - [ ] Configurar GitHub Actions para `npm run build`
@@ -42,6 +29,16 @@
 
 **Estimativa**: 2-3h  
 **Valor**: transforma implementação em evidência demonstrável
+
+---
+
+### Guest Flow Refinement
+- [ ] Revisar política para sincronismo entre hóspedes cadastrados e `reservation.f_total_guests`
+- [ ] Decidir se o líder do grupo também deve ser referenciado explicitamente em `GuestGroup`
+- [ ] Preparar terreno para check-in futuro sem quebrar reservas no nível do grupo
+
+**Estimativa**: 3-5h  
+**Valor**: transforma a nova camada de hóspedes em base sólida para próximas operações
 
 ---
 
@@ -113,5 +110,5 @@
 
 ## Notes
 
-- O foco imediato deixou de ser apenas “estabilizar e validar o MVP” e passou a incluir a expansão planejada de `Guest` dentro de `GuestGroup`
-- O core de ocupação já está entregue; próximos passos devem equilibrar evolução funcional, robustez e demonstração
+- O foco imediato volta a ser “estabilizar e validar o MVP”, agora com a camada `Guest` já entregue
+- O core de ocupação e a gestão individual de hóspedes já estão funcionais; próximos passos devem equilibrar robustez, demonstração e refinamento de regras

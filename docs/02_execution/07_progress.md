@@ -3,11 +3,11 @@
 ## Current State
 
 - **Phase**: Phase 1 - Core Backend + Internal MVP Slice ✅ **IMPLEMENTADO**
-- **Last Update**: 10 de Maio de 2026 - próxima fase do módulo Guests definida em documentação
+- **Last Update**: 10 de Maio de 2026 - gestão individual de hóspedes implementada
 - **Status**: Fluxo core disponível na UI: Hotels → Events → Guests/Reservations → Room Allocations → Tasks
 - **Environment**: GitHub Codespaces + Docker
-- **Recent**: Módulos Guests/Rooms fechados, frontend expandido e base de testes automatizados criada
-- **Current Product Boundary**: operação de hóspedes ainda é centrada em `GuestGroup`; `Guest` individual existe no domínio, mas ainda não está exposto na UI/API principal do MVP
+- **Recent**: Gestão individual de hóspedes adicionada ao backend, frontend e testes
+- **Current Product Boundary**: operação de hóspedes agora combina `GuestGroup + Guest`; `Reservation` permanece vinculada ao grupo
 
 ---
 
@@ -17,7 +17,7 @@
 - [x] **Auth Module** - JWT authentication, registro, login completo
 - [x] **Hotel Module** - CRUD de hotéis, espaços e quartos
 - [x] **Events Module** - CRUD completo de eventos
-- [x] **Guests Module** - grupos, reservas, leitura e atualização
+- [x] **Guests Module** - grupos, hóspedes individuais, líder do grupo, reservas, leitura e atualização
 - [x] **Rooms Module** - alocação de quartos, leitura, atualização e validação de conflito
 - [x] **Tasks Module** - CRUD + status tracking + comentários
 
@@ -25,7 +25,7 @@
 - [x] **LoginPage** - autenticação funcional
 - [x] **HotelsPage** - lista hotéis + criação de hotel + criação de quartos
 - [x] **EventsPage** - lista eventos + criação de evento + navegação por evento
-- [x] **GuestsPage** - grupos, reservas e edição básica
+- [x] **GuestsPage** - grupos, hóspedes individuais, líder do grupo, reservas e edição básica
 - [x] **RoomsPage** - alocação de quartos e edição básica
 - [x] **TasksPage** - CRUD de tasks com filtros por status e prioridade
 
@@ -35,15 +35,18 @@
 - [x] Criar quarto pela UI
 - [x] Criar evento pela UI
 - [x] Criar grupo de hóspedes
+- [x] Cadastrar hóspedes individuais dentro do grupo
+- [x] Definir líder do grupo de forma estruturada
 - [x] Criar reserva por grupo
 - [x] Alocar quarto para reserva
 - [x] Navegar para tasks do evento e operar o fluxo
 
 ### Validation
-- [x] `pytest backend/tests` com 6 testes verdes
+- [x] `pytest backend/tests` com 7 testes verdes
 - [x] `npm run build` do frontend sem erros
 - [x] Fluxo de autenticação coberto por testes automatizados
 - [x] Fluxo mínimo de ocupação coberto por testes automatizados
+- [x] Fluxo de hóspedes individuais e liderança coberto por testes automatizados
 - [x] Sanity do módulo de tasks coberto por testes automatizados
 
 ### Documentation & Cleanup
@@ -54,17 +57,6 @@
 ---
 
 ## In Progress 🚧
-
-### Guest Module Expansion Planning
-- [x] Confirmar que `GuestGroup` permanece como unidade operacional do MVP
-- [x] Registrar que `Guest` individual será a próxima subentidade a ser aberta
-- [ ] Detalhar contrato de `Guest` no backend (CRUD básico + líder do grupo)
-- [ ] Detalhar superfície mínima do frontend para gerir hóspedes dentro do grupo
-- [ ] Definir testes mínimos da expansão sem quebrar o fluxo atual
-
-**Status**: Direção funcional definida; implementação prática ainda não iniciada
-
----
 
 ### MVP Hardening
 - [ ] Adicionar testes HTTP/integration em cima da aplicação ASGI
@@ -77,22 +69,20 @@
 
 ## Next Actions (Short Horizon) 📋
 
-### Priority 1: Group -> Guest Expansion
-- [ ] Formalizar `Guest` como subentidade de `GuestGroup`
-- [ ] Permitir cadastro individual de hóspedes dentro do grupo
-- [ ] Adicionar atributo/campo de líder do grupo em vez de depender de observação textual
-- [ ] Manter `Reservation` vinculada ao grupo, não ao hóspede individual
-- [ ] Desenhar navegação mínima: grupo -> hóspedes -> reserva -> alocação
-
-### Priority 2: CI + Integração
+### Priority 1: CI + Integração
 - [ ] Configurar GitHub Actions para `pytest` + `npm run build`
 - [ ] Adicionar testes API-level para rotas críticas do MVP
 - [ ] Documentar troubleshooting dos testes de integração
 
-### Priority 3: Validation Package
+### Priority 2: Validation Package
 - [ ] Capturar screenshots em `docs/03_validation/screenshots/`
 - [ ] Criar relatório de validação do MVP interno
 - [ ] Validar fluxo completo em Codespaces de ponta a ponta
+
+### Priority 3: Guest Flow Refinement
+- [ ] Revisar consistência entre `group.guests.length` e `reservation.f_total_guests`
+- [ ] Decidir se check-in futuro será no nível do hóspede, do grupo ou híbrido
+- [ ] Melhorar visualização do líder do grupo e composição do grupo na UI
 
 ### Priority 4: UX Polish
 - [ ] Implementar `HotelDetailPage.tsx`
@@ -109,7 +99,7 @@
 ### Residual Risks
 - ⚠️ Testes automatizados atuais estão no nível de serviço/dependency; cobertura HTTP ainda não foi estabilizada
 - ⚠️ Evidência visual do fluxo (screenshots) ainda está pendente
-- ⚠️ Gestão individual de hóspedes ainda depende de convenções textuais em notas/observações quando o operador precisa registrar líder ou composição do grupo
+- ⚠️ Ainda não há regra automática entre número de hóspedes cadastrados e `f_total_guests` da reserva
 
 ---
 
@@ -124,7 +114,6 @@
 - [ ] Melhorar validação de input e mensagens de erro
 - [ ] Melhorar navegação contextual do frontend
 - [ ] Revisar warnings de deprecação em datetime/SQLAlchemy
-- [ ] Fechar lacuna entre `GuestGroup` operacional e `Guest` individual persistido no domínio
 
 ### Low Priority
 - [ ] Métricas
@@ -136,7 +125,7 @@
 ## Metrics
 
 ### Verification
-- Backend automated tests: **6 passing**
+- Backend automated tests: **7 passing**
 - Frontend build: **passing**
 
 ### Module Completion
@@ -148,7 +137,7 @@
 - Gestão de Hotéis: ✅ 100%
 - Gestão de Eventos: ✅ 100%
 - Gestão de Hóspedes/Reservas: ✅ MVP
-- Gestão de Hóspedes Individuais: ⏳ Planejada
+- Gestão de Hóspedes Individuais: ✅ MVP
 - Alocação de Quartos: ✅ MVP
 - Gestão de Tasks: ✅ 100%
 
@@ -158,5 +147,5 @@
 
 - O projeto já está além de POC e hoje se posiciona como **MVP interno enxuto**
 - O coração do produto agora está funcional: operação + reservas + alocação + tasks
-- Próximo marco recomendado: expandir o módulo Guests de `Group` para `Group + Guest` sem quebrar o fluxo operacional atual
-- Após essa expansão, o próximo foco volta para endurecimento de integração automatizada e pacote de validação/piloto
+- O módulo Guests agora cobre `Group + Guest`, mantendo `Reservation` no nível do grupo
+- Próximo foco recomendado: endurecimento de integração automatizada, validação do fluxo e refinamento da consistência entre hóspedes e reservas

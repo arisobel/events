@@ -195,6 +195,44 @@ export interface ReservationUpdate {
   f_notes?: string
 }
 
+export interface Guest {
+  id: number
+  f_group_id: number
+  f_full_name: string
+  f_gender: string | null
+  f_birth_date: string | null
+  f_document: string | null
+  f_phone: string | null
+  f_email: string | null
+  f_guest_type: string | null
+  f_is_group_leader: boolean
+  f_notes: string | null
+}
+
+export interface GuestCreate {
+  f_full_name: string
+  f_gender?: string
+  f_birth_date?: string
+  f_document?: string
+  f_phone?: string
+  f_email?: string
+  f_guest_type?: string
+  f_is_group_leader?: boolean
+  f_notes?: string
+}
+
+export interface GuestUpdate {
+  f_full_name?: string
+  f_gender?: string
+  f_birth_date?: string
+  f_document?: string
+  f_phone?: string
+  f_email?: string
+  f_guest_type?: string
+  f_is_group_leader?: boolean
+  f_notes?: string
+}
+
 export interface GuestGroup {
   id: number
   f_event_id: number
@@ -203,6 +241,7 @@ export interface GuestGroup {
   f_phone: string | null
   f_email: string | null
   f_notes: string | null
+  guests: Guest[]
   reservations: Reservation[]
 }
 
@@ -350,6 +389,37 @@ export const guestGroupService = {
 
   async deleteGroup(eventId: number, groupId: number): Promise<void> {
     await api.delete(`/events/${eventId}/groups/${groupId}`)
+  },
+}
+
+export const guestService = {
+  async getGuests(eventId: number, groupId: number): Promise<Guest[]> {
+    const response = await api.get<Guest[]>(`/events/${eventId}/groups/${groupId}/guests`)
+    return response.data
+  },
+
+  async getGuest(eventId: number, groupId: number, guestId: number): Promise<Guest> {
+    const response = await api.get<Guest>(`/events/${eventId}/groups/${groupId}/guests/${guestId}`)
+    return response.data
+  },
+
+  async createGuest(eventId: number, groupId: number, guest: GuestCreate): Promise<Guest> {
+    const response = await api.post<Guest>(`/events/${eventId}/groups/${groupId}/guests`, guest)
+    return response.data
+  },
+
+  async updateGuest(
+    eventId: number,
+    groupId: number,
+    guestId: number,
+    guest: GuestUpdate,
+  ): Promise<Guest> {
+    const response = await api.put<Guest>(`/events/${eventId}/groups/${groupId}/guests/${guestId}`, guest)
+    return response.data
+  },
+
+  async deleteGuest(eventId: number, groupId: number, guestId: number): Promise<void> {
+    await api.delete(`/events/${eventId}/groups/${groupId}/guests/${guestId}`)
   },
 }
 

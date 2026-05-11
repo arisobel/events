@@ -36,6 +36,41 @@ class ReservationResponse(ReservationBase):
     model_config = ConfigDict(from_attributes=True)
 
 
+class GuestBase(BaseModel):
+    f_full_name: str
+    f_gender: Optional[str] = None
+    f_birth_date: Optional[date] = None
+    f_document: Optional[str] = None
+    f_phone: Optional[str] = None
+    f_email: Optional[str] = None
+    f_guest_type: Optional[str] = None
+    f_is_group_leader: bool = False
+    f_notes: Optional[str] = None
+
+
+class GuestCreate(GuestBase):
+    f_group_id: int
+
+
+class GuestUpdate(BaseModel):
+    f_full_name: Optional[str] = None
+    f_gender: Optional[str] = None
+    f_birth_date: Optional[date] = None
+    f_document: Optional[str] = None
+    f_phone: Optional[str] = None
+    f_email: Optional[str] = None
+    f_guest_type: Optional[str] = None
+    f_is_group_leader: Optional[bool] = None
+    f_notes: Optional[str] = None
+
+
+class GuestResponse(GuestBase):
+    id: int
+    f_group_id: int
+
+    model_config = ConfigDict(from_attributes=True)
+
+
 class GuestGroupBase(BaseModel):
     f_name: str
     f_group_type: Optional[str] = None
@@ -59,6 +94,7 @@ class GuestGroupUpdate(BaseModel):
 class GuestGroupResponse(GuestGroupBase):
     id: int
     f_event_id: int
+    guests: List[GuestResponse] = []
     reservations: List[ReservationResponse] = []
 
     model_config = ConfigDict(from_attributes=True)

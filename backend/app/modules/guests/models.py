@@ -1,5 +1,5 @@
 """Guests module - SQLAlchemy models."""
-from sqlalchemy import Column, Integer, String, CHAR, DateTime, Text, Date, ForeignKey
+from sqlalchemy import Boolean, Column, Integer, String, CHAR, DateTime, Text, Date, ForeignKey
 from sqlalchemy.orm import relationship
 from datetime import datetime
 from app.db.base import Base
@@ -32,6 +32,7 @@ class Guest(Base):
     f_phone = Column(String(50))
     f_email = Column(String(150))
     f_guest_type = Column(String(50))
+    f_is_group_leader = Column(Boolean, nullable=False, default=False)
     f_notes = Column(Text)
     
     group = relationship("GuestGroup", back_populates="guests")

@@ -19,13 +19,13 @@ O MVP interno atual opera corretamente no nível de `GuestGroup -> Reservation -
 - Cria base melhor para check-in, documentação e requests futuros
 
 **Impact:**  
-- ⏳ Backlog imediato passa a incluir CRUD de hóspedes individuais
-- ⏳ `GuestsPage` deverá evoluir de tela de grupos/reservas para grupos + membros
-- ⏳ Notas livres deixam de ser o único lugar para registrar líder e composição do grupo
+- ✅ CRUD de hóspedes individuais implementado
+- ✅ `GuestsPage` evoluiu de tela de grupos/reservas para grupos + membros
+- ✅ Notas livres deixaram de ser o único lugar para registrar líder e composição do grupo
 - ✅ O desenho central do MVP permanece estável
 
 **Participants:** Product + Agent  
-**Status:** ⏳ Planejado
+**Status:** ✅ Implementado
 
 ---
 

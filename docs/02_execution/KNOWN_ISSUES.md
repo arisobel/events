@@ -32,24 +32,26 @@
 
 ---
 
-## 👥 Individual Guest Management Not Yet Exposed
+## 👥 Guest Count vs Reservation Count
 
-### Status: ℹ️ **KNOWN LIMITATION**
+### Status: ℹ️ **OBSERVATION**
 
-### Problem
-- O domínio já possui entidade `Guest`, mas a superfície principal do MVP ainda opera apenas com `GuestGroup` + `Reservation`
-- Operadores conseguem registrar quantidade total de hóspedes, mas não conseguem cadastrar formalmente os membros do grupo
-- Informações como líder do grupo acabam indo para `notes`/`observações`
+### Context
+- O MVP agora expõe `Guest` individual e liderança de grupo na UI principal
+- `Reservation` continua no nível do grupo, com `f_total_guests` mantido de forma explícita
+
+### Current Behavior
+- Operadores podem cadastrar hóspedes individuais dentro do grupo
+- Operadores podem informar `f_total_guests` na reserva
+- Ainda não existe regra automática de sincronismo entre esses dois valores
 
 ### Impact
-- Fluxo operacional principal continua funcionando
-- Estrutura detalhada de composição do grupo ainda fica implícita
-- Não há liderança de grupo estruturada na UI atual
+- O fluxo principal funciona
+- Pode haver divergência intencional ou acidental entre composição do grupo e ocupação reservada
 
-### Planned Resolution
-- Expandir `GuestsPage` para incluir CRUD de hóspedes individuais
-- Adicionar campo/regra de líder do grupo
-- Preservar `Reservation` no nível do grupo
+### Next Decision Needed
+- Definir se `f_total_guests` continuará manual
+- Definir se o sistema passará a sugerir ou sincronizar automaticamente esse valor
 
 ---
 
@@ -77,7 +79,7 @@
 ✅ Fluxo MVP interno implementado  
 ✅ Guests/Reservations/Room Allocations funcionando  
 ✅ Zero bugs críticos conhecidos no fluxo principal
-ℹ️ Lacuna atual de hóspedes individuais tratada como evolução funcional planejada, não bug
+ℹ️ Próxima discussão funcional relevante: política entre hóspedes cadastrados e quantidade total reservada
 
 ---
 

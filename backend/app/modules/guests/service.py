@@ -1,6 +1,7 @@
 """Guests module - service layer."""
-from sqlalchemy.orm import Session
 from typing import List, Optional
+
+from sqlalchemy.orm import Session
 
 from . import models, schemas
 
@@ -47,6 +48,8 @@ def delete_guest_group(db: Session, event_id: int, group_id: int) -> bool:
     db_group = get_event_group(db, event_id, group_id)
     if not db_group:
         return False
+    if db_group.guests:
+        raise ValueError("Cannot delete group with registered guests")
     if db_group.reservations:
         raise ValueError("Cannot delete group with active reservations")
 
@@ -65,6 +68,99 @@ def get_group_reservations(db: Session, event_id: int, group_id: int) -> List[mo
 
 def get_reservation(db: Session, reservation_id: int) -> Optional[models.Reservation]:
     return db.query(models.Reservation).filter(models.Reservation.id == reservation_id).first()
+
+
+def get_group_guests(db: Session, event_id: int, group_id: int) -> List[models.Guest]:
+    db_group = get_event_group(db, event_id, group_id)
+    if not db_group:
+        return []
+    return db.query(models.Guest).filter(models.Guest.f_group_id == group_id).all()
+
+
+def get_group_guest(
+    db: Session,
+    event_id: int,
+    group_id: int,
+    guest_id: int,
+) -> Optional[models.Guest]:
+    db_group = get_event_group(db, event_id, group_id)
+    if not db_group:
+        return None
+    return (
+        db.query(models.Guest)
+        .filter(models.Guest.id == guest_id, models.Guest.f_group_id == group_id)
+        .first()
+    )
+
+
+def _clear_group_leader(db: Session, group_id: int, exclude_guest_id: Optional[int] = None) -> None:
+    query = db.query(models.Guest).filter(
+        models.Guest.f_group_id == group_id,
+        models.Guest.f_is_group_leader.is_(True),
+    )
+    if exclude_guest_id is not None:
+        query = query.filter(models.Guest.id != exclude_guest_id)
+
+    for guest in query.all():
+        guest.f_is_group_leader = False
+
+
+def create_guest(
+    db: Session,
+    event_id: int,
+    group_id: int,
+    guest: schemas.GuestCreate,
+) -> models.Guest:
+    db_group = get_event_group(db, event_id, group_id)
+    if not db_group:
+        raise ValueError("Group not found for event")
+
+    db_guest = models.Guest(**guest.model_dump())
+    if db_guest.f_is_group_leader:
+        _clear_group_leader(db, group_id)
+
+    db.add(db_guest)
+    db.commit()
+    db.refresh(db_guest)
+    return db_guest
+
+
+def update_guest(
+    db: Session,
+    event_id: int,
+    group_id: int,
+    guest_id: int,
+    guest: schemas.GuestUpdate,
+) -> Optional[models.Guest]:
+    db_guest = get_group_guest(db, event_id, group_id, guest_id)
+    if not db_guest:
+        return None
+
+    update_data = guest.model_dump(exclude_unset=True)
+    if update_data.get("f_is_group_leader") is True:
+        _clear_group_leader(db, group_id, exclude_guest_id=guest_id)
+
+    for key, value in update_data.items():
+        setattr(db_guest, key, value)
+
+    db.commit()
+    db.refresh(db_guest)
+    return db_guest
+
+
+def delete_guest(
+    db: Session,
+    event_id: int,
+    group_id: int,
+    guest_id: int,
+) -> bool:
+    db_guest = get_group_guest(db, event_id, group_id, guest_id)
+    if not db_guest:
+        return False
+
+    db.delete(db_guest)
+    db.commit()
+    return True
 
 
 def create_reservation(

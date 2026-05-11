@@ -150,3 +150,64 @@ def test_room_allocation_conflict_raises_error(db_session: Session) -> None:
         )
 
     assert str(exc_info.value) == "Room allocation conflicts with an existing allocation"
+
+
+def test_guest_crud_and_group_leader_switch(db_session: Session) -> None:
+    _, _, event_id = create_hotel_event_and_room(db_session)
+
+    group = guest_service.create_guest_group(
+        db_session,
+        guest_schemas.GuestGroupCreate(
+            f_event_id=event_id,
+            f_name="USA Group",
+            f_group_type="international",
+            f_notes="Leader was previously tracked in notes",
+        ),
+    )
+
+    first_guest = guest_service.create_guest(
+        db_session,
+        event_id,
+        group.id,
+        guest_schemas.GuestCreate(
+          f_group_id=group.id,
+          f_full_name="Jacob Goldberg",
+          f_guest_type="leader",
+          f_phone="+1-555-1000",
+          f_is_group_leader=True,
+        ),
+    )
+    second_guest = guest_service.create_guest(
+        db_session,
+        event_id,
+        group.id,
+        guest_schemas.GuestCreate(
+          f_group_id=group.id,
+          f_full_name="Sarah Cohen",
+          f_guest_type="adult",
+          f_is_group_leader=False,
+        ),
+    )
+
+    guests = guest_service.get_group_guests(db_session, event_id, group.id)
+    assert len(guests) == 2
+    assert sum(1 for guest in guests if guest.f_is_group_leader) == 1
+    assert any(guest.id == first_guest.id and guest.f_is_group_leader for guest in guests)
+
+    updated_guest = guest_service.update_guest(
+        db_session,
+        event_id,
+        group.id,
+        second_guest.id,
+        guest_schemas.GuestUpdate(
+            f_guest_type="leader",
+            f_is_group_leader=True,
+        ),
+    )
+
+    assert updated_guest is not None
+
+    refreshed_guests = guest_service.get_group_guests(db_session, event_id, group.id)
+    assert sum(1 for guest in refreshed_guests if guest.f_is_group_leader) == 1
+    assert any(guest.id == second_guest.id and guest.f_is_group_leader for guest in refreshed_guests)
+    assert any(guest.id == first_guest.id and not guest.f_is_group_leader for guest in refreshed_guests)
