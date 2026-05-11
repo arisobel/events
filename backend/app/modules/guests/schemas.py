@@ -1,8 +1,19 @@
 """Guests module - schemas, service, router."""
 from datetime import date
-from typing import List, Optional
+from typing import List, Literal, Optional
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, field_validator
+
+
+GuestGender = Literal["male", "female"]
+GuestType = Literal["adult", "child", "infant", "staff"]
+
+
+def _normalize_enum_value(value: str | None) -> str | None:
+    if value is None:
+        return None
+    normalized = value.strip().lower()
+    return normalized or None
 
 
 class ReservationBase(BaseModel):
@@ -36,7 +47,47 @@ class ReservationResponse(ReservationBase):
     model_config = ConfigDict(from_attributes=True)
 
 
-class GuestBase(BaseModel):
+class GuestInputBase(BaseModel):
+    f_full_name: str
+    f_gender: Optional[GuestGender] = None
+    f_birth_date: Optional[date] = None
+    f_document: Optional[str] = None
+    f_phone: Optional[str] = None
+    f_email: Optional[str] = None
+    f_guest_type: Optional[GuestType] = None
+    f_is_group_leader: bool = False
+    f_notes: Optional[str] = None
+
+    @field_validator("f_gender", "f_guest_type", mode="before")
+    @classmethod
+    def normalize_enum_fields(cls, value: str | None) -> str | None:
+        return _normalize_enum_value(value)
+
+
+class GuestCreate(GuestInputBase):
+    f_group_id: int
+
+
+class GuestUpdate(BaseModel):
+    f_full_name: Optional[str] = None
+    f_gender: Optional[GuestGender] = None
+    f_birth_date: Optional[date] = None
+    f_document: Optional[str] = None
+    f_phone: Optional[str] = None
+    f_email: Optional[str] = None
+    f_guest_type: Optional[GuestType] = None
+    f_is_group_leader: Optional[bool] = None
+    f_notes: Optional[str] = None
+
+    @field_validator("f_gender", "f_guest_type", mode="before")
+    @classmethod
+    def normalize_enum_fields(cls, value: str | None) -> str | None:
+        return _normalize_enum_value(value)
+
+
+class GuestResponse(BaseModel):
+    id: int
+    f_group_id: int
     f_full_name: str
     f_gender: Optional[str] = None
     f_birth_date: Optional[date] = None
@@ -46,27 +97,6 @@ class GuestBase(BaseModel):
     f_guest_type: Optional[str] = None
     f_is_group_leader: bool = False
     f_notes: Optional[str] = None
-
-
-class GuestCreate(GuestBase):
-    f_group_id: int
-
-
-class GuestUpdate(BaseModel):
-    f_full_name: Optional[str] = None
-    f_gender: Optional[str] = None
-    f_birth_date: Optional[date] = None
-    f_document: Optional[str] = None
-    f_phone: Optional[str] = None
-    f_email: Optional[str] = None
-    f_guest_type: Optional[str] = None
-    f_is_group_leader: Optional[bool] = None
-    f_notes: Optional[str] = None
-
-
-class GuestResponse(GuestBase):
-    id: int
-    f_group_id: int
 
     model_config = ConfigDict(from_attributes=True)
 

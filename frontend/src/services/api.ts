@@ -195,6 +195,21 @@ export interface ReservationUpdate {
   f_notes?: string
 }
 
+export type GuestGender = 'male' | 'female'
+export type GuestType = 'adult' | 'child' | 'infant' | 'staff'
+
+export const GUEST_GENDER_OPTIONS: Array<{ value: GuestGender; label: string }> = [
+  { value: 'male', label: 'Male' },
+  { value: 'female', label: 'Female' },
+]
+
+export const GUEST_TYPE_OPTIONS: Array<{ value: GuestType; label: string }> = [
+  { value: 'adult', label: 'Adult' },
+  { value: 'child', label: 'Child' },
+  { value: 'infant', label: 'Infant' },
+  { value: 'staff', label: 'Staff' },
+]
+
 export interface Guest {
   id: number
   f_group_id: number
@@ -211,24 +226,24 @@ export interface Guest {
 
 export interface GuestCreate {
   f_full_name: string
-  f_gender?: string
+  f_gender?: GuestGender | ''
   f_birth_date?: string
   f_document?: string
   f_phone?: string
   f_email?: string
-  f_guest_type?: string
+  f_guest_type?: GuestType | ''
   f_is_group_leader?: boolean
   f_notes?: string
 }
 
 export interface GuestUpdate {
   f_full_name?: string
-  f_gender?: string
+  f_gender?: GuestGender | ''
   f_birth_date?: string
   f_document?: string
   f_phone?: string
   f_email?: string
-  f_guest_type?: string
+  f_guest_type?: GuestType | ''
   f_is_group_leader?: boolean
   f_notes?: string
 }

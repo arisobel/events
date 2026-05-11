@@ -1,4 +1,5 @@
 import pytest
+from pydantic import ValidationError
 from sqlalchemy.orm import Session
 
 from app.modules.events import schemas as event_schemas
@@ -172,7 +173,8 @@ def test_guest_crud_and_group_leader_switch(db_session: Session) -> None:
         guest_schemas.GuestCreate(
           f_group_id=group.id,
           f_full_name="Jacob Goldberg",
-          f_guest_type="leader",
+          f_guest_type="staff",
+          f_gender="Male",
           f_phone="+1-555-1000",
           f_is_group_leader=True,
         ),
@@ -185,6 +187,7 @@ def test_guest_crud_and_group_leader_switch(db_session: Session) -> None:
           f_group_id=group.id,
           f_full_name="Sarah Cohen",
           f_guest_type="adult",
+          f_gender="female",
           f_is_group_leader=False,
         ),
     )
@@ -200,7 +203,7 @@ def test_guest_crud_and_group_leader_switch(db_session: Session) -> None:
         group.id,
         second_guest.id,
         guest_schemas.GuestUpdate(
-            f_guest_type="leader",
+            f_guest_type="staff",
             f_is_group_leader=True,
         ),
     )
@@ -211,3 +214,31 @@ def test_guest_crud_and_group_leader_switch(db_session: Session) -> None:
     assert sum(1 for guest in refreshed_guests if guest.f_is_group_leader) == 1
     assert any(guest.id == second_guest.id and guest.f_is_group_leader for guest in refreshed_guests)
     assert any(guest.id == first_guest.id and not guest.f_is_group_leader for guest in refreshed_guests)
+    assert first_guest.f_gender == "male"
+    assert updated_guest.f_guest_type == "staff"
+
+
+def test_guest_schema_normalizes_supported_enum_values() -> None:
+    guest = guest_schemas.GuestCreate(
+        f_group_id=1,
+        f_full_name="Moshe Adler",
+        f_gender="Female",
+        f_guest_type="Staff",
+    )
+
+    assert guest.f_gender == "female"
+    assert guest.f_guest_type == "staff"
+
+
+def test_guest_schema_rejects_invalid_enum_values() -> None:
+    with pytest.raises(ValidationError):
+        guest_schemas.GuestCreate(
+            f_group_id=1,
+            f_full_name="Invalid Guest",
+            f_gender="unknown",
+        )
+
+    with pytest.raises(ValidationError):
+        guest_schemas.GuestUpdate(
+            f_guest_type="leader",
+        )

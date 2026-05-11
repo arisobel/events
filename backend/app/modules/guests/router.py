@@ -53,7 +53,7 @@ def list_group_guests(
 def create_group_guest(
     event_id: int,
     group_id: int,
-    guest: schemas.GuestBase,
+    guest: schemas.GuestInputBase,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):

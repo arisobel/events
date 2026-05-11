@@ -5,10 +5,14 @@ import {
   Event,
   Guest,
   GuestCreate,
+  GuestGender,
   GuestGroup,
   GuestGroupCreate,
+  GuestType,
   GuestGroupUpdate,
   GuestUpdate,
+  GUEST_GENDER_OPTIONS,
+  GUEST_TYPE_OPTIONS,
   Reservation,
   ReservationCreate,
   ReservationUpdate,
@@ -18,6 +22,11 @@ import {
   reservationService,
 } from '../services/api'
 import AdminLayout from '../components/AdminLayout'
+
+const GUEST_GENDER_VALUES = new Set(GUEST_GENDER_OPTIONS.map((option) => option.value))
+const GUEST_TYPE_VALUES = new Set(GUEST_TYPE_OPTIONS.map((option) => option.value))
+const GUEST_GENDER_LABELS = Object.fromEntries(GUEST_GENDER_OPTIONS.map((option) => [option.value, option.label]))
+const GUEST_TYPE_LABELS = Object.fromEntries(GUEST_TYPE_OPTIONS.map((option) => [option.value, option.label]))
 
 const emptyGuest: GuestCreate = {
   f_full_name: '',
@@ -299,6 +308,34 @@ export default function GuestsPage() {
 
   const formatDate = (value: string | null) => (value ? new Date(value).toLocaleDateString() : '')
 
+  const normalizeGuestGender = (value: string | null | undefined): GuestGender | '' => {
+    const normalized = value?.trim().toLowerCase() ?? ''
+    return GUEST_GENDER_VALUES.has(normalized as GuestGender) ? (normalized as GuestGender) : ''
+  }
+
+  const normalizeGuestType = (value: string | null | undefined): GuestType | '' => {
+    const normalized = value?.trim().toLowerCase() ?? ''
+    return GUEST_TYPE_VALUES.has(normalized as GuestType) ? (normalized as GuestType) : ''
+  }
+
+  const formatGuestGender = (value: string | null | undefined) => {
+    const normalized = normalizeGuestGender(value)
+    return normalized ? GUEST_GENDER_LABELS[normalized as keyof typeof GUEST_GENDER_LABELS] : value || ''
+  }
+
+  const formatGuestType = (value: string | null | undefined) => {
+    const normalized = normalizeGuestType(value)
+    return normalized ? GUEST_TYPE_LABELS[normalized as keyof typeof GUEST_TYPE_LABELS] : value || ''
+  }
+
+  const getReservationGuestWarning = (reservationTotal: number | null | undefined, registeredGuests: number) => {
+    if (reservationTotal == null || reservationTotal >= registeredGuests) {
+      return null
+    }
+
+    return `Inconsistency: reservation total (${reservationTotal}) is lower than guests registered in the group (${registeredGuests}).`
+  }
+
   const renderGuestFormFields = (
     guest: GuestCreate | GuestUpdate,
     onChange: (field: keyof GuestCreate, value: string | boolean) => void,
@@ -312,20 +349,30 @@ export default function GuestsPage() {
         className="px-3 py-2 border border-gray-300 rounded-md"
         required
       />
-      <input
-        type="text"
-        placeholder="Guest type"
-        value={(guest.f_guest_type as string | undefined) ?? ''}
+      <select
+        value={normalizeGuestType((guest.f_guest_type as string | undefined) ?? '')}
         onChange={(e) => onChange('f_guest_type', e.target.value)}
-        className="px-3 py-2 border border-gray-300 rounded-md"
-      />
-      <input
-        type="text"
-        placeholder="Gender"
-        value={(guest.f_gender as string | undefined) ?? ''}
+        className="px-3 py-2 border border-gray-300 rounded-md bg-white"
+      >
+        <option value="">Guest type</option>
+        {GUEST_TYPE_OPTIONS.map((option) => (
+          <option key={option.value} value={option.value}>
+            {option.label}
+          </option>
+        ))}
+      </select>
+      <select
+        value={normalizeGuestGender((guest.f_gender as string | undefined) ?? '')}
         onChange={(e) => onChange('f_gender', e.target.value)}
-        className="px-3 py-2 border border-gray-300 rounded-md"
-      />
+        className="px-3 py-2 border border-gray-300 rounded-md bg-white"
+      >
+        <option value="">Gender</option>
+        {GUEST_GENDER_OPTIONS.map((option) => (
+          <option key={option.value} value={option.value}>
+            {option.label}
+          </option>
+        ))}
+      </select>
       <input
         type="date"
         value={(guest.f_birth_date as string | undefined) ?? ''}
@@ -678,7 +725,7 @@ export default function GuestsPage() {
                                     )}
                                     {guest.f_guest_type && (
                                       <span className="px-2 py-1 text-xs rounded-full bg-slate-100 text-slate-700">
-                                        {guest.f_guest_type}
+                                        {formatGuestType(guest.f_guest_type)}
                                       </span>
                                     )}
                                   </div>
@@ -686,7 +733,7 @@ export default function GuestsPage() {
                                     {guest.f_phone && <p>Phone: {guest.f_phone}</p>}
                                     {guest.f_email && <p>Email: {guest.f_email}</p>}
                                     {guest.f_document && <p>Document: {guest.f_document}</p>}
-                                    {guest.f_gender && <p>Gender: {guest.f_gender}</p>}
+                                    {guest.f_gender && <p>Gender: {formatGuestGender(guest.f_gender)}</p>}
                                     {guest.f_birth_date && <p>Birth date: {formatDate(guest.f_birth_date)}</p>}
                                     {guest.f_notes && <p>Notes: {guest.f_notes}</p>}
                                   </div>
@@ -697,12 +744,12 @@ export default function GuestsPage() {
                                       setEditingGuestId(guest.id)
                                       setGuestEditForm({
                                         f_full_name: guest.f_full_name,
-                                        f_gender: guest.f_gender || '',
+                                        f_gender: normalizeGuestGender(guest.f_gender),
                                         f_birth_date: guest.f_birth_date || '',
                                         f_document: guest.f_document || '',
                                         f_phone: guest.f_phone || '',
                                         f_email: guest.f_email || '',
-                                        f_guest_type: guest.f_guest_type || '',
+                                        f_guest_type: normalizeGuestType(guest.f_guest_type),
                                         f_is_group_leader: guest.f_is_group_leader,
                                         f_notes: guest.f_notes || '',
                                       })
@@ -763,6 +810,11 @@ export default function GuestsPage() {
                         }))}
                         className="px-3 py-2 border border-gray-300 rounded-md"
                       />
+                      {getReservationGuestWarning(newReservation.f_total_guests, group.guests.length) && (
+                        <div className="md:col-span-2 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
+                          {getReservationGuestWarning(newReservation.f_total_guests, group.guests.length)}
+                        </div>
+                      )}
                       <select
                         value={newReservation.f_status}
                         onChange={(e) => setNewReservation((current) => ({ ...current, f_status: e.target.value }))}
@@ -848,6 +900,11 @@ export default function GuestsPage() {
                                   }))}
                                   className="px-3 py-2 border border-gray-300 rounded-md"
                                 />
+                                {getReservationGuestWarning(reservationEditForm.f_total_guests, group.guests.length) && (
+                                  <div className="md:col-span-2 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
+                                    {getReservationGuestWarning(reservationEditForm.f_total_guests, group.guests.length)}
+                                  </div>
+                                )}
                                 <select
                                   value={reservationEditForm.f_status ?? ''}
                                   onChange={(e) => setReservationEditForm((current) => ({ ...current, f_status: e.target.value }))}
@@ -884,6 +941,11 @@ export default function GuestsPage() {
                             ) : (
                               <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
                                 <div>
+                                  {getReservationGuestWarning(reservation.f_total_guests, group.guests.length) && (
+                                    <div className="mb-3 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
+                                      {getReservationGuestWarning(reservation.f_total_guests, group.guests.length)}
+                                    </div>
+                                  )}
                                   <div className="flex items-center gap-3">
                                     <p className="text-sm font-medium text-gray-900">
                                       {formatDate(reservation.f_start_date)} - {formatDate(reservation.f_end_date)}
