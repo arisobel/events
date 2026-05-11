@@ -1,5 +1,37 @@
 # Decisions Log
 
+## [2026-05-11] Guest Consistency Rule and Controlled Enums
+
+**Context:**  
+Depois da abertura de `Guest` individual na UI principal, surgiram duas definições de produto antes da próxima rodada de implementação: fechar a regra entre `reservation.f_total_guests` e o número de hóspedes cadastrados no grupo, e padronizar `Gender`/`GuestType` para evitar texto livre inconsistente.
+
+**Decision:**  
+- `reservation.f_total_guests` continua sendo um campo explícito no nível da reserva
+- A regra desejada passa a ser: `f_total_guests` deve ser **maior ou igual** ao número de `Guest` cadastrados no grupo
+- Quando `f_total_guests < hóspedes cadastrados`, o sistema deve **apontar inconsistência**, mas **não bloquear** cadastro ou edição
+- `Gender` deixa de ser texto livre e passa a usar enum controlado
+- `GuestType` deixa de ser texto livre e passa a usar enum controlado
+- `leader` **não** entra em `GuestType`; liderança continua separada via `f_is_group_leader`
+- `GuestType` deve incluir `adult`, `child`, `infant` e `staff`
+
+**Rationale:**
+- Permite lançamento progressivo de grupos incompletos sem travar a operação
+- Evita inconsistência silenciosa entre ocupação reservada e composição nominal do grupo
+- Melhora qualidade de dados para filtros, relatórios e regras futuras
+- Preserva separação conceitual entre “tipo de hóspede” e “papel de liderança”
+- `staff` cobre casos reais do domínio, como mashguichim, rabinos e outros workers hospedados sem cobrança padrão
+
+**Impact:**  
+- ⏳ Próximo ciclo deve implementar warning visual de inconsistência entre reserva e hóspedes cadastrados
+- ⏳ Formulários de `Guest` devem trocar inputs livres por selects controlados
+- ⏳ Backend deve validar e expor enums consistentes
+- ✅ A modelagem central `GuestGroup -> Guest -> Reservation` permanece estável
+
+**Participants:** Product + Agent  
+**Status:** ⏳ Pré-desenvolvimento
+
+---
+
 ## [2026-05-10] Guest Expansion Strategy: Group First, Guest Second
 
 **Context:**  

@@ -2,6 +2,20 @@
 
 ## Immediate (Next Cycle) - 1-2 semanas
 
+### Guest Consistency + Enums
+- [ ] Implementar regra visual de consistência: `reservation.f_total_guests >= group.guests.length`
+- [ ] Exibir warning não-bloqueante quando `f_total_guests < hóspedes cadastrados`
+- [ ] Definir comportamento visual da inconsistência sem impedir operação
+- [ ] Trocar `Gender` de texto livre para enum controlado
+- [ ] Trocar `GuestType` de texto livre para enum controlado com `adult`, `child`, `infant`, `staff`
+- [ ] Preservar `f_is_group_leader` como atributo separado de `GuestType`
+- [ ] Cobrir a nova regra e os enums em testes backend/frontend
+
+**Estimativa**: 4-7h  
+**Valor**: melhora consistência operacional sem engessar a operação real do evento
+
+---
+
 ### CI + Automated Verification
 - [ ] Configurar GitHub Actions para `pytest backend/tests`
 - [ ] Configurar GitHub Actions para `npm run build`
@@ -33,7 +47,8 @@
 ---
 
 ### Guest Flow Refinement
-- [ ] Revisar política para sincronismo entre hóspedes cadastrados e `reservation.f_total_guests`
+- [x] Revisar política para sincronismo entre hóspedes cadastrados e `reservation.f_total_guests`
+- [ ] Implementar a política escolhida em UI/backend
 - [ ] Decidir se o líder do grupo também deve ser referenciado explicitamente em `GuestGroup`
 - [ ] Preparar terreno para check-in futuro sem quebrar reservas no nível do grupo
 
@@ -112,3 +127,4 @@
 
 - O foco imediato volta a ser “estabilizar e validar o MVP”, agora com a camada `Guest` já entregue
 - O core de ocupação e a gestão individual de hóspedes já estão funcionais; próximos passos devem equilibrar robustez, demonstração e refinamento de regras
+- A próxima regra funcional já definida é: inconsistência entre hóspedes cadastrados e total reservado gera warning, não bloqueio

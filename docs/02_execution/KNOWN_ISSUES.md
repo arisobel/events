@@ -34,7 +34,7 @@
 
 ## 👥 Guest Count vs Reservation Count
 
-### Status: ℹ️ **OBSERVATION**
+### Status: ℹ️ **RULE DEFINED / NOT IMPLEMENTED**
 
 ### Context
 - O MVP agora expõe `Guest` individual e liderança de grupo na UI principal
@@ -43,15 +43,41 @@
 ### Current Behavior
 - Operadores podem cadastrar hóspedes individuais dentro do grupo
 - Operadores podem informar `f_total_guests` na reserva
-- Ainda não existe regra automática de sincronismo entre esses dois valores
+- Ainda não existe implementação da regra escolhida entre esses dois valores
+
+### Defined Rule
+- `f_total_guests` deve ser maior ou igual ao número de hóspedes cadastrados
+- Se `f_total_guests < hóspedes cadastrados`, o sistema deve sinalizar inconsistência
+- A inconsistência não deve bloquear cadastro ou edição
 
 ### Impact
 - O fluxo principal funciona
 - Pode haver divergência intencional ou acidental entre composição do grupo e ocupação reservada
 
-### Next Decision Needed
-- Definir se `f_total_guests` continuará manual
-- Definir se o sistema passará a sugerir ou sincronizar automaticamente esse valor
+### Planned Resolution
+- Adicionar warning visual e/ou de validação não-bloqueante
+- Implementar essa checagem na UI e no backend
+- Manter `f_total_guests` como campo explícito da reserva
+
+---
+
+## 🧾 Guest Field Standardization
+
+### Status: ℹ️ **RULE DEFINED / NOT IMPLEMENTED**
+
+### Current Behavior
+- `Gender` ainda aceita texto livre
+- `GuestType` ainda aceita texto livre
+
+### Defined Rule
+- `Gender` deve usar enum controlado
+- `GuestType` deve usar enum controlado com `adult`, `child`, `infant`, `staff`
+- `leader` não entra em `GuestType`; liderança continua separada via `f_is_group_leader`
+
+### Planned Resolution
+- Trocar inputs livres por selects
+- Validar enums no backend
+- Alinhar tipos frontend/backend/testes com os mesmos valores
 
 ---
 
@@ -79,7 +105,7 @@
 ✅ Fluxo MVP interno implementado  
 ✅ Guests/Reservations/Room Allocations funcionando  
 ✅ Zero bugs críticos conhecidos no fluxo principal
-ℹ️ Próxima discussão funcional relevante: política entre hóspedes cadastrados e quantidade total reservada
+ℹ️ Próxima implementação funcional relevante: warning de inconsistência e enums controlados no módulo Guests
 
 ---
 

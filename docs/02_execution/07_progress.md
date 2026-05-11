@@ -3,7 +3,7 @@
 ## Current State
 
 - **Phase**: Phase 1 - Core Backend + Internal MVP Slice ✅ **IMPLEMENTADO**
-- **Last Update**: 10 de Maio de 2026 - gestão individual de hóspedes implementada
+- **Last Update**: 11 de Maio de 2026 - critérios pré-desenvolvimento definidos para consistência e enums do módulo Guests
 - **Status**: Fluxo core disponível na UI: Hotels → Events → Guests/Reservations → Room Allocations → Tasks
 - **Environment**: GitHub Codespaces + Docker
 - **Recent**: Gestão individual de hóspedes adicionada ao backend, frontend e testes
@@ -58,6 +58,18 @@
 
 ## In Progress 🚧
 
+### Guest Rules Pre-Development
+- [x] Definir regra de consistência entre `f_total_guests` e hóspedes cadastrados
+- [x] Escolher abordagem não-bloqueante para inconsistência
+- [x] Definir que `Gender` e `GuestType` passam a usar enums controlados
+- [x] Incluir `staff` em `GuestType`
+- [ ] Implementar warning visual e validação correspondente
+- [ ] Implementar enums na UI/API do módulo Guests
+
+**Status**: Critérios funcionais definidos; implementação ainda não iniciada
+
+---
+
 ### MVP Hardening
 - [ ] Adicionar testes HTTP/integration em cima da aplicação ASGI
 - [ ] Capturar screenshots reais do fluxo MVP
@@ -80,7 +92,9 @@
 - [ ] Validar fluxo completo em Codespaces de ponta a ponta
 
 ### Priority 3: Guest Flow Refinement
-- [ ] Revisar consistência entre `group.guests.length` e `reservation.f_total_guests`
+- [x] Revisar consistência entre `group.guests.length` e `reservation.f_total_guests`
+- [ ] Implementar warning quando `reservation.f_total_guests < group.guests.length`
+- [ ] Trocar `Gender` e `GuestType` por enums controlados
 - [ ] Decidir se check-in futuro será no nível do hóspede, do grupo ou híbrido
 - [ ] Melhorar visualização do líder do grupo e composição do grupo na UI
 
@@ -99,7 +113,8 @@
 ### Residual Risks
 - ⚠️ Testes automatizados atuais estão no nível de serviço/dependency; cobertura HTTP ainda não foi estabilizada
 - ⚠️ Evidência visual do fluxo (screenshots) ainda está pendente
-- ⚠️ Ainda não há regra automática entre número de hóspedes cadastrados e `f_total_guests` da reserva
+- ⚠️ A regra entre número de hóspedes cadastrados e `f_total_guests` já foi decidida, mas ainda não foi implementada
+- ⚠️ `Gender` e `GuestType` ainda estão livres na UI atual, sem enum controlado
 
 ---
 
@@ -148,4 +163,5 @@
 - O projeto já está além de POC e hoje se posiciona como **MVP interno enxuto**
 - O coração do produto agora está funcional: operação + reservas + alocação + tasks
 - O módulo Guests agora cobre `Group + Guest`, mantendo `Reservation` no nível do grupo
-- Próximo foco recomendado: endurecimento de integração automatizada, validação do fluxo e refinamento da consistência entre hóspedes e reservas
+- Próximo foco recomendado: implementar a regra de consistência não-bloqueante e os enums controlados do módulo Guests
+- Em paralelo, o projeto segue com necessidades de endurecimento de integração automatizada e pacote de validação
