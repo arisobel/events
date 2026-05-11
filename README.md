@@ -662,11 +662,14 @@ You should see the hotels list!
 
 ## 🌐 Running in GitHub Codespaces
 
-The system is configured to work automatically in Codespaces:
+The system is configured to work automatically in Codespaces through `.devcontainer/devcontainer.json`:
 
-1. **Ports are auto-detected**: Frontend detects backend URL dynamically
-2. **CORS is configured**: Accepts `*.app.github.dev` origins
-3. **URLs**: Access via the PORTS tab in VS Code
+1. **Dependencies are installed** on create
+2. **Postgres + Redis + backend + frontend are started** on Codespace start
+3. **Migrations are applied automatically**
+4. **A development admin user is ensured automatically**
+5. **Ports are auto-detected** and frontend resolves backend URL dynamically
+6. **CORS is configured** for `*.app.github.dev`
 
 ### Make Ports Public
 
@@ -681,6 +684,14 @@ gh codespace ports visibility 5173:public -c $CODESPACE_NAME
 Then access via:
 - **Backend**: `https://{codespace-name}-8000.app.github.dev`
 - **Frontend**: `https://{codespace-name}-5173.app.github.dev`
+
+### Manual Start Command
+
+If you ever need to start everything manually from the repository root:
+
+```bash
+./dev_up.sh
+```
 
 ## 📖 Full Documentation
 

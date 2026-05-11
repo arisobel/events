@@ -2,6 +2,26 @@
 
 ## 🚀 Quick Start
 
+### GitHub Codespaces
+
+Depois de criar ou rebuildar o Codespace, o `.devcontainer` passa a:
+- instalar dependências do backend e frontend
+- subir PostgreSQL, Redis, backend e frontend automaticamente
+- aplicar migrations
+- garantir o usuário admin de desenvolvimento
+
+Se você quiser subir manualmente no terminal, a partir da raiz do repositório rode:
+
+```bash
+./dev_up.sh
+```
+
+Para desligar:
+
+```bash
+./dev_down.sh
+```
+
 ### Prerequisites
 - Docker Desktop 20.10+
 - Git
