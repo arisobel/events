@@ -9,6 +9,7 @@ import {
   hotelService,
 } from '../services/api'
 import AdminLayout from '../components/AdminLayout'
+import { getTodayDateKey, isEventActiveOnDate } from '../utils/events'
 
 export default function EventsPage() {
   const [events, setEvents] = useState<Event[]>([])
@@ -37,6 +38,21 @@ export default function EventsPage() {
   const hotelMap = useMemo(
     () => Object.fromEntries(hotels.map((hotel) => [hotel.id, hotel])),
     [hotels]
+  )
+  const todayDateKey = getTodayDateKey()
+  const sortedEvents = useMemo(
+    () =>
+      [...events].sort((left, right) => {
+        const leftActive = isEventActiveOnDate(left, todayDateKey)
+        const rightActive = isEventActiveOnDate(right, todayDateKey)
+
+        if (leftActive !== rightActive) {
+          return leftActive ? -1 : 1
+        }
+
+        return left.f_start_date.localeCompare(right.f_start_date)
+      }),
+    [events, todayDateKey]
   )
 
   const loadData = async () => {
@@ -258,13 +274,18 @@ export default function EventsPage() {
 
         {!loading && !error && events.length > 0 && (
           <div className="space-y-4">
-            {events.map((event) => {
+            {sortedEvents.map((event) => {
               const hotel = hotelMap[event.f_hotel_id]
+              const isActiveToday = isEventActiveOnDate(event, todayDateKey)
 
               return (
                 <div
                   key={event.id}
-                  className="bg-white rounded-lg shadow hover:shadow-md transition-shadow p-6"
+                  className={`rounded-lg p-6 transition-shadow ${
+                    isActiveToday
+                      ? 'bg-emerald-50 ring-1 ring-emerald-200 shadow-md'
+                      : 'bg-white shadow hover:shadow-md'
+                  }`}
                 >
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex-1">
@@ -272,6 +293,11 @@ export default function EventsPage() {
                         <h2 className="text-xl font-semibold text-gray-900">
                           {event.f_name}
                         </h2>
+                        {isActiveToday && (
+                          <span className="inline-flex items-center rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-medium text-emerald-800">
+                            Active today
+                          </span>
+                        )}
                         <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(event.f_status)}`}>
                           {event.f_status}
                         </span>
@@ -285,6 +311,7 @@ export default function EventsPage() {
                         <p>
                           📅 {new Date(event.f_start_date).toLocaleDateString()} - {new Date(event.f_end_date).toLocaleDateString()}
                         </p>
+                        {isActiveToday && <p className="text-emerald-700">This event is currently in its active period.</p>}
                         {hotel && <p>🏨 {hotel.f_name}</p>}
                         {event.f_expected_guests ? <p>👥 Expected guests: {event.f_expected_guests}</p> : null}
                       </div>

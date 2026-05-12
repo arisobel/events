@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { AuthProvider } from './contexts/AuthContext'
 import LoginPage from './pages/LoginPage'
 import HotelsPage from './pages/HotelsPage'
@@ -7,6 +7,7 @@ import GuestsPage from './pages/GuestsPage'
 import RoomsPage from './pages/RoomsPage'
 import TasksPage from './pages/TasksPage'
 import PrivateRoute from './components/PrivateRoute'
+import AppEntryRedirect from './components/AppEntryRedirect'
 
 function App() {
   return (
@@ -39,7 +40,7 @@ function App() {
               <TasksPage />
             </PrivateRoute>
           } />
-          <Route path="/" element={<Navigate to="/login" replace />} />
+          <Route path="/" element={<AppEntryRedirect />} />
         </Routes>
       </BrowserRouter>
     </AuthProvider>

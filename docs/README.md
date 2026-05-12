@@ -112,19 +112,19 @@ Documentos do sistema anterior de documentação, mantidos para referência hist
 ## 📊 Current Project State
 
 **Phase**: Phase 1 - Core Backend + Internal MVP ✅ **IMPLEMENTADO**  
-**Last Update**: 10 de Maio de 2026  
-**Status**: Fluxo MVP interno disponível de ponta a ponta, incluindo `Guest` individual dentro de `GuestGroup`
+**Last Update**: 11 de Maio de 2026  
+**Status**: Fluxo MVP interno disponível de ponta a ponta, incluindo `Guest` individual dentro de `GuestGroup` e entrada inteligente por evento ativo no período
 
 **Quick Stats**:
 - Backend Modules: 6/6 completos
 - Frontend Pages: 6 páginas funcionais
 - Database: 22 tabelas
-- Tests: 7 backend tests passing + frontend build passing
+- Tests: 9 backend tests passing + frontend build passing
 
 **Next Actions**:
 1. Estabilizar testes HTTP/integration
 2. Capturar screenshots e relatório de validação
-3. Refinar consistência entre hóspedes cadastrados e total reservado
+3. Refinar a política de navegação quando houver múltiplos eventos ativos simultaneamente
 
 Para detalhes completos: [07_progress.md](02_execution/07_progress.md)
 
