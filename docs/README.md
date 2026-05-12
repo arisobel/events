@@ -69,6 +69,7 @@ Documentação técnica detalhada de implementação.
 - [DATABASE_FULL_DRAFT.sql](04_technical/DATABASE_FULL_DRAFT.sql) - Schema completo (draft)
 - [API_PLAN.md](04_technical/API_PLAN.md) - Mapeamento de endpoints REST
 - [DEVELOPMENT_CONVENTIONS.md](04_technical/DEVELOPMENT_CONVENTIONS.md) - Convenções técnicas de implementação
+- [DEPLOYMENT_CAPROVER.md](04_technical/DEPLOYMENT_CAPROVER.md) - Preparo documental para deploy no CapRover
 
 **Princípio**: Referência técnica, não narrativa.
 
@@ -112,8 +113,8 @@ Documentos do sistema anterior de documentação, mantidos para referência hist
 ## 📊 Current Project State
 
 **Phase**: Phase 1 - Core Backend + Internal MVP ✅ **IMPLEMENTADO**  
-**Last Update**: 11 de Maio de 2026  
-**Status**: Fluxo MVP interno disponível de ponta a ponta, incluindo `Guest` individual dentro de `GuestGroup` e entrada inteligente por evento ativo no período
+**Last Update**: 12 de Maio de 2026  
+**Status**: Fluxo MVP interno disponível de ponta a ponta; preparo documental para CapRover registrado, implementação de deploy ainda pendente
 
 **Quick Stats**:
 - Backend Modules: 6/6 completos
@@ -122,9 +123,9 @@ Documentos do sistema anterior de documentação, mantidos para referência hist
 - Tests: 9 backend tests passing + frontend build passing
 
 **Next Actions**:
-1. Estabilizar testes HTTP/integration
-2. Capturar screenshots e relatório de validação
-3. Refinar a política de navegação quando houver múltiplos eventos ativos simultaneamente
+1. Implementar configuração de deploy CapRover conforme [DEPLOYMENT_CAPROVER.md](04_technical/DEPLOYMENT_CAPROVER.md)
+2. Estabilizar testes HTTP/integration
+3. Capturar screenshots e relatório de validação
 
 Para detalhes completos: [07_progress.md](02_execution/07_progress.md)
 

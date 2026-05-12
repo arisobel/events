@@ -2,6 +2,23 @@
 
 ## Immediate (Next Cycle) - 1-2 semanas
 
+### CapRover Deployment Readiness
+- [x] Criar `deploy-caprover.ps1` para gerar pacote `.tar` versionado por timestamp em `/dist`
+- [ ] Criar estratégia final de apps CapRover separados: backend, frontend, PostgreSQL e Redis opcional
+- [ ] Mover/criar `captain-definition` de produção no local esperado pelo fluxo de deploy escolhido
+- [ ] Ajustar comando de produção do backend para rodar sem `--reload`
+- [ ] Definir e implementar estratégia de migrations em produção
+- [ ] Configurar CORS de produção usando domínio real do frontend
+- [ ] Adicionar suporte frontend a `VITE_API_URL`
+- [ ] Criar Dockerfile de produção para frontend estático com fallback SPA
+- [ ] Definir bootstrap seguro de usuário admin em produção
+- [ ] Validar `/health`, `/docs` e fluxo MVP em staging CapRover
+
+**Estimativa**: 5-8h  
+**Valor**: torna o MVP publicável em ambiente controlado sem depender de Codespaces/local
+
+---
+
 ### Guest Consistency + Enums
 - [ ] Implementar regra visual de consistência: `reservation.f_total_guests >= group.guests.length`
 - [ ] Exibir warning não-bloqueante quando `f_total_guests < hóspedes cadastrados`

@@ -1,5 +1,35 @@
 # Known Issues
 
+## 🚢 CapRover Deployment Not Production-Ready
+
+### Status: ℹ️ **DOCUMENTED / NOT IMPLEMENTED**
+
+### Problem
+- Existe `infrastructure/captain-definition`, mas ele aponta apenas para `./backend/Dockerfile`
+- CapRover normalmente espera `captain-definition` na raiz do app/repositório usado no deploy
+- Backend ainda roda com `--reload` no Dockerfile
+- Frontend ainda não possui Dockerfile/build de produção para servir `dist`
+- Frontend ainda não usa `VITE_API_URL` para apontar para API de produção
+- CORS ativo no backend está focado em Codespaces, não em domínio final de produção
+- Migrations e bootstrap de admin de produção ainda não foram definidos
+
+### Impact
+- O projeto não deve ser publicado diretamente em CapRover como produção
+- Deploy atual tende a expor apenas backend e ainda com comportamento de desenvolvimento
+- Frontend em domínio real não chamará a API correta sem ajuste prévio
+
+### Current Mitigation
+- Runbook criado em `docs/04_technical/DEPLOYMENT_CAPROVER.md`
+- Backlog atualizado com checklist de implementação
+
+### Planned Resolution
+- Implementar backend e frontend como apps CapRover separados
+- Configurar variáveis de ambiente de produção
+- Adicionar build estático do frontend e fallback SPA
+- Definir estratégia de migrations e seed/admin seguro
+
+---
+
 ## 🔐 Login / CORS Issues (Codespaces)
 
 ### Status: ✅ **RESOLVED**
@@ -106,6 +136,7 @@
 ✅ Guests/Reservations/Room Allocations funcionando  
 ✅ Zero bugs críticos conhecidos no fluxo principal
 ℹ️ Próxima implementação funcional relevante: warning de inconsistência e enums controlados no módulo Guests
+ℹ️ Próxima implementação operacional relevante: readiness de deploy CapRover
 
 ---
 

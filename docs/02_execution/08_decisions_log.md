@@ -1,5 +1,33 @@
 # Decisions Log
 
+## [2026-05-12] CapRover Deployment Preparation Scope
+
+**Context:**  
+O projeto precisa ser preparado para deploy no CapRover, mas a solicitação atual restringe o trabalho a documentação. O repositório já possui `infrastructure/captain-definition` e `backend/Dockerfile`, porém o estado atual ainda reflete desenvolvimento local/Codespaces e não um deploy de produção completo.
+
+**Decision:**  
+- Registrar o preparo de CapRover somente em documentação neste ciclo
+- Tratar o deploy alvo como apps separados: backend API, frontend estático, PostgreSQL e Redis opcional
+- Não alterar código, Dockerfiles, `captain-definition` ou scripts nesta etapa
+- Usar `docs/04_technical/DEPLOYMENT_CAPROVER.md` como runbook canônico para a próxima implementação
+- Considerar o deploy CapRover como não pronto para produção até que frontend, CORS, comando backend, migrations e bootstrap admin sejam implementados
+
+**Rationale:**
+- Evita publicar um backend com comando de desenvolvimento e sem frontend de produção
+- Mantém a arquitetura de modular monolith com unidades de deploy simples
+- Permite planejar variáveis de ambiente, domínios, migrations e rollback antes de tocar na infraestrutura
+
+**Impact:**  
+- ✅ Estado atual e lacunas foram documentados
+- ✅ Backlog recebeu checklist de readiness CapRover
+- ⏳ Próxima etapa técnica deve implementar o runbook
+- ⏳ Validação em staging CapRover ainda pendente
+
+**Participants:** Product + Agent  
+**Status:** ⏳ Documentado / não implementado
+
+---
+
 ## [2026-05-11] Guest Consistency Rule and Controlled Enums
 
 **Context:**  

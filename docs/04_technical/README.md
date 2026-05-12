@@ -77,6 +77,18 @@ Convenções técnicas de implementação para backend, frontend e fluxo de dese
 
 **Use para**: Alinhar mudanças novas com os padrões ativos do repositório
 
+### [DEPLOYMENT_CAPROVER.md](DEPLOYMENT_CAPROVER.md)
+Runbook de preparacao para deploy no CapRover.
+
+**Conteudo**:
+- estado atual da configuracao de deploy
+- topologia alvo em apps separados
+- variaveis de ambiente de producao
+- gaps antes do primeiro deploy real
+- checklist de readiness
+
+**Use para**: Planejar a implementacao do deploy CapRover sem misturar decisao operacional com codigo
+
 ---
 
 ## 📐 Database Conventions
@@ -296,7 +308,7 @@ https://www.postgresql.org/docs/
 - [ ] Caching layer documentation (Redis)
 - [ ] WebSocket events documentation
 - [ ] Performance optimization guide
-- [ ] Deployment runbook
+- [x] Deployment runbook inicial para CapRover
 
 ### As Needed
 - [ ] Backup/restore procedures
