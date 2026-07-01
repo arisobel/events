@@ -1,5 +1,94 @@
 # Decisions Log
 
+## [2026-07-01] Visão Ampliada do Domínio — Evento Judaico de Hospitalidade
+
+**Context:**
+Sessão de alinhamento de produto revelou profundidade muito maior do que o MVP capturou. O sistema é destinado a programas de Pessach em hotéis — uma "cidade temporária kosher" de 7-10 dias com centenas de hóspedes.
+
+**Domain model ampliado:**
+
+Espaços do hotel precisam ser tipados (sinagoga, restaurante, sala exclusiva de refeição, quadra, piscina, academia, salão de shows, sala de aula).
+
+Staff é multifacetado: funcionário operacional, ministrante (rabino/palestrante/monitor/entertainer), Mashguiach (supervisor kosher).
+
+Atividades/micro-eventos têm: espaço + horário + ministrante + público-alvo + tipo (reza, aula, show, esporte, refeição).
+
+**Três perfis de gestão com interfaces distintas:**
+- **Gestor Financeiro**: grade de quartos × famílias × períodos, precificação, cobrança, receita. PRIORIDADE 1.
+- **Gestor Chef**: refeições, cardápio, estoque, mesas, salas exclusivas
+- **Gestor de Campo**: cronograma de atividades, sinagoga, staff, reclamações, solicitações
+
+**Kashrut / Mashguichim**: módulo especializado — turnos de supervisão kosher por cozinha/refeição, cobertura contínua garantida.
+
+**Multi-idiomas**: i18n desde o início, tanto no app do hóspede quanto na gestão. Mercado internacional.
+
+**Decision:**
+- Gestor Financeiro é a prioridade 1 de implementação
+- Domain model do hotel (espaços tipados) precisa ser expandido antes dos módulos dependentes
+- Kashrut registrado como módulo especializado de médio prazo
+- Multi-idiomas planejado desde o início da arquitetura do `frontend-guest`
+
+**Impact:**
+- ✅ Backlog atualizado com Financial Manager como Priority 1
+- ✅ Domain model ampliado documentado aqui
+- ⏳ PRD e DOMAIN_MODEL.md devem ser atualizados para refletir os 3 gestores
+- ⏳ `HotelSpace` precisa de tipagem formal antes dos módulos de atividade
+
+**Participants:** Product  
+**Status:** ✅ Registrado / ⏳ Implementação iniciando pelo Gestor Financeiro
+
+---
+
+## [2026-07-01] TV Displays — Grade do Dia em Telas do Hotel
+
+**Context:**
+Necessidade identificada de presença física do sistema nas TVs espalhadas pelo hotel durante o evento.
+
+**Decision:**
+- Criar endpoints públicos (sem auth) que retornam o cronograma do dia formatado para exibição
+- Segmentado por público: Geral / Homens / Mulheres / Infantil
+- Destaque para evento iminente (próximos 30 min)
+- Página fullscreen sem chrome, auto-refresh a cada 2 minutos
+- URL padrão: `events.lion.app.br/display/{event_id}?audience=all`
+- QR code na tela leva para o app do hóspede
+
+**Rationale:**
+- Resolve o problema de comunicação presencial sem papel ou quadros físicos
+- Aproveita o mesmo modelo de Activities — custo de implementação baixo dado o módulo
+- Pode ser configurado em qualquer TV com browser (Chromecast, TV com HDMI+browser, tablet)
+
+**Depende de:** Módulo Activities implementado  
+**Status:** ✅ Registrado / ⏳ Implementar após Activities
+
+---
+
+## [2026-07-01] App do Hóspede — Superfície Separada, Mobile-First PWA
+
+**Context:**
+Com o deploy em produção estabilizado, o próximo horizonte de produto é o App do Hóspede. A decisão é sobre arquitetura e estratégia de plataforma.
+
+**Decision:**
+- Criar `frontend-guest/` como segundo frontend no mesmo repositório — app separado, deploy separado (`guest.events.lion.app.br`)
+- Mobile-first desde o início: layout por bottom tab bar, cards grandes, uma ação por tela, tipografia generosa
+- PWA de primeira classe: `manifest.json` + service worker → instalável no celular sem app store
+- Backend compartilhado: mesma API FastAPI; guest app consome os mesmos endpoints com auth próprio
+- Separação futura: se um dia virar React Native, o app web separado é a base mais limpa para migração; a lógica de API pode ser extraída para uma lib compartilhada
+
+**Rationale:**
+- Auth do hóspede (código do evento + sobrenome + nº do quarto) é fundamentalmente diferente do auth admin — misturar criaria complexidade sem benefício
+- Hóspedes acessam quase 100% via smartphone; admins usam desktop/tablet — UX completamente diferente não cabe em um único app sem comprometer um dos dois
+- App separado permite deploy, versioning e rollback independentes
+
+**Impact:**
+- ⏳ `frontend-guest/` a criar no próximo ciclo
+- ⏳ Backend: módulo de Atividades e auth de hóspede como primeiros entregáveis
+- ✅ Decisão registrada; backlog atualizado
+
+**Participants:** Michel (filho) — notas de produto; Product + Agent  
+**Status:** ✅ Decidido / ⏳ Implementação a iniciar
+
+---
+
 ## [2026-06-30] CapRover Production Deploy — Implementação
 
 **Context:**  

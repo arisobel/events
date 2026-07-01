@@ -84,59 +84,208 @@
 
 ---
 
+## Immediate — Próximo Ciclo
+
+### 🔴 PRIORITY 1: Módulo Financeiro — Grade de Quartos
+> Gestor estratégico/financeiro: substitui a planilha principal de alocação e receita
+
+**Backend — Phase 1 (Grade de ocupação):**
+- [ ] Adicionar precificação a `HotelRoom`: `f_price_per_night`, `f_room_type_label`
+- [ ] Adicionar campos financeiros a `Reservation`: `f_amount_total`, `f_amount_paid`, `f_payment_status` (pending/partial/paid), `f_payment_notes`
+- [ ] Endpoint `GET /events/{id}/room-grid` — retorna grade: quartos × períodos × família alocada + status financeiro
+- [ ] Endpoint `GET /events/{id}/financial-summary` — totais: receita esperada, recebida, pendente, ocupação %
+- [ ] Endpoint `GET /guest-groups/{id}/invoice` — extrato por família: quartos, períodos, extras, total, pago, saldo
+
+**Backend — Phase 2 (Extras e exclusivos):**
+- [ ] Modelo `ReservationExtra`: item extra por reserva (sala exclusiva de refeição, serviço) com valor
+- [ ] Endpoint de adição/remoção de extras por reserva
+- [ ] Incluir extras no extrato da família
+
+**Frontend (Gestão — Financeiro):**
+- [ ] Grade visual de quartos × datas (estilo planilha/calendar grid) com cor por status de ocupação
+- [ ] Painel financeiro do evento: ocupação % + receita total/recebida/pendente
+- [ ] Tela de extrato por família com registro de pagamentos
+
+**Estimativa**: 8-12h backend / 6-10h frontend  
+**Valor**: substitui a planilha Excel do gestor financeiro; visibilidade total de ocupação e receita
+
+---
+
+### 📺 Displays de TV — Grade do Dia
+> Telas espalhadas pelo hotel mostrando cronograma e evento iminente, segmentadas por público
+>
+> Originado em sessão 2026-07-01
+
+**Conceito:**
+- Endpoint público (sem auth) que retorna/renderiza o cronograma do dia
+- Consumido por TVs do hotel — auto-refresh a cada N minutos
+- Segmentado por público: Geral / Homens / Mulheres / Infantil
+- Destaque para o evento iminente (próxima atividade em até 30 min)
+
+**Backend:**
+- [ ] `GET /display/{event_id}/today` — atividades do dia, ordenadas por horário
+- [ ] `GET /display/{event_id}/now` — atividade atual + próxima (para destaque)
+- [ ] Parâmetro `?audience=all|men|women|children` para filtrar por público
+- [ ] Sem autenticação — endpoint público read-only
+
+**Frontend (Display):**
+- [ ] Página `DisplayPage` fullscreen, sem chrome (sem menu, sem header)
+- [ ] Layout landscape: hora + título + local + público + próximo evento
+- [ ] Auto-refresh a cada 2 minutos
+- [ ] Versão QR code: link do display → leva para o app do hóspede
+- [ ] URL padrão: `events.lion.app.br/display/{event_id}?audience=all`
+
+**Depende de:** Módulo Activities (cronograma de atividades)  
+**Estimativa**: 3-4h backend / 4-6h frontend  
+**Valor**: presença física do sistema no hotel; visibilidade para hóspedes sem precisar do app
+
+---
+
 ## Short Term - 3-6 semanas
 
-### Schedule Module
-- [ ] Backend: models e CRUD de atividades
-- [ ] Frontend: `SchedulePage.tsx`
-- [ ] Timeline queries e filtros básicos
+### Auth: Troca de Senha + Roles na UI
+- [ ] Endpoint `POST /auth/change-password` (hoje só via docker exec)
+- [ ] UI de perfil com troca de senha
+- [ ] Tela de gerenciamento de usuários e patentes (admin)
+- [ ] Proteger rotas por role no frontend (gestão vs. outras patentes)
 
-### Staff Module
-- [ ] Backend: teams, members, shifts
-- [ ] Frontend: `StaffPage.tsx`
-- [ ] Visualização de turnos/disponibilidade
+**Valor**: operação básica sem acesso à VPS; base para múltiplos perfis de acesso
 
-### Tables Module
-- [ ] Backend: alocação de mesas por período
-- [ ] Frontend: `TablesPage.tsx`
-- [ ] Disponibilidade por refeição/período
+---
+
+### Módulo Funcionários (Staff)
+> Originado nas notas de Michel (Gestão — Cadastro Funcionários)
+- [ ] Backend: modelo `Employee` — dados pessoais, função, períodos de trabalho, salário
+- [ ] Backend: CRUD + vínculo com evento
+- [ ] Frontend: `StaffPage.tsx` — lista, cadastro, edição
+- [ ] Visualização de turnos por evento
+
+**Valor**: substitui controle manual de equipe; base para alocação de staff em atividades
+
+---
+
+### Eventos: Detalhamento Operacional
+> Originado nas notas de Michel (Gestão — Eventos)
+- [ ] Adicionar campos ao evento: `local`, `necessidades` (comida, staff), `publico_alvo` (crianças/adultos/misto/todos)
+- [ ] Calendário visual de eventos por hotel
+- [ ] Duração calculada (data início/fim já existem)
+
+**Valor**: enriquece o contexto operacional do evento sem mudar a estrutura central
+
+---
+
+### Hóspedes: Dados Financeiros da Reserva
+> Originado nas notas de Michel (Gestão — Cadastro Hóspedes)
+- [ ] Adicionar a `Reservation`: `valor_pago`, `dias_hospedados`
+- [ ] Exibir total por grupo/família na UI
+- [ ] (Decidir) divisão por famílias: sub-agrupamento dentro do GuestGroup?
+
+**Valor**: fecha o ciclo operacional do hóspede; base para o módulo financeiro
+
+---
+
+### Organização de Mesas
+> Originado nas notas de Michel (Gestão — Organização Mesas/Salas)
+- [ ] Backend: modelo `TableAssignment` — mesa, família/grupo, refeição/período
+- [ ] Frontend: `TablesPage.tsx` — atribuição de mesas por família
+- [ ] “Em qual mesa minha família está?” — query por grupo
+
+**Valor**: resolve uma das perguntas mais frequentes em eventos desse tipo
+
+---
+
+### Schedule Module (Cronograma de Atividades)
+> Base para o App do Hóspede e para a Gestão
+- [ ] Backend: modelo `Activity` — tipo, horário, local, público-alvo, duração
+- [ ] Tipos: religioso, infantil, refeições, entretenimento/piscina/ACAD
+- [ ] Backend: CRUD com filtros por tipo e período
+- [ ] Frontend (gestão): `SchedulePage.tsx` — cadastro e edição de atividades
+
+**Valor**: backbone do cronograma que tanto o hóspede quanto a gestão vão consumir
 
 ---
 
 ## Mid Term - 2-3 meses
 
-### Supervision Dashboard
-- [ ] Queries agregadas de workload
-- [ ] Kanban view melhorada
-- [ ] Métricas operacionais
+### App do Hóspede ⚠️ Decisão arquitetural pendente
+> Originado nas notas de Michel (Usuário: Hóspede) — superfície nova e independente
+>
+> **Decisão necessária**: seção separada no mesmo frontend (`/guest/...`) ou novo app (`guest.events.lion.app.br`)?
 
-### Rules Engine
-- [ ] Regras de espaço e restrições de tempo
-- [ ] Integração com alocação
-- [ ] Configuração de regras via frontend
+**Auth do hóspede:**
+- [ ] Login via código do evento + sobrenome + número do quarto (sem username/senha)
+- [ ] Token de sessão isolado do auth administrativo
 
-### Logistics / Kashrut / Religious
-- [ ] Completar módulos específicos do domínio
-- [ ] Fechar fluxos especializados por operação
+**Tela inicial:**
+- [ ] Atividades ocorrendo agora e próximas (consome Schedule Module)
+
+**Cronograma:**
+- [ ] Visualização filtrada por tipo (religioso, infantil, refeições, entretenimento)
+- [ ] Filtros configuráveis pelo contratante/gestor
+
+**Reservas:**
+- [ ] Restaurantes — calendário com horários disponíveis
+- [ ] Salas — calendário + forma de pagamento
+- [ ] Gerenciar minhas reservas
+
+**Achados e Perdidos:**
+- [ ] Upload de imagem + descrição
+- [ ] Visualizar registros de outros hóspedes
+
+**Infos:**
+- [ ] Telefones e ramais importantes (cadastrados pela gestão)
+
+**Serviços:**
+- [ ] Babá, enfermeira e outros serviços disponíveis (configurável)
+
+**”Em qual mesa minha família está?”:**
+- [ ] Query por sobrenome/número do quarto → retorna mesa atribuída
+
+**Valor**: transforma o produto de interno para hóspede — diferencial do sistema
+
+---
+
+### Módulo Financeiro
+> Originado nas notas de Michel (Gestão — Financeiro) — escopo a definir
+- [ ] **Definir escopo**: só visualização de receitas, ou também controle de pagamentos?
+- [ ] Dashboard financeiro por evento: total de reservas, valor pago, saldo
+- [ ] Extrato por hóspede/família
+- [ ] (Futuro) integração com formas de pagamento
+
+**Valor**: fecha o ciclo para a alta administração — visão de receita por evento
+
+---
+
+### Supervision Dashboard (Alta Administração)
+- [ ] Visão consolidada de todos os eventos ativos
+- [ ] Métricas: ocupação, tarefas pendentes, staff alocado
+- [ ] Alertas operacionais
+
+---
+
+### Módulo Achados e Perdidos
+- [ ] Backend: modelo `LostItem` — descrição, imagem, data, status (perdido/encontrado/devolvido)
+- [ ] Upload de imagem (storage local ou S3)
+- [ ] API pública (hóspede sem auth pode consultar)
 
 ---
 
 ## Long Term - 3-6 meses
 
 ### PWA Features
-- [ ] Offline support
+- [ ] Offline support para o App do Hóspede
+- [ ] Push notifications para atividades e reservas
 - [ ] Background sync
-- [ ] Push notifications
 
 ### Multi-tenancy Preparation
 - [ ] `tenant_id` em entidades relevantes
-- [ ] Isolação de dados
+- [ ] Isolação de dados por operadora de evento
 - [ ] Seleção de tenant em auth
 
 ### Intelligence Layer
-- [ ] Sugestões de alocação
-- [ ] Detecção automática de conflitos
-- [ ] Automação assistida
+- [ ] Sugestões de alocação de quartos/mesas
+- [ ] Detecção automática de conflitos de agenda
+- [ ] Automação assistida de tarefas recorrentes
 
 ---
 
@@ -145,3 +294,4 @@
 - O foco imediato volta a ser “estabilizar e validar o MVP”, agora com a camada `Guest` já entregue
 - O core de ocupação e a gestão individual de hóspedes já estão funcionais; próximos passos devem equilibrar robustez, demonstração e refinamento de regras
 - A próxima regra funcional já definida é: inconsistência entre hóspedes cadastrados e total reservado gera warning, não bloqueio
+- **2026-07-01**: Notas de produto de Michel incorporadas — App do Hóspede e expansão da Gestão entram como horizontes estruturantes do produto
