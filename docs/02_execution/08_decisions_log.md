@@ -1,5 +1,43 @@
 # Decisions Log
 
+## [2026-06-30] CapRover Production Deploy — Implementação
+
+**Context:**  
+Com a documentação de deploy já existente em `docs/04_technical/DEPLOYMENT_CAPROVER.md`, foi solicitada a implementação efetiva da infraestrutura de produção para CapRover via tarball.
+
+**Decision:**  
+- Adotar topologia de 4 apps: `events-postgres` (one-click), `events-api` (tarball), `events-web` (tarball), Redis adiado
+- Criar `Dockerfile` na raiz do repositório para o backend de produção (contexto CapRover usa raiz do tarball — o `backend/Dockerfile` existente estava com caminhos errados para esse contexto)
+- Rodar `alembic upgrade head` automaticamente no startup do container, antes do uvicorn
+- Criar `frontend/Dockerfile` com multi-stage build (Node → Nginx) em vez de servir frontend pelo backend
+- `VITE_API_URL` resolvido como build arg no Dockerfile do frontend (baked no build), não como env var de runtime
+- CORS corrigido para usar `settings.CORS_ORIGINS` via env var — antes estava hardcoded para Codespaces only e bloqueava produção
+- `build.ps1` como script único de empacotamento com parâmetro `-Target api|web`, substituindo `deploy-caprover.ps1` para novos deploys (o antigo permanece)
+- Domínio de produção: frontend `https://events.lion.app.br`, API `https://api.events.lion.app.br`
+
+**Rationale:**
+- `Dockerfile` na raiz resolve o problema de contexto do CapRover — com `dockerfilePath: "./Dockerfile"`, o build context é a raiz do tarball, e os `COPY backend/` ficam corretos
+- Migrations no startup elimina passo manual; é seguro com Alembic (idempotente quando não há mudanças)
+- Redis adiado porque o MVP atual não usa cache — adicionar agora seria complexidade sem benefício
+- `frontend/Dockerfile` separado (em vez de servir static do FastAPI) mantém separação de responsabilidades e facilita escalar/configurar cada app individualmente
+- Dois `captain-definition` (raiz para api, `frontend/` para web) permite usar um único script de build para gerar tarballs independentes
+
+**Impact:**  
+- ✅ `Dockerfile` criado na raiz
+- ✅ `captain-definition` criado na raiz (events-api)
+- ✅ `frontend/Dockerfile` criado (multi-stage Node + Nginx)
+- ✅ `frontend/nginx.conf` criado (SPA fallback + cache headers)
+- ✅ `frontend/captain-definition` criado (events-web)
+- ✅ `build.ps1` criado na raiz
+- ✅ CORS corrigido em `backend/app/main.py`
+- ✅ `VITE_API_URL` adicionado em `frontend/src/services/api.ts`
+- ⏳ Primeiro deploy no CapRover ainda pendente
+
+**Participants:** Product + Agent  
+**Status:** ✅ Implementado / ⏳ Validação em staging pendente
+
+---
+
 ## [2026-05-12] CapRover Deployment Preparation Scope
 
 **Context:**  

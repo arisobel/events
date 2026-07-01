@@ -1,10 +1,10 @@
-# CapRover Deployment Preparation
+# CapRover Deployment
 
 ## Status
 
-**Documented only. Not implemented yet.**
+**Infraestrutura implementada. Primeiro deploy em staging pendente.**
 
-This file describes the target deployment model and the repository gaps that must be closed before a production CapRover deploy. No application code, Dockerfile, frontend build configuration, or CapRover configuration has been changed as part of this preparation.
+Atualizado em 2026-06-30: todos os arquivos de infraestrutura de produção foram criados. O próximo passo é criar as apps no CapRover e executar o primeiro deploy.
 
 ---
 
@@ -20,16 +20,25 @@ This file describes the target deployment model and the repository gaps that mus
 - Backend configuration is environment-driven through `backend/app/core/config.py`.
 - Frontend is a Vite React app with `npm run build`.
 
-### Current Limitations For CapRover
+### Implemented (2026-06-30)
 
-- `infrastructure/captain-definition` currently points only to `./backend/Dockerfile`.
-- `captain-definition` is not at repository root, which is where CapRover normally expects it for direct repository deploys.
-- `backend/Dockerfile` runs Uvicorn with `--reload`, which is development-oriented.
-- The backend container does not run `alembic upgrade head` on startup.
-- There is no production frontend Dockerfile or Nginx/static serving configuration.
-- Frontend API discovery currently supports only `localhost`, GitHub Codespaces and fallback to `http://localhost:8000`.
-- Backend CORS currently accepts Codespaces via regex and does not yet use production domain configuration in the active middleware.
-- Redis is configured but not required by the current MVP flow.
+- `captain-definition` criado na raiz do repositório — aponta para `./Dockerfile` (app `events-api`).
+- `Dockerfile` criado na raiz — backend produção com caminhos corretos para contexto CapRover (`backend/` como subpasta), sem `--reload`, com `alembic upgrade head` no startup.
+- `frontend/Dockerfile` criado — multi-stage build: Node 20 para `npm ci && npm run build`, depois Nginx Alpine para servir `/dist`.
+- `frontend/nginx.conf` criado — SPA fallback para React Router, cache headers para assets estáticos.
+- `frontend/captain-definition` criado — aponta para `./frontend/Dockerfile` (app `events-web`).
+- `build.ps1` criado na raiz — gera tarball timestampado em `/dist/`, aceita `-Target api|web`, mantém apenas os últimos 5 de cada tipo.
+- CORS corrigido em `backend/app/main.py` — usa `settings.CORS_ORIGINS` (env var) combinado com regex Codespaces; antes estava hardcoded para Codespaces only e ignorava produção.
+- `VITE_API_URL` adicionado em `frontend/src/services/api.ts` — tem prioridade sobre detecção de hostname; basta setar o build arg no CapRover.
+- Redis adiado — confirmado que o MVP atual não depende de Redis; será adicionado como `events-redis` (one-click app) em ciclo futuro.
+
+### Pending
+
+- Criar apps no CapRover (events-postgres, events-api, events-web).
+- Configurar variáveis de ambiente para `events-api`.
+- Primeiro deploy e validação de `/health`.
+- Criar usuário admin de produção.
+- Adicionar Redis quando necessário.
 
 ---
 
@@ -139,28 +148,32 @@ The repository currently has `backend/scripts/ensure_dev_admin.py`, but that is 
 
 ### Local Packaging
 
-For the current CapRover package format, run from the repository root:
+Use `build.ps1` (criado em 2026-06-30) para gerar os tarballs de produção:
 
 ```powershell
-.\deploy-caprover.ps1
+# Tarball para events-api
+.\build.ps1 -Target api
+
+# Tarball para events-web
+.\build.ps1 -Target web
 ```
 
-The script creates:
+Os arquivos gerados ficam em `dist/`:
 
 ```text
-dist/deploy-caprover-YYYYMMDD-HHMMSS.tar
+dist/events-api-YYYYMMDD-HHMMSS.tar
+dist/events-web-YYYYMMDD-HHMMSS.tar
 ```
 
-Packaging behavior:
+Comportamento:
 
-- stages files in a temporary directory
-- copies `infrastructure/captain-definition` to the package root as `captain-definition`
-- excludes `.git`, `dist`, `node_modules`, frontend build output, caches, `.env`, logs and pid files
-- does not change application code or deployment configuration
+- copia o projeto inteiro para um diretório temporário (via `robocopy`)
+- exclui `.git`, `dist`, `node_modules`, caches, `.env`, logs e pid files
+- copia o `captain-definition` correto para a raiz do pacote (raiz para api, `frontend/captain-definition` para web)
+- cria o `.tar` com `tar.exe` e move para `dist/`
+- mantém apenas os últimos 5 tarballs de cada tipo em `dist/`
 
-Current limitation:
-
-- the generated package follows the current `captain-definition`, which points to `./backend/Dockerfile`; it is not yet the final production-ready two-app deployment model.
+O script `deploy-caprover.ps1` (legado) continua existindo mas não deve ser usado para novos deploys — ele aponta para `infrastructure/captain-definition` que usa `./backend/Dockerfile` (contexto de desenvolvimento).
 
 ### Preparation
 
@@ -200,14 +213,14 @@ Expected:
 
 ### Must Have Before First Real Deploy
 
-- [ ] Root-level CapRover definition for backend or documented app-specific deploy path.
-- [ ] Backend production command without `--reload`.
-- [ ] Migration execution strategy.
-- [ ] Production CORS configured.
-- [ ] Frontend `VITE_API_URL` support.
-- [ ] Frontend production Dockerfile/static serving.
-- [ ] Production admin bootstrap strategy.
-- [ ] Production `SECRET_KEY` configured.
+- [x] Root-level CapRover definition for backend (`captain-definition` + `./Dockerfile`).
+- [x] Backend production command without `--reload` (`uvicorn --workers 2`).
+- [x] Migration execution strategy (automático no startup: `alembic upgrade head`).
+- [x] Production CORS configured (`settings.CORS_ORIGINS` via env var `CORS_ORIGINS`).
+- [x] Frontend `VITE_API_URL` support (build arg no `frontend/Dockerfile`, checado em `api.ts`).
+- [x] Frontend production Dockerfile/static serving (`frontend/Dockerfile` + nginx + SPA fallback).
+- [ ] Production admin bootstrap strategy (criar via console CapRover após primeiro deploy).
+- [ ] Production `SECRET_KEY` configured (setar nas env vars do CapRover antes do deploy).
 - [ ] PostgreSQL persistence/backup plan.
 
 ### Should Have Before Pilot Use

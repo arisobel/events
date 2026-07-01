@@ -3,12 +3,12 @@
 ## Current State
 
 - **Phase**: Phase 1 - Core Backend + Internal MVP Slice ✅ **IMPLEMENTADO**
-- **Last Update**: 12 de Maio de 2026 - preparo documental para deploy CapRover registrado
+- **Last Update**: 30 de Junho de 2026 - infraestrutura de deploy CapRover implementada
 - **Status**: Fluxo core disponível na UI: Hotels → Events → Guests/Reservations → Room Allocations → Tasks
 - **Environment**: GitHub Codespaces + Docker
-- **Recent**: Gestão individual de hóspedes adicionada ao backend, frontend e testes
+- **Recent**: Deploy CapRover implementado — Dockerfiles de produção, build script, captain-definitions, CORS e VITE_API_URL configurados
 - **Current Product Boundary**: operação de hóspedes agora combina `GuestGroup + Guest`; `Reservation` permanece vinculada ao grupo
-- **Deployment State**: CapRover planejado e documentado; implementação de deploy ainda não iniciada
+- **Deployment State**: CapRover pronto para deploy — arquivos de infra criados; validação em staging pendente
 
 ---
 
@@ -56,21 +56,31 @@
 - [x] Stub legado removido: `/backend/app/api/routes/hotel.py`
 - [x] Runbook inicial de deploy CapRover criado em `docs/04_technical/DEPLOYMENT_CAPROVER.md`
 - [x] Script `deploy-caprover.ps1` criado para gerar pacote `.tar` timestampado em `/dist`
+- [x] **CapRover production deploy implementado** — ver seção abaixo
 
 ---
 
 ## In Progress 🚧
 
-### CapRover Deployment Preparation
+### CapRover Deployment — Infra Implementada (2026-06-30)
 - [x] Mapear estado atual de `captain-definition`, `backend/Dockerfile`, `docker-compose.yml` e frontend Vite
 - [x] Documentar topologia alvo para CapRover em apps separados
 - [x] Documentar variáveis de ambiente e checklist de readiness
 - [x] Implementar empacotamento local via `deploy-caprover.ps1`
-- [ ] Implementar Docker/CapRover de produção para backend
-- [ ] Implementar Docker/CapRover de produção para frontend
+- [x] `Dockerfile` na raiz — backend produção com caminhos corretos para contexto CapRover, sem `--reload`, migrations automáticas no startup
+- [x] `captain-definition` na raiz — aponta para `./Dockerfile` (app `events-api`)
+- [x] `frontend/Dockerfile` — multi-stage: build Node + serve Nginx com SPA fallback
+- [x] `frontend/nginx.conf` — SPA fallback para React Router, cache headers para assets
+- [x] `frontend/captain-definition` — aponta para `./frontend/Dockerfile` (app `events-web`)
+- [x] `build.ps1` — substitui `deploy-caprover.ps1` com suporte a `-Target api|web`, mantém últimos 5 tarballs em `/dist/`
+- [x] CORS corrigido em `backend/app/main.py` — usa `settings.CORS_ORIGINS` (env var) + regex Codespaces; era hardcoded para Codespaces only
+- [x] `VITE_API_URL` adicionado em `frontend/src/services/api.ts` — checado antes de qualquer detecção de hostname
+- [ ] Criar apps no CapRover (events-postgres, events-api, events-web)
+- [ ] Configurar variáveis de ambiente no CapRover para events-api
 - [ ] Validar deploy em staging CapRover
+- [ ] Criar usuário admin de produção
 
-**Status**: Preparação documental concluída; nenhuma mudança de código ou infraestrutura aplicada
+**Status**: Arquivos de infra prontos; próximo passo é criar as apps no CapRover e executar o primeiro deploy
 
 ---
 
@@ -97,8 +107,15 @@
 
 ## Next Actions (Short Horizon) 📋
 
-### Priority 1: CI + Integração
-- [ ] Implementar preparo técnico de CapRover conforme `docs/04_technical/DEPLOYMENT_CAPROVER.md`
+### Priority 1: Deploy CapRover
+- [ ] Criar apps no CapRover: `events-postgres` (one-click), `events-api`, `events-web`
+- [ ] Configurar env vars em `events-api` (DATABASE_URL, SECRET_KEY, CORS_ORIGINS, DEBUG)
+- [ ] Configurar VITE_API_URL como build arg no app `events-web`
+- [ ] Rodar `.\build.ps1 -Target api` e fazer upload do tarball para `events-api`
+- [ ] Rodar `.\build.ps1 -Target web` e fazer upload do tarball para `events-web`
+- [ ] Validar `/health` na API e fluxo de login no frontend
+
+### Priority 2: CI + Integração
 - [ ] Configurar GitHub Actions para `pytest` + `npm run build`
 - [ ] Adicionar testes API-level para rotas críticas do MVP
 - [ ] Documentar troubleshooting dos testes de integração
@@ -128,7 +145,7 @@
 - ⚠️ Não há bloqueadores funcionais ativos para o MVP interno
 
 ### Residual Risks
-- ⚠️ Deploy CapRover ainda não está pronto para produção: frontend estático, CORS de produção, comando backend sem reload e migrations precisam ser implementados
+- ⚠️ Deploy CapRover ainda não foi validado em staging — arquivos prontos, mas o primeiro deploy real ainda não ocorreu
 - ⚠️ Testes automatizados atuais estão no nível de serviço/dependency; cobertura HTTP ainda não foi estabilizada
 - ⚠️ Evidência visual do fluxo (screenshots) ainda está pendente
 - ⚠️ A regra entre número de hóspedes cadastrados e `f_total_guests` já foi decidida, mas ainda não foi implementada

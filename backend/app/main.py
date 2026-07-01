@@ -22,19 +22,12 @@ app = FastAPI(
 )
 
 # Configure CORS middleware
-"""
+# allow_origins comes from CORS_ORIGINS env var (set in CapRover for production)
+# allow_origin_regex covers GitHub Codespaces dev environments
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.CORS_ORIGINS,
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-"""
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origin_regex="https://.*\\.app\\.github\\.dev",
+    allow_origin_regex=r"https://.*\.app\.github\.dev",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

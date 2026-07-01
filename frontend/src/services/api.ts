@@ -1,6 +1,10 @@
 import axios from 'axios'
 
 const getApiBaseUrl = () => {
+  if (import.meta.env.VITE_API_URL) {
+    return import.meta.env.VITE_API_URL as string
+  }
+
   if (window.location.hostname === 'localhost') {
     return 'http://localhost:8000'
   }
