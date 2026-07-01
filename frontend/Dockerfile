@@ -7,7 +7,7 @@ RUN npm ci
 
 COPY frontend/ ./
 
-ARG VITE_API_URL=https://api.events.lion.app.br
+ARG VITE_API_URL=https://events-api.lion.app.br
 ENV VITE_API_URL=$VITE_API_URL
 
 RUN npm run build
