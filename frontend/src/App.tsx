@@ -5,6 +5,7 @@ import HotelsPage from './pages/HotelsPage'
 import EventsPage from './pages/EventsPage'
 import GuestsPage from './pages/GuestsPage'
 import RoomsPage from './pages/RoomsPage'
+import RoomGridPage from './pages/RoomGridPage'
 import TasksPage from './pages/TasksPage'
 import PrivateRoute from './components/PrivateRoute'
 import AppEntryRedirect from './components/AppEntryRedirect'
@@ -33,6 +34,11 @@ function App() {
           <Route path="/events/:eventId/rooms" element={
             <PrivateRoute>
               <RoomsPage />
+            </PrivateRoute>
+          } />
+          <Route path="/events/:eventId/room-grid" element={
+            <PrivateRoute>
+              <RoomGridPage />
             </PrivateRoute>
           } />
           <Route path="/events/:eventId/tasks" element={

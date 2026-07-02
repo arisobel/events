@@ -161,6 +161,12 @@ export default function RoomsPage() {
             >
               Tasks
             </button>
+            <button
+              onClick={() => navigate(`/events/${eventId}/room-grid`)}
+              className="bg-amber-500 text-white px-3 py-1.5 rounded-md hover:bg-amber-600"
+            >
+              📅 Room Grid
+            </button>
           </div>
           <button
             onClick={() => setShowCreateForm((current) => !current)}

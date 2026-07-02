@@ -331,6 +331,12 @@ export default function EventsPage() {
                         Room Allocations
                       </button>
                       <button
+                        onClick={() => navigate(`/events/${event.id}/room-grid`)}
+                        className="bg-amber-500 text-white px-4 py-2 rounded-md hover:bg-amber-600 text-sm font-medium whitespace-nowrap"
+                      >
+                        📅 Room Grid
+                      </button>
+                      <button
                         onClick={() => navigate(`/events/${event.id}/tasks`)}
                         className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 text-sm font-medium whitespace-nowrap"
                       >

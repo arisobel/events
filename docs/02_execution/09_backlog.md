@@ -102,9 +102,11 @@
 - [ ] Incluir extras no extrato da família
 
 **Frontend (Gestão — Financeiro):**
-- [ ] Grade visual de quartos × datas (estilo planilha/calendar grid) com cor por status de ocupação
-- [ ] Painel financeiro do evento: ocupação % + receita total/recebida/pendente
+- [x] Grade visual de quartos × datas (estilo planilha/calendar grid) com cor por status de pagamento — `RoomGridPage` (2026-07-02)
+- [x] Painel financeiro do evento: ocupação % + receita total/recebida/pendente — cards no topo da grade (2026-07-02)
 - [ ] Tela de extrato por família com registro de pagamentos
+- [ ] UI para registrar pagamento (editar `f_amount_paid`/`f_payment_status` da reserva)
+- [ ] Swap direto entre dois quartos ocupados (precisa de endpoint dedicado — conflito na validação com dois updates sequenciais)
 
 **Estimativa**: 8-12h backend / 6-10h frontend  
 **Valor**: substitui a planilha Excel do gestor financeiro; visibilidade total de ocupação e receita

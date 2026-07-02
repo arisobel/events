@@ -338,6 +338,53 @@ export interface RoomAllocationUpdate {
   f_notes?: string
 }
 
+// Finance module types
+export type PaymentStatus = 'pending' | 'partial' | 'paid'
+
+export interface RoomGridAllocation {
+  allocation_id: number
+  reservation_id: number
+  group_id: number
+  group_name: string
+  f_start_date: string
+  f_end_date: string
+  f_payment_status: PaymentStatus
+  f_checkin_status: string
+}
+
+export interface RoomGridRoom {
+  room_id: number
+  f_room_number: string
+  f_room_type: string | null
+  f_room_type_label: string | null
+  f_floor: string | null
+  f_block: string | null
+  f_capacity: number
+  f_price_per_night: string | number | null
+  allocations: RoomGridAllocation[]
+}
+
+export interface RoomGrid {
+  event_id: number
+  event_name: string
+  f_start_date: string
+  f_end_date: string
+  rooms: RoomGridRoom[]
+}
+
+export interface FinancialSummary {
+  event_id: number
+  total_rooms: number
+  event_nights: number
+  allocated_room_nights: number
+  occupancy_rate: number
+  reservation_count: number
+  expected_revenue: string | number
+  received_amount: string | number
+  pending_amount: string | number
+  reservations_by_payment_status: Record<string, number>
+}
+
 export const authService = {
   async login(credentials: LoginCredentials): Promise<LoginResponse> {
     const formData = new URLSearchParams()
@@ -533,6 +580,18 @@ export const roomAllocationService = {
 
   async getReservationAllocations(reservationId: number): Promise<RoomAllocation[]> {
     const response = await api.get<RoomAllocation[]>(`/reservations/${reservationId}/room-allocations`)
+    return response.data
+  },
+}
+
+export const financeService = {
+  async getRoomGrid(eventId: number): Promise<RoomGrid> {
+    const response = await api.get<RoomGrid>(`/events/${eventId}/room-grid`)
+    return response.data
+  },
+
+  async getFinancialSummary(eventId: number): Promise<FinancialSummary> {
+    const response = await api.get<FinancialSummary>(`/events/${eventId}/financial-summary`)
     return response.data
   },
 }

@@ -60,6 +60,18 @@
 
 ---
 
+### Grade Visual de Quartos — RoomGridPage (2026-07-02)
+- [x] `financeService` no frontend (`getRoomGrid`, `getFinancialSummary`) + tipos do módulo finance
+- [x] `RoomGridPage` em `/events/{id}/room-grid` — linhas = quartos, colunas = noites do evento
+- [x] Coluna HOJE destacada; barras coloridas por status de pagamento (verde pago / âmbar parcial / vermelho pendente); ✓ = check-in feito
+- [x] Cards de resumo: ocupação %, receita esperada/recebida/pendente
+- [x] Clique na barra → painel de detalhe com troca de quarto/datas/check-in (`PUT /room-allocations`)
+- [x] Clique em célula livre → criar alocação para reserva existente naquele quarto/data
+- [x] Navegação: botão "📅 Room Grid" na EventsPage e RoomsPage
+- [ ] Pendente: validação do build no Codespaces (node indisponível na estação local)
+
+---
+
 ### Edição de Hotéis e Quartos (2026-07-02)
 - [x] `HotelUpdate` expandido — agora edita documento, telefone, email, endereço, cidade, estado, país e notas (antes só nome/trade/phone/email/active)
 - [x] `HotelRoomUpdate` expandido — número, tipo, rótulo comercial, andar, bloco, capacidade, preço/noite, status e notas
