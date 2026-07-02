@@ -1,5 +1,6 @@
 """Guests module - schemas, service, router."""
 from datetime import date
+from decimal import Decimal
 from typing import List, Literal, Optional
 
 from pydantic import BaseModel, ConfigDict, field_validator
@@ -7,6 +8,7 @@ from pydantic import BaseModel, ConfigDict, field_validator
 
 GuestGender = Literal["male", "female"]
 GuestType = Literal["adult", "child", "infant", "staff"]
+PaymentStatus = Literal["pending", "partial", "paid"]
 
 
 def _normalize_enum_value(value: str | None) -> str | None:
@@ -22,6 +24,10 @@ class ReservationBase(BaseModel):
     f_package_type: Optional[str] = None
     f_status: str = "confirmed"
     f_total_guests: Optional[int] = None
+    f_amount_total: Optional[Decimal] = None
+    f_amount_paid: Decimal = Decimal("0")
+    f_payment_status: PaymentStatus = "pending"
+    f_payment_notes: Optional[str] = None
     f_notes: Optional[str] = None
 
 
@@ -36,6 +42,10 @@ class ReservationUpdate(BaseModel):
     f_package_type: Optional[str] = None
     f_status: Optional[str] = None
     f_total_guests: Optional[int] = None
+    f_amount_total: Optional[Decimal] = None
+    f_amount_paid: Optional[Decimal] = None
+    f_payment_status: Optional[PaymentStatus] = None
+    f_payment_notes: Optional[str] = None
     f_notes: Optional[str] = None
 
 

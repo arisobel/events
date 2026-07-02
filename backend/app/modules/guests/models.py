@@ -1,5 +1,5 @@
 """Guests module - SQLAlchemy models."""
-from sqlalchemy import Boolean, Column, Integer, String, CHAR, DateTime, Text, Date, ForeignKey
+from sqlalchemy import Boolean, Column, Integer, Numeric, String, CHAR, DateTime, Text, Date, ForeignKey
 from sqlalchemy.orm import relationship
 from datetime import datetime
 from app.db.base import Base
@@ -49,6 +49,10 @@ class Reservation(Base):
     f_package_type = Column(String(50))
     f_status = Column(String(30), default='confirmed')
     f_total_guests = Column(Integer)
+    f_amount_total = Column(Numeric(10, 2))
+    f_amount_paid = Column(Numeric(10, 2), nullable=False, default=0)
+    f_payment_status = Column(String(20), nullable=False, default='pending')  # pending, partial, paid
+    f_payment_notes = Column(Text)
     f_notes = Column(Text)
     
     group = relationship("GuestGroup", back_populates="reservations")

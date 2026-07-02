@@ -1,5 +1,5 @@
 """Hotel module - SQLAlchemy models."""
-from sqlalchemy import Column, Integer, String, CHAR, DateTime, Text, ForeignKey
+from sqlalchemy import Column, Integer, Numeric, String, CHAR, DateTime, Text, ForeignKey
 from sqlalchemy.orm import relationship
 from datetime import datetime
 from app.db.base import Base
@@ -57,6 +57,8 @@ class HotelRoom(Base):
     f_hotel_id = Column(Integer, ForeignKey("t_hotel.id"), nullable=False)
     f_room_number = Column(String(20), nullable=False)
     f_room_type = Column(String(50))  # standard, suite, family, etc.
+    f_room_type_label = Column(String(100))  # rótulo comercial livre exibido na grade/extrato
+    f_price_per_night = Column(Numeric(10, 2))
     f_floor = Column(String(50))
     f_block = Column(String(50))
     f_capacity = Column(Integer, nullable=False, default=1)

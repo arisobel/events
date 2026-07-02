@@ -2,6 +2,7 @@
 from pydantic import BaseModel, ConfigDict
 from typing import Optional
 from datetime import datetime
+from decimal import Decimal
 
 
 # Hotel schemas
@@ -65,9 +66,11 @@ class HotelSpaceResponse(HotelSpaceBase):
 class HotelRoomBase(BaseModel):
     f_room_number: str
     f_room_type: Optional[str] = None
+    f_room_type_label: Optional[str] = None
     f_floor: Optional[str] = None
     f_block: Optional[str] = None
     f_capacity: int = 1
+    f_price_per_night: Optional[Decimal] = None
     f_notes: Optional[str] = None
 
 
@@ -76,6 +79,8 @@ class HotelRoomCreate(HotelRoomBase):
 
 
 class HotelRoomUpdate(BaseModel):
+    f_room_type_label: Optional[str] = None
+    f_price_per_night: Optional[Decimal] = None
     f_status: Optional[str] = None
     f_notes: Optional[str] = None
 

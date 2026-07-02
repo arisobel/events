@@ -89,12 +89,12 @@
 ### 🔴 PRIORITY 1: Módulo Financeiro — Grade de Quartos
 > Gestor estratégico/financeiro: substitui a planilha principal de alocação e receita
 
-**Backend — Phase 1 (Grade de ocupação):**
-- [ ] Adicionar precificação a `HotelRoom`: `f_price_per_night`, `f_room_type_label`
-- [ ] Adicionar campos financeiros a `Reservation`: `f_amount_total`, `f_amount_paid`, `f_payment_status` (pending/partial/paid), `f_payment_notes`
-- [ ] Endpoint `GET /events/{id}/room-grid` — retorna grade: quartos × períodos × família alocada + status financeiro
-- [ ] Endpoint `GET /events/{id}/financial-summary` — totais: receita esperada, recebida, pendente, ocupação %
-- [ ] Endpoint `GET /guest-groups/{id}/invoice` — extrato por família: quartos, períodos, extras, total, pago, saldo
+**Backend — Phase 1 (Grade de ocupação):** ✅ **IMPLEMENTADO 2026-07-02**
+- [x] Adicionar precificação a `HotelRoom`: `f_price_per_night`, `f_room_type_label`
+- [x] Adicionar campos financeiros a `Reservation`: `f_amount_total`, `f_amount_paid`, `f_payment_status` (pending/partial/paid), `f_payment_notes`
+- [x] Endpoint `GET /events/{id}/room-grid` — retorna grade: quartos × períodos × família alocada + status financeiro
+- [x] Endpoint `GET /events/{id}/financial-summary` — totais: receita esperada, recebida, pendente, ocupação %
+- [x] Endpoint `GET /events/{event_id}/groups/{group_id}/invoice` — extrato por família: quartos, períodos, total, pago, saldo (extras ficam para Phase 2)
 
 **Backend — Phase 2 (Extras e exclusivos):**
 - [ ] Modelo `ReservationExtra`: item extra por reserva (sala exclusiva de refeição, serviço) com valor

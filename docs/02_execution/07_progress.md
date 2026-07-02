@@ -2,12 +2,12 @@
 
 ## Current State
 
-- **Phase**: Phase 1 - Core Backend + Internal MVP Slice ✅ **IMPLEMENTADO**
-- **Last Update**: 30 de Junho de 2026 - infraestrutura de deploy CapRover implementada
+- **Phase**: Phase 1 - Core Backend + Internal MVP Slice ✅ **IMPLEMENTADO** | Financeiro Backend Phase 1 ✅
+- **Last Update**: 02 de Julho de 2026 - Módulo Financeiro Backend Phase 1 implementado
 - **Status**: Fluxo core disponível na UI: Hotels → Events → Guests/Reservations → Room Allocations → Tasks
 - **Environment**: GitHub Codespaces + Docker
-- **Recent**: Deploy CapRover implementado — Dockerfiles de produção, build script, captain-definitions, CORS e VITE_API_URL configurados
-- **Current Product Boundary**: operação de hóspedes agora combina `GuestGroup + Guest`; `Reservation` permanece vinculada ao grupo
+- **Recent**: Módulo `finance` criado — precificação de quartos, pagamento por reserva, endpoints room-grid / financial-summary / invoice (migration `9d2f5c1e7a34`)
+- **Current Product Boundary**: operação de hóspedes agora combina `GuestGroup + Guest`; `Reservation` permanece vinculada ao grupo e agora carrega dados financeiros
 - **Deployment State**: CapRover pronto para deploy — arquivos de infra criados; validação em staging pendente
 
 ---
@@ -57,6 +57,18 @@
 - [x] Runbook inicial de deploy CapRover criado em `docs/04_technical/DEPLOYMENT_CAPROVER.md`
 - [x] Script `deploy-caprover.ps1` criado para gerar pacote `.tar` timestampado em `/dist`
 - [x] **CapRover production deploy implementado** — ver seção abaixo
+
+---
+
+### Módulo Financeiro — Backend Phase 1 (2026-07-02)
+- [x] `HotelRoom.f_price_per_night` e `HotelRoom.f_room_type_label` (modelo + schemas + migration)
+- [x] `Reservation.f_amount_total`, `f_amount_paid`, `f_payment_status` (pending/partial/paid), `f_payment_notes`
+- [x] Migration Alembic `9d2f5c1e7a34`
+- [x] Novo módulo `app/modules/finance` (schemas + service + router, sem models próprios)
+- [x] `GET /events/{id}/room-grid` — quartos do hotel × alocações com grupo e status financeiro
+- [x] `GET /events/{id}/financial-summary` — receita esperada/recebida/pendente, ocupação %, contagem por status
+- [x] `GET /events/{event_id}/groups/{group_id}/invoice` — extrato por família com linhas por alocação, noites, subtotais e saldo
+- [x] 7 testes novos em `tests/test_finance.py` — suíte total: 16 verdes
 
 ---
 
@@ -175,7 +187,7 @@
 ## Metrics
 
 ### Verification
-- Backend automated tests: **7 passing**
+- Backend automated tests: **16 passing**
 - Frontend build: **passing**
 
 ### Module Completion

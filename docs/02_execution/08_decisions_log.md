@@ -1,5 +1,31 @@
 # Decisions Log
 
+## [2026-07-02] Módulo Financeiro — Backend Phase 1 Implementado
+
+**Context:**
+Primeiro passo do Gestor Financeiro (Priority 1): precificação de quartos, rastreamento de pagamento por reserva e endpoints de leitura consolidada (grade, resumo, extrato).
+
+**Decisions:**
+- `HotelRoom` ganha `f_price_per_night` (Numeric 10,2) e `f_room_type_label` (rótulo comercial livre)
+- `Reservation` ganha `f_amount_total`, `f_amount_paid` (default 0), `f_payment_status` (pending/partial/paid) e `f_payment_notes`
+- **`f_payment_status` é controlado manualmente pelo operador** — não é derivado automaticamente dos valores. Segue a filosofia de "warning não-bloqueante": a UI pode sinalizar inconsistência (ex.: pago = total mas status pendente), mas o sistema não impõe
+- `f_amount_total` da reserva é o valor autoritativo (negociado); o extrato também expõe `calculated_total` (noites × preço do quarto) como referência para conferência
+- Cálculo de noites: `end_date - start_date` (dia de checkout não conta); alocação de dia único conta como 1 noite
+- Novo módulo `finance` **sem models próprios** — é camada de leitura sobre Hotel/Guests/Rooms
+- Endpoint de extrato ficou `GET /events/{event_id}/groups/{group_id}/invoice` (o backlog citava `/guest-groups/{id}/invoice`, mas o padrão do código nesta base é aninhar grupos sob eventos)
+- Ocupação % = noites alocadas / (total de quartos × noites do evento)
+
+**Impact:**
+- Migration `9d2f5c1e7a34` adiciona os 6 campos
+- 3 endpoints novos: `/events/{id}/room-grid`, `/events/{id}/financial-summary`, `/events/{id}/groups/{gid}/invoice`
+- 7 testes novos em `tests/test_finance.py`; suíte total com 16 verdes
+- Phase 2 (ReservationExtra) e frontend (grade visual) permanecem no backlog
+
+**Participants:** Product + Engineering  
+**Status:** ✅ Implementado
+
+---
+
 ## [2026-07-01] Visão Ampliada do Domínio — Evento Judaico de Hospitalidade
 
 **Context:**
