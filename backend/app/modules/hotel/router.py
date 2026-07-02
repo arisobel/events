@@ -104,6 +104,21 @@ def create_room(
     return service.create_hotel_room(db, room_create)
 
 
+@router.put("/{hotel_id}/rooms/{room_id}", response_model=schemas.HotelRoomResponse)
+def update_room(
+    hotel_id: int,
+    room_id: int,
+    room: schemas.HotelRoomUpdate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
+):
+    """Update a room's data (number, type, capacity, price, status, etc.)."""
+    updated_room = service.update_hotel_room(db, hotel_id, room_id, room)
+    if not updated_room:
+        raise HTTPException(status_code=404, detail="Room not found for hotel")
+    return updated_room
+
+
 @router.get("/{hotel_id}/kitchens", response_model=List[schemas.HotelKitchenResponse])
 def get_hotel_kitchens(
     hotel_id: int,

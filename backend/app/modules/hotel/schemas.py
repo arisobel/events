@@ -26,8 +26,14 @@ class HotelCreate(HotelBase):
 class HotelUpdate(BaseModel):
     f_name: Optional[str] = None
     f_trade_name: Optional[str] = None
+    f_document: Optional[str] = None
     f_phone: Optional[str] = None
     f_email: Optional[str] = None
+    f_address: Optional[str] = None
+    f_city: Optional[str] = None
+    f_state: Optional[str] = None
+    f_country: Optional[str] = None
+    f_notes: Optional[str] = None
     f_is_active: Optional[str] = None
 
 
@@ -79,7 +85,12 @@ class HotelRoomCreate(HotelRoomBase):
 
 
 class HotelRoomUpdate(BaseModel):
+    f_room_number: Optional[str] = None
+    f_room_type: Optional[str] = None
     f_room_type_label: Optional[str] = None
+    f_floor: Optional[str] = None
+    f_block: Optional[str] = None
+    f_capacity: Optional[int] = None
     f_price_per_night: Optional[Decimal] = None
     f_status: Optional[str] = None
     f_notes: Optional[str] = None

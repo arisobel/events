@@ -60,6 +60,16 @@
 
 ---
 
+### Edição de Hotéis e Quartos (2026-07-02)
+- [x] `HotelUpdate` expandido — agora edita documento, telefone, email, endereço, cidade, estado, país e notas (antes só nome/trade/phone/email/active)
+- [x] `HotelRoomUpdate` expandido — número, tipo, rótulo comercial, andar, bloco, capacidade, preço/noite, status e notas
+- [x] Service `update_hotel_room` + rota `PUT /hotels/{hotel_id}/rooms/{room_id}` (não existia edição de quarto)
+- [x] Frontend `hotelService.updateHotel` e `updateHotelRoom`
+- [x] `HotelsPage` com edição de hotel e quarto reutilizando os formulários; campo de **preço/noite** e **rótulo comercial** agora editáveis na UI (destrava a precificação do módulo financeiro)
+- [x] 6 testes novos em `tests/test_hotel_edit.py`
+
+---
+
 ### Módulo Financeiro — Backend Phase 1 (2026-07-02)
 - [x] `HotelRoom.f_price_per_night` e `HotelRoom.f_room_type_label` (modelo + schemas + migration)
 - [x] `Reservation.f_amount_total`, `f_amount_paid`, `f_payment_status` (pending/partial/paid), `f_payment_notes`
@@ -187,8 +197,8 @@
 ## Metrics
 
 ### Verification
-- Backend automated tests: **16 passing**
-- Frontend build: **passing**
+- Backend automated tests: **22 passing**
+- Frontend build: **passing** (validado por último em Codespaces; node/docker indisponíveis na estação Windows atual)
 
 ### Module Completion
 - Phase 0 (Bootstrap): **100%** ✅

@@ -92,14 +92,30 @@ export interface HotelCreate {
   f_notes?: string
 }
 
+export interface HotelUpdate {
+  f_name?: string
+  f_trade_name?: string
+  f_document?: string
+  f_phone?: string
+  f_email?: string
+  f_address?: string
+  f_city?: string
+  f_state?: string
+  f_country?: string
+  f_notes?: string
+  f_is_active?: string
+}
+
 export interface HotelRoom {
   id: number
   f_hotel_id: number
   f_room_number: string
   f_room_type: string | null
+  f_room_type_label?: string | null
   f_floor: string | null
   f_block: string | null
   f_capacity: number
+  f_price_per_night?: string | null
   f_status: string
   f_notes?: string | null
 }
@@ -107,9 +123,23 @@ export interface HotelRoom {
 export interface HotelRoomCreate {
   f_room_number: string
   f_room_type?: string
+  f_room_type_label?: string
   f_floor?: string
   f_block?: string
   f_capacity: number
+  f_price_per_night?: string | number
+  f_notes?: string
+}
+
+export interface HotelRoomUpdate {
+  f_room_number?: string
+  f_room_type?: string
+  f_room_type_label?: string
+  f_floor?: string
+  f_block?: string
+  f_capacity?: number
+  f_price_per_night?: string | number
+  f_status?: string
   f_notes?: string
 }
 
@@ -357,6 +387,11 @@ export const hotelService = {
     return response.data
   },
 
+  async updateHotel(id: number, hotel: HotelUpdate): Promise<Hotel> {
+    const response = await api.put<Hotel>(`/hotels/${id}`, hotel)
+    return response.data
+  },
+
   async getHotelRooms(hotelId: number): Promise<HotelRoom[]> {
     const response = await api.get<HotelRoom[]>(`/hotels/${hotelId}/rooms`)
     return response.data
@@ -364,6 +399,15 @@ export const hotelService = {
 
   async createHotelRoom(hotelId: number, room: HotelRoomCreate): Promise<HotelRoom> {
     const response = await api.post<HotelRoom>(`/hotels/${hotelId}/rooms`, room)
+    return response.data
+  },
+
+  async updateHotelRoom(
+    hotelId: number,
+    roomId: number,
+    room: HotelRoomUpdate,
+  ): Promise<HotelRoom> {
+    const response = await api.put<HotelRoom>(`/hotels/${hotelId}/rooms/${roomId}`, room)
     return response.data
   },
 }

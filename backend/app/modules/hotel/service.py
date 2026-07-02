@@ -61,11 +61,38 @@ def create_hotel_room(db: Session, room: schemas.HotelRoomCreate) -> models.Hote
     return db_room
 
 
+def get_hotel_room(db: Session, hotel_id: int, room_id: int) -> Optional[models.HotelRoom]:
+    return (
+        db.query(models.HotelRoom)
+        .filter(models.HotelRoom.id == room_id, models.HotelRoom.f_hotel_id == hotel_id)
+        .first()
+    )
+
+
+def update_hotel_room(
+    db: Session,
+    hotel_id: int,
+    room_id: int,
+    room: schemas.HotelRoomUpdate,
+) -> Optional[models.HotelRoom]:
+    db_room = get_hotel_room(db, hotel_id, room_id)
+    if not db_room:
+        return None
+
+    update_data = room.model_dump(exclude_unset=True)
+    for key, value in update_data.items():
+        setattr(db_room, key, value)
+
+    db.commit()
+    db.refresh(db_room)
+    return db_room
+
+
 def update_room_status(db: Session, room_id: int, status: str) -> Optional[models.HotelRoom]:
     db_room = db.query(models.HotelRoom).filter(models.HotelRoom.id == room_id).first()
     if not db_room:
         return None
-    
+
     db_room.f_status = status
     db.commit()
     db.refresh(db_room)

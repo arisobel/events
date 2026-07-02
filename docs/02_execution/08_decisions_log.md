@@ -1,5 +1,27 @@
 # Decisions Log
 
+## [2026-07-02] Edição de Hotéis e Quartos
+
+**Context:**
+Cadastro de hotéis/quartos só permitia criar. Faltava editar — e não havia forma de definir o preço do quarto pela UI, o que travava o módulo financeiro recém-criado.
+
+**Decisions:**
+- `HotelUpdate` deixou de ser um subconjunto arbitrário e passou a cobrir todos os campos de contato/localização + notas
+- Criada rota `PUT /hotels/{hotel_id}/rooms/{room_id}` (edição completa do quarto) — validando que o quarto pertence ao hotel da URL
+- `update_room_status()` foi mantido para uso pontual, mas a edição rica passa por `update_hotel_room()`
+- Frontend reutiliza os mesmos formulários para criar e editar (modo controlado por `editingHotelId`/`editingRoomId`), evitando duplicação de UI
+- O seletor de hotel fica travado ao editar um quarto (não se move quarto de hotel por esse caminho)
+- Campos `f_price_per_night` e `f_room_type_label` agora são editáveis na UI — este é o ponto onde o operador define a precificação que alimenta a grade e o extrato
+
+**Impact:**
+- 6 testes novos em `tests/test_hotel_edit.py`; suíte total: 22 verdes
+- Precificação de quartos passa a ser operável de ponta a ponta pela interface
+
+**Participants:** Product + Engineering  
+**Status:** ✅ Implementado
+
+---
+
 ## [2026-07-02] Módulo Financeiro — Backend Phase 1 Implementado
 
 **Context:**
