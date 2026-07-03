@@ -60,6 +60,15 @@
 
 ---
 
+### Pacote Feedback do Grid (2026-07-03)
+- [x] **Edição de evento**: `EventUpdate` completo (datas, tipo, families, entry default) + validação de datas + UI na EventsPage
+- [x] **Evento de entrada padrão**: `f_is_entry_default` exclusivo + redirect de entrada (flag → evento em curso → lista); destino room-grid durante o evento, guests fora dele
+- [x] **Preço por Evento × Quarto**: `t_event_room_price` com fallback ao preço base; grid/extrato usam preço efetivo; UI clicando no quarto no Room Grid
+- [x] Migration `b7e3a9c4d512`; suíte total: 28 testes verdes
+- [ ] Backlog estruturado: períodos+hebcal no grid; atribuição pessoa→quarto
+
+---
+
 ### Grade Visual de Quartos — RoomGridPage (2026-07-02)
 - [x] `financeService` no frontend (`getRoomGrid`, `getFinancialSummary`) + tipos do módulo finance
 - [x] `RoomGridPage` em `/events/{id}/room-grid` — linhas = quartos, colunas = noites do evento
@@ -209,7 +218,7 @@
 ## Metrics
 
 ### Verification
-- Backend automated tests: **22 passing**
+- Backend automated tests: **28 passing**
 - Frontend build: **passing** (validado por último em Codespaces; node/docker indisponíveis na estação Windows atual)
 
 ### Module Completion

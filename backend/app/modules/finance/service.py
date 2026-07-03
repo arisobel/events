@@ -14,7 +14,7 @@ from app.modules.guests import models as guest_models
 from app.modules.hotel import models as hotel_models
 from app.modules.rooms import models as room_models
 
-from . import schemas
+from . import models, schemas
 
 
 def _nights(start_date: date, end_date: date) -> int:
@@ -24,6 +24,90 @@ def _nights(start_date: date, end_date: date) -> int:
 
 def _get_event(db: Session, event_id: int) -> Optional[event_models.Event]:
     return db.query(event_models.Event).filter(event_models.Event.id == event_id).first()
+
+
+def _get_event_price_map(db: Session, event_id: int) -> dict:
+    """Overrides de preço do evento: room_id -> preço/noite."""
+    rows = (
+        db.query(models.EventRoomPrice)
+        .filter(models.EventRoomPrice.f_event_id == event_id)
+        .all()
+    )
+    return {row.f_room_id: row.f_price_per_night for row in rows}
+
+
+def _effective_price(price_map: dict, room: hotel_models.HotelRoom) -> Optional[Decimal]:
+    override = price_map.get(room.id)
+    if override is not None:
+        return Decimal(override)
+    if room.f_price_per_night is not None:
+        return Decimal(room.f_price_per_night)
+    return None
+
+
+def get_event_room_prices(db: Session, event_id: int) -> Optional[List[models.EventRoomPrice]]:
+    if not _get_event(db, event_id):
+        return None
+    return (
+        db.query(models.EventRoomPrice)
+        .filter(models.EventRoomPrice.f_event_id == event_id)
+        .all()
+    )
+
+
+def upsert_event_room_price(
+    db: Session,
+    event_id: int,
+    room_id: int,
+    payload: schemas.EventRoomPriceUpsert,
+) -> models.EventRoomPrice:
+    event = _get_event(db, event_id)
+    if not event:
+        raise ValueError("Event not found")
+
+    room = db.query(hotel_models.HotelRoom).filter(hotel_models.HotelRoom.id == room_id).first()
+    if not room:
+        raise ValueError("Room not found")
+    if room.f_hotel_id != event.f_hotel_id:
+        raise ValueError("Room does not belong to the event hotel")
+
+    db_price = (
+        db.query(models.EventRoomPrice)
+        .filter(
+            models.EventRoomPrice.f_event_id == event_id,
+            models.EventRoomPrice.f_room_id == room_id,
+        )
+        .first()
+    )
+    if db_price:
+        db_price.f_price_per_night = payload.f_price_per_night
+    else:
+        db_price = models.EventRoomPrice(
+            f_event_id=event_id,
+            f_room_id=room_id,
+            f_price_per_night=payload.f_price_per_night,
+        )
+        db.add(db_price)
+
+    db.commit()
+    db.refresh(db_price)
+    return db_price
+
+
+def delete_event_room_price(db: Session, event_id: int, room_id: int) -> bool:
+    db_price = (
+        db.query(models.EventRoomPrice)
+        .filter(
+            models.EventRoomPrice.f_event_id == event_id,
+            models.EventRoomPrice.f_room_id == room_id,
+        )
+        .first()
+    )
+    if not db_price:
+        return False
+    db.delete(db_price)
+    db.commit()
+    return True
 
 
 def _get_event_allocations(db: Session, event_id: int) -> List[tuple]:
@@ -54,6 +138,7 @@ def get_event_room_grid(db: Session, event_id: int) -> Optional[schemas.RoomGrid
         .order_by(hotel_models.HotelRoom.f_room_number)
         .all()
     )
+    price_map = _get_event_price_map(db, event_id)
 
     allocations_by_room: dict[int, List[schemas.RoomGridAllocation]] = {}
     for allocation, reservation, group in _get_event_allocations(db, event_id):
@@ -79,7 +164,9 @@ def get_event_room_grid(db: Session, event_id: int) -> Optional[schemas.RoomGrid
             f_floor=room.f_floor,
             f_block=room.f_block,
             f_capacity=room.f_capacity,
-            f_price_per_night=room.f_price_per_night,
+            f_price_per_night=_effective_price(price_map, room),
+            f_base_price_per_night=room.f_price_per_night,
+            f_has_event_price=room.id in price_map,
             allocations=sorted(
                 allocations_by_room.get(room.id, []),
                 key=lambda a: a.f_start_date,
@@ -171,6 +258,7 @@ def get_group_invoice(db: Session, event_id: int, group_id: int) -> Optional[sch
         .all()
     )
 
+    price_map = _get_event_price_map(db, event_id)
     invoice_reservations: List[schemas.InvoiceReservation] = []
     total_amount = Decimal("0")
     total_paid = Decimal("0")
@@ -191,11 +279,8 @@ def get_group_invoice(db: Session, event_id: int, group_id: int) -> Optional[sch
         calculated_total: Optional[Decimal] = None
         for allocation, room in allocations:
             nights = _nights(allocation.f_start_date, allocation.f_end_date)
-            subtotal = (
-                Decimal(room.f_price_per_night) * nights
-                if room.f_price_per_night is not None
-                else None
-            )
+            price_per_night = _effective_price(price_map, room)
+            subtotal = price_per_night * nights if price_per_night is not None else None
             if subtotal is not None:
                 calculated_total = (calculated_total or Decimal("0")) + subtotal
             lines.append(
@@ -207,7 +292,7 @@ def get_group_invoice(db: Session, event_id: int, group_id: int) -> Optional[sch
                     f_start_date=allocation.f_start_date,
                     f_end_date=allocation.f_end_date,
                     nights=nights,
-                    f_price_per_night=room.f_price_per_night,
+                    f_price_per_night=price_per_night,
                     subtotal=subtotal,
                 )
             )

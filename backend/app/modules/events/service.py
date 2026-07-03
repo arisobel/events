@@ -12,8 +12,22 @@ def get_events(db: Session, skip: int = 0, limit: int = 100) -> List[models.Even
     return db.query(models.Event).offset(skip).limit(limit).all()
 
 
+def _clear_entry_default(db: Session, exclude_event_id: Optional[int] = None) -> None:
+    query = db.query(models.Event).filter(models.Event.f_is_entry_default.is_(True))
+    if exclude_event_id is not None:
+        query = query.filter(models.Event.id != exclude_event_id)
+    for event in query.all():
+        event.f_is_entry_default = False
+
+
 def create_event(db: Session, event: schemas.EventCreate) -> models.Event:
+    if event.f_start_date > event.f_end_date:
+        raise ValueError("Event start date must be before or equal to end date")
+
     db_event = models.Event(**event.model_dump())
+    if db_event.f_is_entry_default:
+        _clear_entry_default(db)
+
     db.add(db_event)
     db.commit()
     db.refresh(db_event)
@@ -24,10 +38,19 @@ def update_event(db: Session, event_id: int, event: schemas.EventUpdate) -> Opti
     db_event = get_event(db, event_id)
     if not db_event:
         return None
-    
-    for key, value in event.model_dump(exclude_unset=True).items():
+
+    update_data = event.model_dump(exclude_unset=True)
+    start_date = update_data.get("f_start_date", db_event.f_start_date)
+    end_date = update_data.get("f_end_date", db_event.f_end_date)
+    if start_date > end_date:
+        raise ValueError("Event start date must be before or equal to end date")
+
+    if update_data.get("f_is_entry_default") is True:
+        _clear_entry_default(db, exclude_event_id=event_id)
+
+    for key, value in update_data.items():
         setattr(db_event, key, value)
-    
+
     db.commit()
     db.refresh(db_event)
     return db_event

@@ -113,6 +113,41 @@
 
 ---
 
+### 🕎 Períodos do Evento no Grid + Importação hebcal
+> Originado em sessão 2026-07-02: mostrar Yom Tov / Chol Hamoed abaixo da linha de dias do Room Grid
+>
+> Decisão de arquitetura: o grid lê `EventPeriod` (já existe modelo + rotas GET/POST); hebcal é **importador**, não dependência em tempo real
+
+**Backend:**
+- [ ] Endpoint `POST /events/{id}/periods/import-jewish-holidays` — proxy para API hebcal.com (JSON), cria `EventPeriod`s no intervalo do evento
+- [ ] Localização do hotel (cidade/geo) para horários corretos — depende de dados confiáveis no cadastro do hotel
+- [ ] (Decidir) importar também horários de velas/havdalá ou só datas — perguntas em aberto: Israel vs diáspora (2º dia Yom Tov)
+- [ ] PUT/DELETE de períodos (hoje só GET/POST)
+
+**Frontend:**
+- [ ] Faixa de períodos abaixo do header do Room Grid (nome + tipo colorido)
+- [ ] UI de gestão de períodos do evento + botão "Importar datas judaicas"
+
+**Estimativa**: 4-6h  
+**Valor**: contexto religioso-operacional direto na tela chave; reuso futuro nos displays de TV
+
+---
+
+### 🛏️ Atribuição Pessoa → Quarto
+> Originado em sessão 2026-07-02: "quem dorme em qual quarto?" — hoje o vínculo para no grupo
+>
+> Responde pergunta operacional frequente (check-in individual, emergências, "em qual quarto está fulano?")
+
+- [ ] (Decidir) modelo: `guest.f_room_allocation_id` (simples) vs tabela própria com histórico
+- [ ] Backend: atribuir/remover hóspede de uma alocação; validar capacidade do quarto (warning não-bloqueante)
+- [ ] Painel de detalhe do Room Grid: listar hóspedes do quarto; inferir automaticamente quando o grupo tem 1 quarto só
+- [ ] Busca "onde está fulano?" por nome → quarto
+
+**Estimativa**: 4-6h  
+**Valor**: fecha o ciclo de ocupação no nível da pessoa; base para check-in individual futuro
+
+---
+
 ### 📺 Displays de TV — Grade do Dia
 > Telas espalhadas pelo hotel mostrando cronograma e evento iminente, segmentadas por público
 >

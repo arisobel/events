@@ -1,5 +1,27 @@
 # Decisions Log
 
+## [2026-07-03] Feedback do Room Grid — Pacote de Melhorias (edição de evento, entrada padrão, preço por evento)
+
+**Context:**
+Revisão do Room Grid pelo Michel gerou 5 pontos. Implementados os 3 menores; 2 maiores estruturados no backlog.
+
+**Decisions:**
+1. **Edição de evento**: `EventUpdate` expandido (datas, tipo, expected_families, entry default). Validação de datas invertidas em create/update. Encolher datas com alocações fora da janela **não bloqueia** (filosofia de warning); a grade recorta na janela naturalmente. Hotel do evento não é editável (mover evento de hotel quebraria alocações).
+2. **Evento de entrada padrão**: flag `f_is_entry_default` em `Event`, exclusiva (marcar um desmarca os demais — mesmo padrão do líder de grupo). Resolução de entrada no app: flag manual → senão evento em curso por data → senão lista. **Destino**: durante o evento → Room Grid (tela de monitoramento); fora do período → Guests (preparação).
+3. **Preço por Evento × Quarto**: tabela `t_event_room_price` (unique event+room) sobrepõe o preço base de `HotelRoom`. Room-grid e extrato usam o **preço efetivo** (override > base); grid expõe base + flag para a UI distinguir (asterisco violeta). Rotas: GET/PUT/DELETE `/events/{id}/room-prices/{room_id}`. **Preço por período dentro do evento ficou de fora por decisão pendente** — a tabela pode ganhar `f_event_period_id` opcional depois sem quebrar nada.
+4. **Yom Tov no grid (hebcal)**: decidido que o grid lerá `EventPeriod` (já existente) e o hebcal entra como importador via backend — estruturado no backlog, não implementado.
+5. **Nomes no quarto**: nomes na barra do grid descartados (poluição visual); painel de detalhe mostrará hóspedes; atribuição real pessoa→quarto estruturada no backlog como feature própria.
+
+**Impact:**
+- Migration `b7e3a9c4d512` (flag + tabela de preços)
+- 6 testes novos (4 events edit, 2 event room price); suíte total: 28 verdes
+- UI: edição de evento na EventsPage (checkbox "Evento ativo"), preço por evento clicando no quarto no Room Grid
+
+**Participants:** Product (Michel) + Engineering  
+**Status:** ✅ Itens 2, 3, 4 implementados / 📋 Itens 1, 5 no backlog
+
+---
+
 ## [2026-07-02] Edição de Hotéis e Quartos
 
 **Context:**

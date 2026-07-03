@@ -59,6 +59,7 @@ type CellSegment =
 type Selection =
   | { kind: 'alloc'; room: RoomGridRoom; allocation: RoomGridAllocation }
   | { kind: 'create'; room: RoomGridRoom; date: string }
+  | { kind: 'room'; room: RoomGridRoom }
 
 export default function RoomGridPage() {
   const { eventId } = useParams<{ eventId: string }>()
@@ -79,6 +80,7 @@ export default function RoomGridPage() {
     f_notes: '',
   })
   const [saving, setSaving] = useState(false)
+  const [eventPriceInput, setEventPriceInput] = useState('')
 
   useEffect(() => {
     if (eventId) {
@@ -191,9 +193,50 @@ export default function RoomGridPage() {
     setError('')
   }
 
+  const openRoomPrice = (room: RoomGridRoom) => {
+    setSelection({ kind: 'room', room })
+    setEventPriceInput(
+      room.f_has_event_price && room.f_price_per_night != null
+        ? String(room.f_price_per_night)
+        : ''
+    )
+    setError('')
+  }
+
   const closePanel = () => {
     setSelection(null)
     setEditForm({})
+  }
+
+  const handleSaveEventPrice = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (selection?.kind !== 'room' || eventPriceInput === '') return
+    try {
+      setSaving(true)
+      setError('')
+      await financeService.setEventRoomPrice(Number(eventId), selection.room.room_id, eventPriceInput)
+      closePanel()
+      await loadData()
+    } catch (err: any) {
+      setError(err.response?.data?.detail || 'Failed to set event price')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const handleRemoveEventPrice = async () => {
+    if (selection?.kind !== 'room') return
+    try {
+      setSaving(true)
+      setError('')
+      await financeService.deleteEventRoomPrice(Number(eventId), selection.room.room_id)
+      closePanel()
+      await loadData()
+    } catch (err: any) {
+      setError(err.response?.data?.detail || 'Failed to remove event price')
+    } finally {
+      setSaving(false)
+    }
   }
 
   const handleSaveAllocation = async () => {
@@ -310,7 +353,7 @@ export default function RoomGridPage() {
           <span className="flex items-center gap-1.5">
             <span className="inline-block w-3 h-3 rounded border border-slate-300 bg-white" /> Livre (clique para alocar)
           </span>
-          <span className="flex items-center gap-1.5">✓ = check-in feito · cada célula = 1 noite</span>
+          <span className="flex items-center gap-1.5">✓ = check-in feito · cada célula = 1 noite · * = preço específico do evento</span>
         </div>
 
         {error && (
@@ -361,13 +404,21 @@ export default function RoomGridPage() {
                   className="grid border-b border-slate-100 items-stretch"
                   style={{ gridTemplateColumns: gridTemplate }}
                 >
-                  <div className="sticky left-0 z-10 bg-white px-3 py-2 border-r border-slate-200">
+                  <button
+                    onClick={() => openRoomPrice(room)}
+                    title="Editar preço deste quarto no evento"
+                    className="sticky left-0 z-10 bg-white px-3 py-2 border-r border-slate-200 text-left hover:bg-slate-50 transition-colors"
+                  >
                     <p className="text-sm font-semibold text-slate-900">{room.f_room_number}</p>
                     <p className="text-xs text-slate-500 truncate">
                       {room.f_room_type_label || room.f_room_type || 'Standard'} · {room.f_capacity}p
-                      {room.f_price_per_night != null ? ` · ${formatMoney(room.f_price_per_night)}` : ''}
+                      {room.f_price_per_night != null ? (
+                        <span className={room.f_has_event_price ? 'text-violet-700 font-semibold' : ''}>
+                          {' · '}{formatMoney(room.f_price_per_night)}{room.f_has_event_price ? '*' : ''}
+                        </span>
+                      ) : ' · sem preço'}
                     </p>
-                  </div>
+                  </button>
                   {(segmentsByRoom[room.room_id] || []).map((segment) => {
                     if (segment.kind === 'free') {
                       const isToday = segment.dayIndex === todayIndex
@@ -477,6 +528,56 @@ export default function RoomGridPage() {
                 Fechar
               </button>
             </div>
+          </div>
+        )}
+
+        {/* Detail panel: event room price */}
+        {selection?.kind === 'room' && (
+          <div className="bg-white rounded-lg shadow p-6 mt-4">
+            <h2 className="text-lg font-semibold text-gray-900 mb-1">
+              Preço do Quarto {selection.room.f_room_number} neste evento
+            </h2>
+            <p className="text-sm text-gray-600 mb-4">
+              Preço base do quarto: {selection.room.f_base_price_per_night != null
+                ? `${formatMoney(selection.room.f_base_price_per_night)}/noite`
+                : 'não definido'}
+              {selection.room.f_has_event_price && ' · este evento tem preço próprio'}
+            </p>
+            <form onSubmit={handleSaveEventPrice} className="flex flex-wrap items-center gap-3">
+              <input
+                type="number"
+                min={0}
+                step="0.01"
+                placeholder="Preço/noite neste evento (R$)"
+                value={eventPriceInput}
+                onChange={(e) => setEventPriceInput(e.target.value)}
+                className="px-3 py-2 border border-gray-300 rounded-md w-60"
+              />
+              <button
+                type="submit"
+                disabled={saving || eventPriceInput === ''}
+                className="bg-violet-600 text-white px-5 py-2 rounded-md hover:bg-violet-700 disabled:opacity-50"
+              >
+                {saving ? 'Saving...' : 'Definir preço do evento'}
+              </button>
+              {selection.room.f_has_event_price && (
+                <button
+                  type="button"
+                  onClick={handleRemoveEventPrice}
+                  disabled={saving}
+                  className="bg-gray-200 text-gray-700 px-5 py-2 rounded-md hover:bg-gray-300 disabled:opacity-50"
+                >
+                  Remover (voltar ao preço base)
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={closePanel}
+                className="bg-gray-200 text-gray-700 px-5 py-2 rounded-md hover:bg-gray-300"
+              >
+                Fechar
+              </button>
+            </form>
           </div>
         )}
 

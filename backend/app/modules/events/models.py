@@ -1,5 +1,5 @@
 """Events module - SQLAlchemy models."""
-from sqlalchemy import Column, Integer, String, CHAR, DateTime, Text, Date, ForeignKey
+from sqlalchemy import Boolean, Column, Integer, String, CHAR, DateTime, Text, Date, ForeignKey
 from sqlalchemy.orm import relationship
 from datetime import datetime
 from app.db.base import Base
@@ -18,6 +18,7 @@ class Event(Base):
     f_expected_guests = Column(Integer)
     f_expected_families = Column(Integer)
     f_status = Column(String(30), default='draft')
+    f_is_entry_default = Column(Boolean, nullable=False, default=False)
     f_notes = Column(Text)
     f_created_at = Column(DateTime, default=datetime.utcnow)
     f_updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)

@@ -22,6 +22,7 @@ from app.modules.events.models import Event, EventPeriod, EventSpace, EventConfi
 from app.modules.guests.models import GuestGroup, Guest, Reservation, SpecialRequest  # noqa
 from app.modules.rooms.models import RoomAllocation  # noqa
 from app.modules.tasks.models import Task, TaskComment, TaskStatusHistory  # noqa
+from app.modules.finance.models import EventRoomPrice  # noqa
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.

@@ -1,5 +1,7 @@
 """Finance module - FastAPI routes."""
-from fastapi import APIRouter, Depends, HTTPException
+from typing import List
+
+from fastapi import APIRouter, Depends, HTTPException, Response, status
 from sqlalchemy.orm import Session
 
 from app.db.session import get_db
@@ -48,3 +50,45 @@ def get_group_invoice(
     if not invoice:
         raise HTTPException(status_code=404, detail="Group not found for event")
     return invoice
+
+
+@router.get("/events/{event_id}/room-prices", response_model=List[schemas.EventRoomPriceResponse])
+def list_event_room_prices(
+    event_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+):
+    """Overrides de preço/noite dos quartos para o evento."""
+    prices = service.get_event_room_prices(db, event_id)
+    if prices is None:
+        raise HTTPException(status_code=404, detail="Event not found")
+    return prices
+
+
+@router.put("/events/{event_id}/room-prices/{room_id}", response_model=schemas.EventRoomPriceResponse)
+def upsert_event_room_price(
+    event_id: int,
+    room_id: int,
+    payload: schemas.EventRoomPriceUpsert,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+):
+    """Define (cria ou atualiza) o preço/noite do quarto para o evento."""
+    try:
+        return service.upsert_event_room_price(db, event_id, room_id, payload)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+
+@router.delete("/events/{event_id}/room-prices/{room_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_event_room_price(
+    event_id: int,
+    room_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+):
+    """Remove o override de preço do evento; o quarto volta ao preço base."""
+    deleted = service.delete_event_room_price(db, event_id, room_id)
+    if not deleted:
+        raise HTTPException(status_code=404, detail="Event room price not found")
+    return Response(status_code=status.HTTP_204_NO_CONTENT)

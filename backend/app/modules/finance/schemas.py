@@ -3,7 +3,21 @@ from datetime import date
 from decimal import Decimal
 from typing import Dict, List, Optional
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
+
+
+# Event room price schemas
+class EventRoomPriceUpsert(BaseModel):
+    f_price_per_night: Decimal
+
+
+class EventRoomPriceResponse(BaseModel):
+    id: int
+    f_event_id: int
+    f_room_id: int
+    f_price_per_night: Decimal
+
+    model_config = ConfigDict(from_attributes=True)
 
 
 # Room grid schemas
@@ -26,7 +40,9 @@ class RoomGridRoom(BaseModel):
     f_floor: Optional[str] = None
     f_block: Optional[str] = None
     f_capacity: int
-    f_price_per_night: Optional[Decimal] = None
+    f_price_per_night: Optional[Decimal] = None  # preço efetivo: evento > base do quarto
+    f_base_price_per_night: Optional[Decimal] = None
+    f_has_event_price: bool = False
     allocations: List[RoomGridAllocation] = []
 
 

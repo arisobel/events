@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom'
 import {
   Event,
   EventCreate,
+  EventUpdate,
   Hotel,
   eventService,
   hotelService,
@@ -18,6 +19,7 @@ export default function EventsPage() {
   const [error, setError] = useState('')
   const [showCreateForm, setShowCreateForm] = useState(false)
   const [creating, setCreating] = useState(false)
+  const [editingEventId, setEditingEventId] = useState<number | null>(null)
   const [newEvent, setNewEvent] = useState<EventCreate>({
     f_hotel_id: 0,
     f_name: '',
@@ -26,6 +28,7 @@ export default function EventsPage() {
     f_end_date: '',
     f_expected_guests: undefined,
     f_expected_families: undefined,
+    f_is_entry_default: false,
     f_notes: '',
   })
 
@@ -78,6 +81,40 @@ export default function EventsPage() {
     }
   }
 
+  const resetForm = () => {
+    setShowCreateForm(false)
+    setEditingEventId(null)
+    setNewEvent((current) => ({
+      ...current,
+      f_name: '',
+      f_event_type: '',
+      f_start_date: '',
+      f_end_date: '',
+      f_expected_guests: undefined,
+      f_expected_families: undefined,
+      f_is_entry_default: false,
+      f_notes: '',
+    }))
+  }
+
+  const openEditForm = (event: Event) => {
+    setEditingEventId(event.id)
+    setNewEvent({
+      f_hotel_id: event.f_hotel_id,
+      f_name: event.f_name,
+      f_event_type: event.f_event_type || '',
+      f_start_date: event.f_start_date,
+      f_end_date: event.f_end_date,
+      f_expected_guests: event.f_expected_guests ?? undefined,
+      f_expected_families: event.f_expected_families ?? undefined,
+      f_is_entry_default: event.f_is_entry_default,
+      f_notes: event.f_notes || '',
+    })
+    setShowCreateForm(true)
+    setError('')
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
   const handleCreateEvent = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!newEvent.f_hotel_id) {
@@ -96,27 +133,31 @@ export default function EventsPage() {
     try {
       setCreating(true)
       setError('')
-      await eventService.createEvent({
-        ...newEvent,
-        f_event_type: newEvent.f_event_type || undefined,
-        f_expected_guests: newEvent.f_expected_guests || undefined,
-        f_expected_families: newEvent.f_expected_families || undefined,
-        f_notes: newEvent.f_notes || undefined,
-      })
-      setShowCreateForm(false)
-      setNewEvent((current) => ({
-        ...current,
-        f_name: '',
-        f_event_type: '',
-        f_start_date: '',
-        f_end_date: '',
-        f_expected_guests: undefined,
-        f_expected_families: undefined,
-        f_notes: '',
-      }))
+      if (editingEventId) {
+        const payload: EventUpdate = {
+          f_name: newEvent.f_name,
+          f_event_type: newEvent.f_event_type || undefined,
+          f_start_date: newEvent.f_start_date,
+          f_end_date: newEvent.f_end_date,
+          f_expected_guests: newEvent.f_expected_guests || undefined,
+          f_expected_families: newEvent.f_expected_families || undefined,
+          f_is_entry_default: newEvent.f_is_entry_default,
+          f_notes: newEvent.f_notes || undefined,
+        }
+        await eventService.updateEvent(editingEventId, payload)
+      } else {
+        await eventService.createEvent({
+          ...newEvent,
+          f_event_type: newEvent.f_event_type || undefined,
+          f_expected_guests: newEvent.f_expected_guests || undefined,
+          f_expected_families: newEvent.f_expected_families || undefined,
+          f_notes: newEvent.f_notes || undefined,
+        })
+      }
+      resetForm()
       await loadData()
     } catch (err: any) {
-      setError(err.response?.data?.detail || 'Failed to create event')
+      setError(err.response?.data?.detail || 'Failed to save event')
     } finally {
       setCreating(false)
     }
@@ -149,7 +190,7 @@ export default function EventsPage() {
           </p>
           <div className="flex flex-wrap items-center gap-3">
             <button
-              onClick={() => setShowCreateForm((current) => !current)}
+              onClick={() => (showCreateForm ? resetForm() : setShowCreateForm(true))}
               className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 text-sm"
             >
               {showCreateForm ? 'Hide Event Form' : '+ New Event'}
@@ -165,13 +206,16 @@ export default function EventsPage() {
 
         {showCreateForm && (
           <div className="bg-white rounded-lg shadow p-6 mb-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">Create event</h2>
+            <h2 className="text-lg font-semibold text-gray-900 mb-4">
+              {editingEventId ? 'Edit event' : 'Create event'}
+            </h2>
             <form onSubmit={handleCreateEvent} className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <select
                 value={newEvent.f_hotel_id}
                 onChange={(e) => setNewEvent((current) => ({ ...current, f_hotel_id: Number(e.target.value) }))}
-                className="px-3 py-2 border border-gray-300 rounded-md"
+                className="px-3 py-2 border border-gray-300 rounded-md disabled:bg-gray-100"
                 required
+                disabled={editingEventId != null}
               >
                 <option value={0}>Select hotel</option>
                 {hotels.map((hotel) => (
@@ -238,17 +282,26 @@ export default function EventsPage() {
                 onChange={(e) => setNewEvent((current) => ({ ...current, f_notes: e.target.value }))}
                 className="px-3 py-2 border border-gray-300 rounded-md md:col-span-2"
               />
+              <label className="md:col-span-2 flex items-center gap-2 text-sm text-gray-700">
+                <input
+                  type="checkbox"
+                  checked={newEvent.f_is_entry_default || false}
+                  onChange={(e) => setNewEvent((current) => ({ ...current, f_is_entry_default: e.target.checked }))}
+                  className="h-4 w-4 rounded border-gray-300"
+                />
+                Evento ativo — abrir este evento ao entrar no sistema (desmarca os demais)
+              </label>
               <div className="md:col-span-2 flex gap-3">
                 <button
                   type="submit"
                   disabled={creating}
                   className="bg-blue-600 text-white px-5 py-2 rounded-md hover:bg-blue-700 disabled:opacity-50"
                 >
-                  {creating ? 'Creating...' : 'Create event'}
+                  {creating ? 'Saving...' : editingEventId ? 'Save changes' : 'Create event'}
                 </button>
                 <button
                   type="button"
-                  onClick={() => setShowCreateForm(false)}
+                  onClick={resetForm}
                   className="bg-gray-200 text-gray-700 px-5 py-2 rounded-md hover:bg-gray-300"
                 >
                   Cancel
@@ -298,6 +351,11 @@ export default function EventsPage() {
                             Active today
                           </span>
                         )}
+                        {event.f_is_entry_default && (
+                          <span className="inline-flex items-center rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-medium text-amber-800">
+                            ⭐ Entry default
+                          </span>
+                        )}
                         <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(event.f_status)}`}>
                           {event.f_status}
                         </span>
@@ -318,6 +376,12 @@ export default function EventsPage() {
                     </div>
 
                     <div className="ml-4 flex flex-col gap-2">
+                      <button
+                        onClick={() => openEditForm(event)}
+                        className="bg-blue-50 text-blue-700 px-4 py-2 rounded-md hover:bg-blue-100 text-sm font-medium whitespace-nowrap"
+                      >
+                        ✏️ Edit Event
+                      </button>
                       <button
                         onClick={() => navigate(`/events/${event.id}/guests`)}
                         className="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 text-sm font-medium whitespace-nowrap"

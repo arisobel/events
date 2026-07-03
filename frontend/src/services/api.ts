@@ -152,6 +152,7 @@ export interface Event {
   f_end_date: string
   f_expected_guests?: number | null
   f_expected_families?: number | null
+  f_is_entry_default: boolean
   f_notes?: string | null
   f_status: string
   f_created_at: string
@@ -166,6 +167,19 @@ export interface EventCreate {
   f_end_date: string
   f_expected_guests?: number
   f_expected_families?: number
+  f_is_entry_default?: boolean
+  f_notes?: string
+}
+
+export interface EventUpdate {
+  f_name?: string
+  f_event_type?: string
+  f_start_date?: string
+  f_end_date?: string
+  f_status?: string
+  f_expected_guests?: number
+  f_expected_families?: number
+  f_is_entry_default?: boolean
   f_notes?: string
 }
 
@@ -361,7 +375,16 @@ export interface RoomGridRoom {
   f_block: string | null
   f_capacity: number
   f_price_per_night: string | number | null
+  f_base_price_per_night: string | number | null
+  f_has_event_price: boolean
   allocations: RoomGridAllocation[]
+}
+
+export interface EventRoomPrice {
+  id: number
+  f_event_id: number
+  f_room_id: number
+  f_price_per_night: string | number
 }
 
 export interface RoomGrid {
@@ -472,6 +495,11 @@ export const eventService = {
 
   async createEvent(event: EventCreate): Promise<Event> {
     const response = await api.post<Event>('/events', event)
+    return response.data
+  },
+
+  async updateEvent(id: number, event: EventUpdate): Promise<Event> {
+    const response = await api.put<Event>(`/events/${id}`, event)
     return response.data
   },
 }
@@ -593,6 +621,22 @@ export const financeService = {
   async getFinancialSummary(eventId: number): Promise<FinancialSummary> {
     const response = await api.get<FinancialSummary>(`/events/${eventId}/financial-summary`)
     return response.data
+  },
+
+  async setEventRoomPrice(
+    eventId: number,
+    roomId: number,
+    pricePerNight: string | number,
+  ): Promise<EventRoomPrice> {
+    const response = await api.put<EventRoomPrice>(
+      `/events/${eventId}/room-prices/${roomId}`,
+      { f_price_per_night: pricePerNight },
+    )
+    return response.data
+  },
+
+  async deleteEventRoomPrice(eventId: number, roomId: number): Promise<void> {
+    await api.delete(`/events/${eventId}/room-prices/${roomId}`)
   },
 }
 

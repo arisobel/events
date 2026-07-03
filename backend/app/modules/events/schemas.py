@@ -11,6 +11,7 @@ class EventBase(BaseModel):
     f_end_date: date
     f_expected_guests: Optional[int] = None
     f_expected_families: Optional[int] = None
+    f_is_entry_default: bool = False
     f_notes: Optional[str] = None
 
 
@@ -20,8 +21,13 @@ class EventCreate(EventBase):
 
 class EventUpdate(BaseModel):
     f_name: Optional[str] = None
+    f_event_type: Optional[str] = None
+    f_start_date: Optional[date] = None
+    f_end_date: Optional[date] = None
     f_status: Optional[str] = None
     f_expected_guests: Optional[int] = None
+    f_expected_families: Optional[int] = None
+    f_is_entry_default: Optional[bool] = None
     f_notes: Optional[str] = None
 
 
@@ -31,7 +37,7 @@ class EventResponse(EventBase):
     f_status: str
     f_created_at: datetime
     f_updated_at: datetime
-    
+
     model_config = ConfigDict(from_attributes=True)
 
 

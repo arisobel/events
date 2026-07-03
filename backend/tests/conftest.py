@@ -16,6 +16,7 @@ from app.core.security import get_password_hash
 from app.db.base import Base
 from app.modules.auth import models as auth_models
 from app.modules.events import models as event_models
+from app.modules.finance import models as finance_models
 from app.modules.guests import models as guest_models
 from app.modules.hotel import models as hotel_models
 from app.modules.rooms import models as room_models

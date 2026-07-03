@@ -29,7 +29,10 @@ def create_event(
     current_user: User = Depends(get_current_active_user)
 ):
     """Create a new event."""
-    return service.create_event(db, event)
+    try:
+        return service.create_event(db, event)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
 
 
 @router.get("/{event_id}", response_model=schemas.EventResponse)
@@ -53,7 +56,11 @@ def update_event(
     current_user: User = Depends(get_current_active_user)
 ):
     """Update event."""
-    updated = service.update_event(db, event_id, event)
+    try:
+        updated = service.update_event(db, event_id, event)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
     if not updated:
         raise HTTPException(status_code=404, detail="Event not found")
     return updated

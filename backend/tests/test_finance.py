@@ -1,7 +1,9 @@
 from decimal import Decimal
 
+import pytest
 from sqlalchemy.orm import Session
 
+from app.modules.finance import schemas as finance_schemas
 from app.modules.events import schemas as event_schemas
 from app.modules.events import service as event_service
 from app.modules.finance import service as finance_service
@@ -189,6 +191,75 @@ def test_group_invoice_returns_none_for_wrong_event(db_session: Session) -> None
     group_id, _, _ = create_group_with_paid_reservation(db_session, event_id, room_a_id)
 
     assert finance_service.get_group_invoice(db_session, event_id + 1, group_id) is None
+
+
+def test_event_room_price_overrides_base_price(db_session: Session) -> None:
+    _, room_a_id, room_b_id, event_id = create_priced_setup(db_session)
+    group_id, _, _ = create_group_with_paid_reservation(db_session, event_id, room_a_id)
+
+    finance_service.upsert_event_room_price(
+        db_session,
+        event_id,
+        room_a_id,
+        finance_schemas.EventRoomPriceUpsert(f_price_per_night=Decimal("800.00")),
+    )
+
+    grid = finance_service.get_event_room_grid(db_session, event_id)
+    assert grid is not None
+    room_a = next(room for room in grid.rooms if room.room_id == room_a_id)
+    room_b = next(room for room in grid.rooms if room.room_id == room_b_id)
+
+    # room A: override do evento vence o preço base
+    assert room_a.f_price_per_night == Decimal("800.00")
+    assert room_a.f_base_price_per_night == Decimal("500.00")
+    assert room_a.f_has_event_price is True
+    # room B: sem override e sem base
+    assert room_b.f_price_per_night is None
+    assert room_b.f_has_event_price is False
+
+    # extrato usa o preço efetivo: 4 noites * 800
+    invoice = finance_service.get_group_invoice(db_session, event_id, group_id)
+    assert invoice is not None
+    assert invoice.reservations[0].calculated_total == Decimal("3200.00")
+
+    # upsert atualiza em vez de duplicar
+    finance_service.upsert_event_room_price(
+        db_session,
+        event_id,
+        room_a_id,
+        finance_schemas.EventRoomPriceUpsert(f_price_per_night=Decimal("900.00")),
+    )
+    prices = finance_service.get_event_room_prices(db_session, event_id)
+    assert prices is not None
+    assert len(prices) == 1
+    assert prices[0].f_price_per_night == Decimal("900.00")
+
+    # delete volta ao preço base
+    assert finance_service.delete_event_room_price(db_session, event_id, room_a_id) is True
+    grid = finance_service.get_event_room_grid(db_session, event_id)
+    assert grid is not None
+    room_a = next(room for room in grid.rooms if room.room_id == room_a_id)
+    assert room_a.f_price_per_night == Decimal("500.00")
+    assert room_a.f_has_event_price is False
+
+
+def test_event_room_price_rejects_room_from_other_hotel(db_session: Session) -> None:
+    _, _, _, event_id = create_priced_setup(db_session)
+    other_hotel = hotel_service.create_hotel(
+        db_session, hotel_schemas.HotelCreate(f_name="Other Hotel")
+    )
+    other_room = hotel_service.create_hotel_room(
+        db_session,
+        hotel_schemas.HotelRoomCreate(f_hotel_id=other_hotel.id, f_room_number="901"),
+    )
+
+    with pytest.raises(ValueError):
+        finance_service.upsert_event_room_price(
+            db_session,
+            event_id,
+            other_room.id,
+            finance_schemas.EventRoomPriceUpsert(f_price_per_night=Decimal("100.00")),
+        )
 
 
 def test_reservation_payment_fields_update(db_session: Session) -> None:
