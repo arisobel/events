@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 
 import {
@@ -51,6 +51,10 @@ function LabeledField({
   )
 }
 
+// busca acento-insensível
+const normalizeText = (value: string) =>
+  value.normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase()
+
 // Ícones inline (o projeto não usa lib de ícones — só SVG inline). Paths do FA Free.
 function GroupIcon({ className }: { className?: string }) {
   return (
@@ -64,6 +68,14 @@ function PersonIcon({ className }: { className?: string }) {
   return (
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512" fill="currentColor" className={className} aria-hidden="true">
       <path d="M224 256A128 128 0 1 0 224 0a128 128 0 1 0 0 256zm-45.7 48C79.8 304 0 383.8 0 482.3C0 498.7 13.3 512 29.7 512l388.6 0c16.4 0 29.7-13.3 29.7-29.7C448 383.8 368.2 304 269.7 304l-91.4 0z" />
+    </svg>
+  )
+}
+
+function PencilIcon({ className }: { className?: string }) {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="currentColor" className={className} aria-hidden="true">
+      <path d="M362.7 19.3L314.3 67.7 444.3 197.7l48.4-48.4c25-25 25-65.5 0-90.5L453.3 19.3c-25-25-65.5-25-90.5 0zm-71 71L58.6 323.5c-10.4 10.4-18 23.3-22.2 37.4L1 481.2C-1.5 489.7 .8 498.8 7 505s15.3 8.5 23.7 6.1l120.3-35.4c14.1-4.2 27-11.8 37.4-22.2L421.3 220.3 291.7 90.3z" />
     </svg>
   )
 }
@@ -97,6 +109,7 @@ export default function GuestsPage() {
   const [activeReservationGroupId, setActiveReservationGroupId] = useState<number | null>(null)
   // Colapso da lista de hóspedes — no mobile começa fechada; no desktop (md+) sempre visível via CSS
   const [openGuests, setOpenGuests] = useState<Record<number, boolean>>({})
+  const [search, setSearch] = useState('')
   const [editingGroupId, setEditingGroupId] = useState<number | null>(null)
   const [editingGuestId, setEditingGuestId] = useState<number | null>(null)
   const [editingReservationId, setEditingReservationId] = useState<number | null>(null)
@@ -121,6 +134,22 @@ export default function GuestsPage() {
     f_notes: '',
   })
   const [reservationEditForm, setReservationEditForm] = useState<ReservationUpdate>({})
+
+  // Busca: filtra grupos por nome, tipo, líder, telefone/email e nomes dos hóspedes
+  const visibleGroups = useMemo(() => {
+    const q = normalizeText(search.trim())
+    if (!q) return groups
+    return groups.filter((group) => {
+      const haystack = [
+        group.f_name,
+        group.f_group_type ?? '',
+        group.f_phone ?? '',
+        group.f_email ?? '',
+        ...group.guests.map((guest) => guest.f_full_name),
+      ]
+      return haystack.some((value) => normalizeText(value).includes(q))
+    })
+  }, [groups, search])
 
   useEffect(() => {
     if (eventId) {
@@ -636,8 +665,33 @@ export default function GuestsPage() {
         )}
 
         {!loading && groups.length > 0 && (
-          <div className="space-y-6">
-            {groups.map((group) => {
+          <div className="space-y-4">
+            <div className="relative">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+                className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400"
+                aria-hidden="true"
+              >
+                <path fillRule="evenodd" d="M9 3.5a5.5 5.5 0 1 0 3.4 9.83l3.63 3.64a.75.75 0 1 0 1.06-1.06l-3.64-3.63A5.5 5.5 0 0 0 9 3.5ZM5 9a4 4 0 1 1 8 0 4 4 0 0 1-8 0Z" clipRule="evenodd" />
+              </svg>
+              <input
+                type="search"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Search groups or guests…"
+                className="w-full rounded-lg border border-gray-300 bg-white pl-10 pr-3 py-2.5 text-sm shadow-sm focus:border-indigo-400 focus:outline-none focus:ring-1 focus:ring-indigo-400"
+              />
+            </div>
+
+            {visibleGroups.length === 0 ? (
+              <div className="text-center text-gray-500 bg-white rounded-lg shadow p-8 text-sm">
+                Nenhum grupo ou hóspede corresponde a “{search}”.
+              </div>
+            ) : (
+            <div className="space-y-6">
+            {visibleGroups.map((group) => {
               const leader = getGroupLeader(group)
 
               return (
@@ -753,7 +807,7 @@ export default function GuestsPage() {
                         aria-label="Edit group"
                         className="shrink-0 whitespace-nowrap bg-gray-100 text-gray-800 px-3 py-2 rounded-md hover:bg-gray-200 text-sm flex items-center"
                       >
-                        <GroupIcon className="w-5 h-5 sm:hidden" />
+                        <PencilIcon className="w-4 h-4 sm:hidden" />
                         <span className="hidden sm:inline">Edit group</span>
                       </button>
                       <button
@@ -1166,6 +1220,8 @@ export default function GuestsPage() {
                 </div>
               )
             })}
+            </div>
+            )}
           </div>
         )}
       </div>

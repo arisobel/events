@@ -14,6 +14,7 @@ interface IconProps {
 const navLinks = [
   { label: 'Hotels', path: '/hotels', icon: HotelIcon },
   { label: 'Events', path: '/events', icon: CalendarDaysIcon },
+  { label: 'Clientes', path: '/clients', icon: UsersIcon },
 ]
 
 function HotelIcon({ className }: IconProps) {
@@ -27,6 +28,17 @@ function HotelIcon({ className }: IconProps) {
       <path d="M12 13h2" />
       <path d="M10 20v-3h4v3" />
       <path d="M3 20h18" />
+    </svg>
+  )
+}
+
+function UsersIcon({ className }: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className={className}>
+      <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+      <circle cx="9" cy="7" r="4" />
+      <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
+      <path d="M16 3.13a4 4 0 0 1 0 7.75" />
     </svg>
   )
 }

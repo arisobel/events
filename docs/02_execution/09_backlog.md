@@ -150,9 +150,24 @@
 
 ---
 
-### 🧩 Hóspedes/Famílias a Nível Raiz (desacoplamento de eventos) ⭐ ESTRUTURAL
+### 🧩 Hóspedes/Famílias a Nível Raiz (desacoplamento de eventos) ⭐ ESTRUTURAL — 🟡 EM ANDAMENTO (2026-07-05)
 > Originado em sessão 2026-07-03: famílias recorrem entre eventos (Pessach todo ano) — recadastrar a cada evento é ruim
 >
+> **Decisão tomada (2026-07-05):** modelo "Cliente + Pessoas". Primeira fatia entregue.
+
+**✅ Entregue (2026-07-05):**
+- [x] Módulos raiz `Client` + `Person` (t_client / t_person); FKs opcionais `GuestGroup.f_client_id` / `Guest.f_person_id`; migration `e1b9c3f5a7d2`
+- [x] CRUD backend + `GET /clients/{id}/events` + `POST /clients/{id}/import-to-event/{event_id}`
+- [x] Sidebar "Clientes" + `ClientsPage` (CRUD cliente/pessoas, busca, participações)
+
+**Falta:**
+- [ ] UI "Importar de cliente" na GuestsPage do evento (endpoint pronto)
+- [ ] "Promover" grupo existente → cliente (criar cliente a partir de um grupo já cadastrado)
+- [ ] (Decidir) sincronização de edições: mudar dados de uma Pessoa raiz reflete nos hóspedes já importados?
+
+---
+
+### 🧩 Hóspedes/Famílias a Nível Raiz — notas originais da proposta
 > **Decisão pendente antes de implementar** — muda o modelo de dados central
 
 **Problema atual:**

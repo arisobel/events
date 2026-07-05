@@ -3,6 +3,7 @@ import { AuthProvider } from './contexts/AuthContext'
 import LoginPage from './pages/LoginPage'
 import HotelsPage from './pages/HotelsPage'
 import EventsPage from './pages/EventsPage'
+import ClientsPage from './pages/ClientsPage'
 import GuestsPage from './pages/GuestsPage'
 import RoomsPage from './pages/RoomsPage'
 import RoomGridPage from './pages/RoomGridPage'
@@ -24,6 +25,11 @@ function App() {
           <Route path="/events" element={
             <PrivateRoute>
               <EventsPage />
+            </PrivateRoute>
+          } />
+          <Route path="/clients" element={
+            <PrivateRoute>
+              <ClientsPage />
             </PrivateRoute>
           } />
           <Route path="/events/:eventId/guests" element={

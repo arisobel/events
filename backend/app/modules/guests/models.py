@@ -10,6 +10,7 @@ class GuestGroup(Base):
     
     id = Column(Integer, primary_key=True, index=True)
     f_event_id = Column(Integer, ForeignKey("t_event.id"), nullable=False)
+    f_client_id = Column(Integer, ForeignKey("t_client.id"))  # cliente raiz (opcional)
     f_name = Column(String(150), nullable=False)
     f_group_type = Column(String(50))
     f_nationality = Column(String(2))  # código ISO 3166-1 alpha-2 (ex.: BR, AR, US, IL)
@@ -26,6 +27,7 @@ class Guest(Base):
     
     id = Column(Integer, primary_key=True, index=True)
     f_group_id = Column(Integer, ForeignKey("t_guest_group.id"), nullable=False)
+    f_person_id = Column(Integer, ForeignKey("t_person.id"))  # pessoa raiz (opcional)
     f_full_name = Column(String(150), nullable=False)
     f_gender = Column(String(20))
     f_birth_date = Column(Date)

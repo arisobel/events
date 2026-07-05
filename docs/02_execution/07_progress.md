@@ -60,6 +60,19 @@
 
 ---
 
+### Cadastro Raiz de Clientes + Pessoas (2026-07-05) ⭐ ESTRUTURAL
+> Escolha do usuário: modelo completo "Cliente + Pessoas" (entidade permanente + participação por evento)
+- [x] Backend: novo módulo `clients` — `Client` (t_client) e `Person` (t_person), entidades raiz independentes de evento
+- [x] FKs opcionais incrementais: `GuestGroup.f_client_id` e `Guest.f_person_id` (nada existente quebra); migration `e1b9c3f5a7d2`
+- [x] Service/endpoints: CRUD de clientes e pessoas; `GET /clients/{id}/events` (participações via grupos ligados); `POST /clients/{id}/import-to-event/{event_id}` (cria grupo no evento a partir do cliente, copiando pessoas → hóspedes com `f_person_id` e titular → líder)
+- [x] Nacionalidade do cliente reaproveita a bandeira; delete de cliente **desvincula** grupos/hóspedes em vez de apagá-los
+- [x] 5 testes novos (`test_clients.py`): CRUD cliente/pessoa, normalização, import cria grupo+hóspedes, delete desvincula; suíte → ~40 esperado (validar no Codespaces)
+- [x] Frontend: `clientService` + tipos; **link "Clientes" na sidebar** (ao lado de Hotels/Events); rota `/clients`; `ClientsPage` (busca, CRUD cliente, CRUD pessoas, lista de eventos participados)
+- [ ] **Próximo passo**: botão "Importar de cliente" na GuestsPage (endpoint já existe) + vínculo reverso ao promover grupo→cliente
+- [ ] Base pronta para **conta corrente por cliente** (LedgerEntry) — próximo item estrutural
+
+---
+
 ### Polish Mobile da GuestsPage (2026-07-05)
 - [x] Barra de navegação do topo em **linha única** (← Events / Rooms / Tasks com scroll horizontal se preciso; nome do evento oculto no mobile via `hidden sm:inline`); botão "+ New Group" fixo à direita (`shrink-0`)
 - [x] No mobile, botões de ação viram **ícones** (SVG inline, componentes `GroupIcon`/`PersonIcon`) e voltam a texto no desktop (`sm:inline`): **New Group** = grupo + "+"; **Edit group** = grupo; **+ Guest** = pessoa + "+"; **Delete** = lixeira. "+ Reservation" segue como texto

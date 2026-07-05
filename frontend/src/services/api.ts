@@ -766,3 +766,120 @@ export const taskService = {
     return response.data
   },
 }
+
+// ---- Clients (cadastro raiz: cliente/família + pessoas permanentes) ----
+export interface Person {
+  id: number
+  f_client_id: number
+  f_full_name: string
+  f_gender: string | null
+  f_birth_date: string | null
+  f_document: string | null
+  f_phone: string | null
+  f_email: string | null
+  f_is_primary: boolean
+  f_notes: string | null
+}
+
+export interface PersonCreate {
+  f_full_name: string
+  f_gender?: string
+  f_birth_date?: string
+  f_document?: string
+  f_phone?: string
+  f_email?: string
+  f_is_primary?: boolean
+  f_notes?: string
+}
+
+export type PersonUpdate = Partial<PersonCreate>
+
+export interface Client {
+  id: number
+  f_name: string
+  f_client_type: string | null
+  f_nationality: string | null
+  f_document: string | null
+  f_phone: string | null
+  f_email: string | null
+  f_notes: string | null
+  persons: Person[]
+}
+
+export interface ClientCreate {
+  f_name: string
+  f_client_type?: string
+  f_nationality?: string
+  f_document?: string
+  f_phone?: string
+  f_email?: string
+  f_notes?: string
+}
+
+export type ClientUpdate = Partial<ClientCreate>
+
+export interface ClientEventLink {
+  event_id: number
+  event_name: string
+  group_id: number
+  group_name: string
+}
+
+export interface ImportClientToEventResult {
+  group_id: number
+  persons_imported: number
+}
+
+export const clientService = {
+  async getClients(search?: string): Promise<Client[]> {
+    const response = await api.get<Client[]>('/clients', {
+      params: search ? { search } : undefined,
+    })
+    return response.data
+  },
+
+  async getClient(clientId: number): Promise<Client> {
+    const response = await api.get<Client>(`/clients/${clientId}`)
+    return response.data
+  },
+
+  async createClient(client: ClientCreate): Promise<Client> {
+    const response = await api.post<Client>('/clients', client)
+    return response.data
+  },
+
+  async updateClient(clientId: number, client: ClientUpdate): Promise<Client> {
+    const response = await api.put<Client>(`/clients/${clientId}`, client)
+    return response.data
+  },
+
+  async deleteClient(clientId: number): Promise<void> {
+    await api.delete(`/clients/${clientId}`)
+  },
+
+  async createPerson(clientId: number, person: PersonCreate): Promise<Person> {
+    const response = await api.post<Person>(`/clients/${clientId}/persons`, person)
+    return response.data
+  },
+
+  async updatePerson(clientId: number, personId: number, person: PersonUpdate): Promise<Person> {
+    const response = await api.put<Person>(`/clients/${clientId}/persons/${personId}`, person)
+    return response.data
+  },
+
+  async deletePerson(clientId: number, personId: number): Promise<void> {
+    await api.delete(`/clients/${clientId}/persons/${personId}`)
+  },
+
+  async getClientEvents(clientId: number): Promise<ClientEventLink[]> {
+    const response = await api.get<ClientEventLink[]>(`/clients/${clientId}/events`)
+    return response.data
+  },
+
+  async importClientToEvent(clientId: number, eventId: number): Promise<ImportClientToEventResult> {
+    const response = await api.post<ImportClientToEventResult>(
+      `/clients/${clientId}/import-to-event/${eventId}`,
+    )
+    return response.data
+  },
+}
