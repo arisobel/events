@@ -51,6 +51,23 @@ function LabeledField({
   )
 }
 
+// Ícones inline (o projeto não usa lib de ícones — só SVG inline). Paths do FA Free.
+function GroupIcon({ className }: { className?: string }) {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640" fill="currentColor" className={className} aria-hidden="true">
+      <path d="M320 64C355.3 64 384 92.7 384 128C384 163.3 355.3 192 320 192C284.7 192 256 163.3 256 128C256 92.7 284.7 64 320 64zM416 376C416 401 403.3 423 384 435.9L384 528C384 554.5 362.5 576 336 576L304 576C277.5 576 256 554.5 256 528L256 435.9C236.7 423 224 401 224 376L224 336C224 283 267 240 320 240C373 240 416 283 416 336L416 376zM160 96C190.9 96 216 121.1 216 152C216 182.9 190.9 208 160 208C129.1 208 104 182.9 104 152C104 121.1 129.1 96 160 96zM176 336L176 368C176 400.5 188.1 430.1 208 452.7L208 528C208 529.2 208 530.5 208.1 531.7C199.6 539.3 188.4 544 176 544L144 544C117.5 544 96 522.5 96 496L96 439.4C76.9 428.4 64 407.7 64 384L64 352C64 299 107 256 160 256C172.7 256 184.8 258.5 195.9 262.9C183.3 284.3 176 309.3 176 336zM432 528L432 452.7C451.9 430.2 464 400.5 464 368L464 336C464 309.3 456.7 284.4 444.1 262.9C455.2 258.4 467.3 256 480 256C533 256 576 299 576 352L576 384C576 407.7 563.1 428.4 544 439.4L544 496C544 522.5 522.5 544 496 544L464 544C451.7 544 440.4 539.4 431.9 531.7C431.9 530.5 432 529.2 432 528zM480 96C510.9 96 536 121.1 536 152C536 182.9 510.9 208 480 208C449.1 208 424 182.9 424 152C424 121.1 449.1 96 480 96z" />
+    </svg>
+  )
+}
+
+function PersonIcon({ className }: { className?: string }) {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512" fill="currentColor" className={className} aria-hidden="true">
+      <path d="M224 256A128 128 0 1 0 224 0a128 128 0 1 0 0 256zm-45.7 48C79.8 304 0 383.8 0 482.3C0 498.7 13.3 512 29.7 512l388.6 0c16.4 0 29.7-13.3 29.7-29.7C448 383.8 368.2 304 269.7 304l-91.4 0z" />
+    </svg>
+  )
+}
+
 const emptyGuest: GuestCreate = {
   f_full_name: '',
   f_gender: '',
@@ -512,9 +529,18 @@ export default function GuestsPage() {
           </div>
           <button
             onClick={() => setShowGroupForm((current) => !current)}
-            className="shrink-0 whitespace-nowrap bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 text-sm"
+            title={showGroupForm ? 'Hide group form' : 'New group'}
+            aria-label={showGroupForm ? 'Hide group form' : 'New group'}
+            className={`shrink-0 whitespace-nowrap bg-indigo-600 text-white px-3 sm:px-4 py-2 rounded-md hover:bg-indigo-700 text-sm flex items-center gap-1.5 ${
+              showGroupForm ? 'ring-2 ring-indigo-300' : ''
+            }`}
           >
-            {showGroupForm ? 'Hide' : '+ New Group'}
+            {/* mobile: ícone de grupo com "+"; desktop (sm+): texto */}
+            <span className="sm:hidden flex items-center gap-0.5">
+              <span className="text-base leading-none">+</span>
+              <GroupIcon className="w-5 h-5" />
+            </span>
+            <span className="hidden sm:inline">{showGroupForm ? 'Hide' : '+ New Group'}</span>
           </button>
         </div>
 
@@ -723,15 +749,24 @@ export default function GuestsPage() {
                             f_notes: group.f_notes || '',
                           })
                         }}
-                        className="shrink-0 whitespace-nowrap bg-gray-100 text-gray-800 px-3 py-2 rounded-md hover:bg-gray-200 text-sm"
+                        title="Edit group"
+                        aria-label="Edit group"
+                        className="shrink-0 whitespace-nowrap bg-gray-100 text-gray-800 px-3 py-2 rounded-md hover:bg-gray-200 text-sm flex items-center"
                       >
-                        Edit group
+                        <GroupIcon className="w-5 h-5 sm:hidden" />
+                        <span className="hidden sm:inline">Edit group</span>
                       </button>
                       <button
                         onClick={() => startGuestCreate(group)}
-                        className="shrink-0 whitespace-nowrap bg-indigo-50 text-indigo-700 px-3 py-2 rounded-md hover:bg-indigo-100 text-sm"
+                        title="Add guest"
+                        aria-label="Add guest"
+                        className="shrink-0 whitespace-nowrap bg-indigo-50 text-indigo-700 px-3 py-2 rounded-md hover:bg-indigo-100 text-sm flex items-center"
                       >
-                        + Guest
+                        <span className="sm:hidden flex items-center gap-0.5">
+                          <span className="text-base leading-none">+</span>
+                          <PersonIcon className="w-4 h-4" />
+                        </span>
+                        <span className="hidden sm:inline">+ Guest</span>
                       </button>
                       <button
                         onClick={() => startReservationCreate(group)}

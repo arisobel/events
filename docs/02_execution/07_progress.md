@@ -62,6 +62,8 @@
 
 ### Polish Mobile da GuestsPage (2026-07-05)
 - [x] Barra de navegação do topo em **linha única** (← Events / Rooms / Tasks com scroll horizontal se preciso; nome do evento oculto no mobile via `hidden sm:inline`); botão "+ New Group" fixo à direita (`shrink-0`)
+- [x] No mobile, botões de ação viram **ícones** (SVG inline, componentes `GroupIcon`/`PersonIcon`) e voltam a texto no desktop (`sm:inline`): **New Group** = grupo + "+"; **Edit group** = grupo; **+ Guest** = pessoa + "+"; **Delete** = lixeira. "+ Reservation" segue como texto
+- ⓘ Ícones: o projeto **não usa lib de ícones** (nem FontAwesome/lucide/heroicons) — só emoji + SVG inline (paths do FA Free colados inline, sem instalar nada). Sugestão futura se quiser padronizar: `lucide-react`
 - [x] Botões de controle do grupo (Edit group / + Guest / + Reservation / Delete) em **uma linha só** (`flex-nowrap overflow-x-auto`); **Delete virou ícone de lixeira** (SVG) para poupar espaço
 - [x] Lista de hóspedes **colapsável no mobile**: "Guests (N)" virou botão de toggle (chevron ▸ só no mobile); fechada por padrão no mobile, sempre visível no desktop (`md:block`); "+ Guest" abre a seção automaticamente
 - ⓘ Só CSS/estado — nenhuma mudança de backend
