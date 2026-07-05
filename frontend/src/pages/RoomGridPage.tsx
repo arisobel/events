@@ -4,6 +4,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import {
   FinancialSummary,
   GuestGroup,
+  PaymentStatus,
   RoomAllocationCreate,
   RoomAllocationUpdate,
   RoomGrid,
@@ -11,6 +12,7 @@ import {
   RoomGridRoom,
   financeService,
   guestGroupService,
+  reservationService,
   roomAllocationService,
 } from '../services/api'
 import AdminLayout from '../components/AdminLayout'
@@ -82,6 +84,12 @@ export default function RoomGridPage() {
   const [saving, setSaving] = useState(false)
   const [eventPriceInput, setEventPriceInput] = useState('')
   const [showStatsMobile, setShowStatsMobile] = useState(false)
+  const [paymentForm, setPaymentForm] = useState<{
+    f_amount_total: string
+    f_amount_paid: string
+    f_payment_status: PaymentStatus
+    f_payment_notes: string
+  }>({ f_amount_total: '', f_amount_paid: '', f_payment_status: 'pending', f_payment_notes: '' })
 
   useEffect(() => {
     if (eventId) {
@@ -172,7 +180,7 @@ export default function RoomGridPage() {
 
   // ---- selection handlers ----
 
-  const openAllocation = (room: RoomGridRoom, allocation: RoomGridAllocation) => {
+  const openAllocation = async (room: RoomGridRoom, allocation: RoomGridAllocation) => {
     setSelection({ kind: 'alloc', room, allocation })
     setEditForm({
       f_room_id: room.room_id,
@@ -180,7 +188,40 @@ export default function RoomGridPage() {
       f_end_date: allocation.f_end_date,
       f_checkin_status: allocation.f_checkin_status,
     })
+    // valores de pagamento vêm da reserva (não da alocação) — busca para pré-preencher
+    setPaymentForm({ f_amount_total: '', f_amount_paid: '', f_payment_status: allocation.f_payment_status, f_payment_notes: '' })
     setError('')
+    try {
+      const reservation = await reservationService.getReservation(allocation.reservation_id)
+      setPaymentForm({
+        f_amount_total: reservation.f_amount_total != null ? String(reservation.f_amount_total) : '',
+        f_amount_paid: reservation.f_amount_paid != null ? String(reservation.f_amount_paid) : '',
+        f_payment_status: reservation.f_payment_status || 'pending',
+        f_payment_notes: reservation.f_payment_notes || '',
+      })
+    } catch {
+      // se a busca falhar, mantém os campos vazios — não bloqueia o painel
+    }
+  }
+
+  const handleSavePayment = async () => {
+    if (selection?.kind !== 'alloc') return
+    try {
+      setSaving(true)
+      setError('')
+      await reservationService.updateReservation(selection.allocation.reservation_id, {
+        f_amount_total: paymentForm.f_amount_total === '' ? undefined : paymentForm.f_amount_total,
+        f_amount_paid: paymentForm.f_amount_paid === '' ? undefined : paymentForm.f_amount_paid,
+        f_payment_status: paymentForm.f_payment_status,
+        f_payment_notes: paymentForm.f_payment_notes || undefined,
+      })
+      closePanel()
+      await loadData()
+    } catch (err: any) {
+      setError(err.response?.data?.detail || 'Failed to save payment')
+    } finally {
+      setSaving(false)
+    }
   }
 
   const openCreate = (room: RoomGridRoom, date: string) => {
@@ -397,15 +438,15 @@ export default function RoomGridPage() {
         {!loading && grid && grid.rooms.length > 0 && (
           <div className="bg-white rounded-lg shadow overflow-auto max-h-[70vh]">
             <div className="min-w-max [--room-col-width:64px] md:[--room-col-width:200px]">
-              {/* Header row (sticky top ao rolar verticalmente) */}
-              <div className="grid border-b border-slate-200" style={{ gridTemplateColumns: gridTemplate }}>
-                <div className="sticky left-0 top-0 z-40 bg-slate-50 px-2 md:px-3 py-2 text-xs font-semibold text-slate-600 border-r border-slate-200">
+              {/* Header row — sticky top ancorado no wrapper de altura total (não nas células, que ficam presas à linha) */}
+              <div className="grid border-b border-slate-200 sticky top-0 z-30" style={{ gridTemplateColumns: gridTemplate }}>
+                <div className="sticky left-0 z-40 bg-slate-50 px-2 md:px-3 py-2 text-xs font-semibold text-slate-600 border-r border-slate-200">
                   Quarto
                 </div>
                 {days.map((day, index) => (
                   <div
                     key={dayISOs[index]}
-                    className={`sticky top-0 z-30 px-1 py-2 text-center text-xs border-r border-slate-100 ${
+                    className={`px-1 py-2 text-center text-xs border-r border-slate-100 ${
                       index === todayIndex
                         ? 'bg-blue-600 text-white font-semibold'
                         : 'bg-slate-50 text-slate-600'
@@ -549,6 +590,71 @@ export default function RoomGridPage() {
                 className="bg-gray-200 text-gray-700 px-5 py-2 rounded-md hover:bg-gray-300"
               >
                 Fechar
+              </button>
+            </div>
+
+            {/* Pagamento da reserva */}
+            <div className="mt-5 pt-5 border-t border-gray-200">
+              <h3 className="text-sm font-semibold text-gray-900 mb-3">Pagamento da reserva</h3>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                <label className="flex flex-col gap-1">
+                  <span className="text-xs text-gray-500">Valor total (R$)</span>
+                  <input
+                    type="number"
+                    min={0}
+                    step="0.01"
+                    value={paymentForm.f_amount_total}
+                    onChange={(e) => setPaymentForm((c) => ({ ...c, f_amount_total: e.target.value }))}
+                    className="px-3 py-2 border border-gray-300 rounded-md"
+                  />
+                </label>
+                <label className="flex flex-col gap-1">
+                  <span className="text-xs text-gray-500">Valor pago (R$)</span>
+                  <input
+                    type="number"
+                    min={0}
+                    step="0.01"
+                    value={paymentForm.f_amount_paid}
+                    onChange={(e) => setPaymentForm((c) => ({ ...c, f_amount_paid: e.target.value }))}
+                    className="px-3 py-2 border border-gray-300 rounded-md"
+                  />
+                </label>
+                <label className="flex flex-col gap-1">
+                  <span className="text-xs text-gray-500">Status</span>
+                  <select
+                    value={paymentForm.f_payment_status}
+                    onChange={(e) => setPaymentForm((c) => ({ ...c, f_payment_status: e.target.value as PaymentStatus }))}
+                    className="px-3 py-2 border border-gray-300 rounded-md"
+                  >
+                    <option value="pending">Pendente</option>
+                    <option value="partial">Parcial</option>
+                    <option value="paid">Pago</option>
+                  </select>
+                </label>
+                <div className="flex flex-col gap-1">
+                  <span className="text-xs text-gray-500">Saldo</span>
+                  <div className="px-3 py-2 text-sm font-medium text-gray-800">
+                    {formatMoney(
+                      Number(paymentForm.f_amount_total || 0) - Number(paymentForm.f_amount_paid || 0),
+                    )}
+                  </div>
+                </div>
+              </div>
+              <label className="flex flex-col gap-1 mt-3">
+                <span className="text-xs text-gray-500">Observação de pagamento</span>
+                <input
+                  type="text"
+                  value={paymentForm.f_payment_notes}
+                  onChange={(e) => setPaymentForm((c) => ({ ...c, f_payment_notes: e.target.value }))}
+                  className="px-3 py-2 border border-gray-300 rounded-md"
+                />
+              </label>
+              <button
+                onClick={handleSavePayment}
+                disabled={saving}
+                className="mt-3 bg-emerald-600 text-white px-5 py-2 rounded-md hover:bg-emerald-700 disabled:opacity-50"
+              >
+                {saving ? 'Saving...' : 'Salvar pagamento'}
               </button>
             </div>
           </div>

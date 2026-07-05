@@ -222,6 +222,10 @@ export interface Reservation {
   f_package_type: string | null
   f_status: string
   f_total_guests: number | null
+  f_amount_total: string | number | null
+  f_amount_paid: string | number
+  f_payment_status: PaymentStatus
+  f_payment_notes: string | null
   f_notes: string | null
 }
 
@@ -240,6 +244,10 @@ export interface ReservationUpdate {
   f_package_type?: string
   f_status?: string
   f_total_guests?: number
+  f_amount_total?: string | number
+  f_amount_paid?: string | number
+  f_payment_status?: PaymentStatus
+  f_payment_notes?: string
   f_notes?: string
 }
 

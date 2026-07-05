@@ -60,6 +60,15 @@
 
 ---
 
+### UI de Pagamento no Room Grid (2026-07-03)
+- [x] Painel de detalhe da alocação ganhou seção "Pagamento da reserva": valor total, valor pago, status (pendente/parcial/pago), saldo calculado e observação
+- [x] Ao abrir a alocação, busca a reserva (`GET /reservations/{id}`) para pré-preencher os valores atuais; salva via `PUT /reservations/{id}`
+- [x] Fecha o ciclo financeiro: os cards "Recebido"/"Pendente" e as cores do grid passam a refletir pagamentos reais registrados pela UI (antes só via API)
+- [x] Tipos de reserva no `api.ts` ganharam os campos financeiros (estavam ausentes no front)
+- [x] Status de pagamento permanece manual (consistente com a decisão de warning não-bloqueante)
+
+---
+
 ### Ajustes de Layout do Grid — Sticky Header e Mobile (2026-07-03)
 - [x] Cabeçalho do grid (linha de dias) fixo ao rolar verticalmente — container com scroll próprio + `sticky top-0`
 - [x] Botão Refresh agora na mesma linha de Allocations/Guests no mobile
