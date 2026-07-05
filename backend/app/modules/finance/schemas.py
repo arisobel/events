@@ -62,6 +62,7 @@ class RoomGridAllocation(BaseModel):
     reservation_id: int
     group_id: int
     group_name: str
+    group_nationality: Optional[str] = None
     f_start_date: date
     f_end_date: date
     f_payment_status: str

@@ -18,6 +18,7 @@ import {
   roomAllocationService,
 } from '../services/api'
 import AdminLayout from '../components/AdminLayout'
+import { countryFlagEmoji, countryName } from '../utils/countries'
 
 // ---- date helpers (YYYY-MM-DD strings, local time) ----
 
@@ -133,6 +134,7 @@ export default function RoomGridPage() {
         group.reservations.map((reservation) => ({
           ...reservation,
           groupName: group.f_name,
+          groupNationality: group.f_nationality,
         }))
       ),
     [groups]
@@ -643,6 +645,7 @@ export default function RoomGridPage() {
                         style={{ gridColumn: `${startIndex + 2} / ${endIndex + 3}` }}
                       >
                         {allocation.f_checkin_status === 'checked_in' ? '✓ ' : ''}
+                        {allocation.group_nationality ? `${countryFlagEmoji(allocation.group_nationality)} ` : ''}
                         {allocation.group_name}
                       </button>
                     )
@@ -659,6 +662,11 @@ export default function RoomGridPage() {
             <div className="flex items-start justify-between gap-4 mb-4">
               <div>
                 <h2 className="text-lg font-semibold text-gray-900">
+                  {selection.allocation.group_nationality && (
+                    <span className="mr-1.5" title={countryName(selection.allocation.group_nationality)}>
+                      {countryFlagEmoji(selection.allocation.group_nationality)}
+                    </span>
+                  )}
                   {selection.allocation.group_name} — Reserva
                 </h2>
                 <p className="text-sm text-gray-600 mt-1">
@@ -976,6 +984,7 @@ export default function RoomGridPage() {
                   <option value={0}>Selecione a reserva</option>
                   {reservations.map((reservation) => (
                     <option key={reservation.id} value={reservation.id}>
+                      {reservation.groupNationality ? `${countryFlagEmoji(reservation.groupNationality)} ` : ''}
                       {reservation.groupName} · {reservation.f_start_date} → {reservation.f_end_date}
                     </option>
                   ))}

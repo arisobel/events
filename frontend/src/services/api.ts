@@ -339,6 +339,7 @@ export interface GuestGroup {
   f_event_id: number
   f_name: string
   f_group_type: string | null
+  f_nationality: string | null
   f_phone: string | null
   f_email: string | null
   f_notes: string | null
@@ -349,6 +350,7 @@ export interface GuestGroup {
 export interface GuestGroupCreate {
   f_name: string
   f_group_type?: string
+  f_nationality?: string
   f_phone?: string
   f_email?: string
   f_notes?: string
@@ -357,6 +359,7 @@ export interface GuestGroupCreate {
 export interface GuestGroupUpdate {
   f_name?: string
   f_group_type?: string
+  f_nationality?: string
   f_phone?: string
   f_email?: string
   f_notes?: string
@@ -398,6 +401,7 @@ export interface RoomGridAllocation {
   reservation_id: number
   group_id: number
   group_name: string
+  group_nationality?: string | null
   f_start_date: string
   f_end_date: string
   f_payment_status: PaymentStatus
@@ -445,6 +449,30 @@ export interface FinancialSummary {
   received_amount: string | number
   pending_amount: string | number
   reservations_by_payment_status: Record<string, number>
+}
+
+export interface InvoiceReservation {
+  reservation_id: number
+  f_start_date: string
+  f_end_date: string
+  f_status: string
+  f_payment_status: PaymentStatus
+  f_amount_total: string | number | null
+  extras_total: string | number
+  grand_total: string | number | null
+  f_amount_paid: string | number
+  balance: string | number | null
+  calculated_total: string | number | null
+}
+
+export interface GroupInvoice {
+  event_id: number
+  group_id: number
+  group_name: string
+  reservations: InvoiceReservation[]
+  total_amount: string | number
+  total_paid: string | number
+  balance: string | number
 }
 
 export const authService = {
@@ -659,6 +687,11 @@ export const financeService = {
 
   async getFinancialSummary(eventId: number): Promise<FinancialSummary> {
     const response = await api.get<FinancialSummary>(`/events/${eventId}/financial-summary`)
+    return response.data
+  },
+
+  async getGroupInvoice(eventId: number, groupId: number): Promise<GroupInvoice> {
+    const response = await api.get<GroupInvoice>(`/events/${eventId}/groups/${groupId}/invoice`)
     return response.data
   },
 

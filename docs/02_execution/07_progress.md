@@ -60,6 +60,24 @@
 
 ---
 
+### Bandeira de Nacionalidade do Grupo (2026-07-05)
+- [x] `GuestGroup.f_nationality` (ISO 3166-1 alpha-2) + normalização para maiúsculo no schema (migration `d4a7f0c1e256`)
+- [x] `utils/countries.ts` no frontend: lista de países comuns + `countryFlagEmoji` (emoji derivado do código, sem assets) + `countryName`
+- [x] Seletor de país no cadastro e na edição do grupo (GuestsPage); bandeira ao lado do nome do grupo
+- [x] `group_nationality` exposto no room-grid; bandeira na barra da alocação, no painel de detalhe e no seletor de reserva (RoomGridPage)
+- [x] 1 teste novo (`test_group_nationality_normalized_and_exposed_in_room_grid`) — normalização + exposição no grid; suíte deve ir a 35 (validar no Codespaces)
+- ⓘ Build/pytest pendentes de execução no Codespaces (node/pytest indisponíveis na estação Windows)
+
+---
+
+### Financeiro na Página de Guests + Layout Horizontal (2026-07-03)
+- [x] Card da reserva na `GuestsPage` mostra **Total geral / Extras / Pago / Saldo / status** (via invoice do grupo, carregado em paralelo sem bloquear a lista)
+- [x] Hóspedes passam a um **grid responsivo** (1/2/3 colunas) no desktop — economiza espaço vertical; card em edição ocupa a linha toda
+- [x] Visibilidade financeira marcada para gate por RBAC (backlog)
+- [ ] Alocar hóspede em quarto específico (ex.: Michel no 1215) → backlog "Pessoa→Quarto"
+
+---
+
 ### Refinos do Painel Financeiro (2026-07-03)
 - [x] Botão "↺ Calcular pela ocupação" preenche o valor da hospedagem somando preço × noites de **todos os quartos da reserva** (editável depois, para negociação)
 - [x] Painel deixa explícito que o financeiro é **da reserva inteira** (grupo), não do quarto clicado — lista os quartos da reserva + noites·quarto
@@ -272,7 +290,7 @@
 ## Metrics
 
 ### Verification
-- Backend automated tests: **34 passing**
+- Backend automated tests: **34 passing** (+1 novo p/ nacionalidade → 35 esperado, validar no Codespaces)
 - Frontend build: **passing** (validado por último em Codespaces; node/docker indisponíveis na estação Windows atual)
 
 ### Module Completion

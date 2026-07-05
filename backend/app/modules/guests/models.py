@@ -12,6 +12,7 @@ class GuestGroup(Base):
     f_event_id = Column(Integer, ForeignKey("t_event.id"), nullable=False)
     f_name = Column(String(150), nullable=False)
     f_group_type = Column(String(50))
+    f_nationality = Column(String(2))  # código ISO 3166-1 alpha-2 (ex.: BR, AR, US, IL)
     f_phone = Column(String(50))
     f_email = Column(String(150))
     f_notes = Column(Text)

@@ -111,12 +111,25 @@ class GuestResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
+def _normalize_country_code(value: str | None) -> str | None:
+    if value is None:
+        return None
+    normalized = value.strip().upper()
+    return normalized or None
+
+
 class GuestGroupBase(BaseModel):
     f_name: str
     f_group_type: Optional[str] = None
+    f_nationality: Optional[str] = None  # ISO 3166-1 alpha-2 (BR, AR, US, IL...)
     f_phone: Optional[str] = None
     f_email: Optional[str] = None
     f_notes: Optional[str] = None
+
+    @field_validator("f_nationality", mode="before")
+    @classmethod
+    def normalize_nationality(cls, value: str | None) -> str | None:
+        return _normalize_country_code(value)
 
 
 class GuestGroupCreate(GuestGroupBase):
@@ -126,9 +139,15 @@ class GuestGroupCreate(GuestGroupBase):
 class GuestGroupUpdate(BaseModel):
     f_name: Optional[str] = None
     f_group_type: Optional[str] = None
+    f_nationality: Optional[str] = None
     f_phone: Optional[str] = None
     f_email: Optional[str] = None
     f_notes: Optional[str] = None
+
+    @field_validator("f_nationality", mode="before")
+    @classmethod
+    def normalize_nationality(cls, value: str | None) -> str | None:
+        return _normalize_country_code(value)
 
 
 class GuestGroupResponse(GuestGroupBase):

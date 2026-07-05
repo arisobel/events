@@ -223,6 +223,46 @@ def test_room_grid_returns_none_for_missing_event(db_session: Session) -> None:
     assert finance_service.get_event_room_grid(db_session, 999) is None
 
 
+def test_group_nationality_normalized_and_exposed_in_room_grid(db_session: Session) -> None:
+    _, room_a_id, _, event_id = create_priced_setup(db_session)
+
+    # código informado em minúsculo deve ser normalizado para alpha-2 maiúsculo
+    group = guest_service.create_guest_group(
+        db_session,
+        guest_schemas.GuestGroupCreate(
+            f_event_id=event_id, f_name="Cohen Family", f_nationality="br"
+        ),
+    )
+    assert group.f_nationality == "BR"
+
+    reservation = guest_service.create_reservation(
+        db_session,
+        event_id,
+        group.id,
+        guest_schemas.ReservationCreate(
+            f_event_id=event_id,
+            f_group_id=group.id,
+            f_start_date="2026-04-01",
+            f_end_date="2026-04-05",
+            f_status="confirmed",
+        ),
+    )
+    room_service.create_room_allocation(
+        db_session,
+        room_schemas.RoomAllocationCreate(
+            f_reservation_id=reservation.id,
+            f_room_id=room_a_id,
+            f_start_date="2026-04-01",
+            f_end_date="2026-04-05",
+        ),
+    )
+
+    grid = finance_service.get_event_room_grid(db_session, event_id)
+    assert grid is not None
+    room_a = next(room for room in grid.rooms if room.room_id == room_a_id)
+    assert room_a.allocations[0].group_nationality == "BR"
+
+
 def test_financial_summary_totals_and_occupancy(db_session: Session) -> None:
     _, room_a_id, _, event_id = create_priced_setup(db_session)
     create_group_with_paid_reservation(db_session, event_id, room_a_id)

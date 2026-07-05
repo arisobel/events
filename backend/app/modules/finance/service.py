@@ -273,6 +273,7 @@ def get_event_room_grid(db: Session, event_id: int) -> Optional[schemas.RoomGrid
                 reservation_id=reservation.id,
                 group_id=group.id,
                 group_name=group.f_name,
+                group_nationality=group.f_nationality,
                 f_start_date=allocation.f_start_date,
                 f_end_date=allocation.f_end_date,
                 f_payment_status=reservation.f_payment_status or "pending",

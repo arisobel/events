@@ -205,12 +205,13 @@
 
 ---
 
-### 🏳️ Bandeira de Nacionalidade do Grupo/Família
+### 🏳️ Bandeira de Nacionalidade do Grupo/Família ✅ **IMPLEMENTADO 2026-07-05**
 > Originado em sessão 2026-07-03 (lateral): em evento internacional, identificar de relance a nacionalidade da família
-- [ ] Adicionar `f_nationality` (código ISO 3166-1 alpha-2, ex.: BR, AR, US, IL) a `GuestGroup`
-- [ ] Seletor de país no cadastro/edição do grupo (GuestsPage)
-- [ ] Exibir bandeira (emoji derivado do código ISO — sem assets de imagem) na barra do Room Grid, no painel e na lista de grupos
-- [ ] Conjunto de países comuns pré-listado (BR, AR, US, IL, UY, MX…) + busca
+- [x] Adicionar `f_nationality` (código ISO 3166-1 alpha-2, ex.: BR, AR, US, IL) a `GuestGroup` (migration `d4a7f0c1e256`)
+- [x] Seletor de país no cadastro/edição do grupo (GuestsPage)
+- [x] Exibir bandeira (emoji derivado do código ISO — sem assets de imagem) na barra do Room Grid, no painel e na lista de grupos
+- [x] Conjunto de países comuns pré-listado (BR, AR, US, IL, UY, MX…) em `utils/countries.ts`
+- [ ] (Futuro) busca/autocomplete quando a lista crescer
 
 **Estimativa**: 2-3h  
 **Valor**: leitura rápida da composição internacional do evento; combina com o i18n e o app do hóspede
@@ -235,6 +236,7 @@
 - [ ] Proteção de rotas/endpoints por papel (backend + frontend)
 - [ ] Tela de gestão de usuários e papéis
 - [ ] **Entrada automática configurável por papel**: o redirect para o Room Grid faz sentido para o Gestor Financeiro, não para todos — destino de entrada passa a depender do papel
+- [ ] **Visibilidade de dados financeiros por papel**: o resumo financeiro na página de Guests e no Room Grid deve ser gated por alçada (hoje visível a todos)
 
 **Estimativa**: 8-12h  
 **Valor**: segrega as 3 interfaces de gestão; personaliza a entrada por perfil

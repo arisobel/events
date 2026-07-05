@@ -13,15 +13,18 @@ import {
   GuestUpdate,
   GUEST_GENDER_OPTIONS,
   GUEST_TYPE_OPTIONS,
+  InvoiceReservation,
   Reservation,
   ReservationCreate,
   ReservationUpdate,
   eventService,
+  financeService,
   guestGroupService,
   guestService,
   reservationService,
 } from '../services/api'
 import AdminLayout from '../components/AdminLayout'
+import { COUNTRY_OPTIONS, countryFlagEmoji, countryName } from '../utils/countries'
 
 const GUEST_GENDER_VALUES = new Set(GUEST_GENDER_OPTIONS.map((option) => option.value))
 const GUEST_TYPE_VALUES = new Set(GUEST_TYPE_OPTIONS.map((option) => option.value))
@@ -46,6 +49,8 @@ export default function GuestsPage() {
 
   const [event, setEvent] = useState<Event | null>(null)
   const [groups, setGroups] = useState<GuestGroup[]>([])
+  // Financeiro por reserva (do invoice do grupo) — candidato a gate por RBAC no futuro
+  const [financeByReservation, setFinanceByReservation] = useState<Record<number, InvoiceReservation>>({})
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [showGroupForm, setShowGroupForm] = useState(false)
@@ -60,6 +65,7 @@ export default function GuestsPage() {
   const [newGroup, setNewGroup] = useState<GuestGroupCreate>({
     f_name: '',
     f_group_type: '',
+    f_nationality: '',
     f_phone: '',
     f_email: '',
     f_notes: '',
@@ -93,10 +99,29 @@ export default function GuestsPage() {
       ])
       setEvent(eventData)
       setGroups(groupsData)
+      void loadFinance(groupsData)
     } catch (err: any) {
       setError(err.response?.data?.detail || 'Failed to load guest groups')
     } finally {
       setLoading(false)
+    }
+  }
+
+  // Busca o extrato de cada grupo em paralelo e indexa por reserva (não bloqueia a lista de grupos)
+  const loadFinance = async (groupsData: GuestGroup[]) => {
+    try {
+      const invoices = await Promise.all(
+        groupsData.map((group) => financeService.getGroupInvoice(Number(eventId), group.id)),
+      )
+      const map: Record<number, InvoiceReservation> = {}
+      for (const invoice of invoices) {
+        for (const res of invoice.reservations) {
+          map[res.reservation_id] = res
+        }
+      }
+      setFinanceByReservation(map)
+    } catch {
+      // financeiro é complementar; se falhar, a lista de grupos segue funcionando
     }
   }
 
@@ -120,6 +145,7 @@ export default function GuestsPage() {
       await guestGroupService.createGroup(Number(eventId), {
         ...newGroup,
         f_group_type: newGroup.f_group_type || undefined,
+        f_nationality: newGroup.f_nationality || undefined,
         f_phone: newGroup.f_phone || undefined,
         f_email: newGroup.f_email || undefined,
         f_notes: newGroup.f_notes || undefined,
@@ -127,6 +153,7 @@ export default function GuestsPage() {
       setNewGroup({
         f_name: '',
         f_group_type: '',
+        f_nationality: '',
         f_phone: '',
         f_email: '',
         f_notes: '',
@@ -308,6 +335,22 @@ export default function GuestsPage() {
 
   const formatDate = (value: string | null) => (value ? new Date(value).toLocaleDateString() : '')
 
+  const formatMoney = (value: string | number | null | undefined) => {
+    const num = Number(value ?? 0)
+    return (Number.isNaN(num) ? 0 : num).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
+  }
+
+  const getPaymentStatusColor = (status: string) => {
+    switch (status) {
+      case 'paid':
+        return 'bg-emerald-100 text-emerald-800'
+      case 'partial':
+        return 'bg-amber-100 text-amber-800'
+      default:
+        return 'bg-rose-100 text-rose-800'
+    }
+  }
+
   const normalizeGuestGender = (value: string | null | undefined): GuestGender | '' => {
     const normalized = value?.trim().toLowerCase() ?? ''
     return GUEST_GENDER_VALUES.has(normalized as GuestGender) ? (normalized as GuestGender) : ''
@@ -476,6 +519,18 @@ export default function GuestsPage() {
                 onChange={(e) => setNewGroup((current) => ({ ...current, f_group_type: e.target.value }))}
                 className="px-3 py-2 border border-gray-300 rounded-md"
               />
+              <select
+                value={newGroup.f_nationality || ''}
+                onChange={(e) => setNewGroup((current) => ({ ...current, f_nationality: e.target.value }))}
+                className="px-3 py-2 border border-gray-300 rounded-md bg-white"
+              >
+                <option value="">Nationality</option>
+                {COUNTRY_OPTIONS.map((country) => (
+                  <option key={country.code} value={country.code}>
+                    {countryFlagEmoji(country.code)} {country.name}
+                  </option>
+                ))}
+              </select>
               <input
                 type="text"
                 placeholder="Phone"
@@ -549,6 +604,18 @@ export default function GuestsPage() {
                             onChange={(e) => setGroupEditForm((current) => ({ ...current, f_group_type: e.target.value }))}
                             className="px-3 py-2 border border-gray-300 rounded-md"
                           />
+                          <select
+                            value={groupEditForm.f_nationality ?? ''}
+                            onChange={(e) => setGroupEditForm((current) => ({ ...current, f_nationality: e.target.value }))}
+                            className="px-3 py-2 border border-gray-300 rounded-md bg-white"
+                          >
+                            <option value="">Nationality</option>
+                            {COUNTRY_OPTIONS.map((country) => (
+                              <option key={country.code} value={country.code}>
+                                {countryFlagEmoji(country.code)} {country.name}
+                              </option>
+                            ))}
+                          </select>
                           <input
                             type="text"
                             value={groupEditForm.f_phone ?? ''}
@@ -588,7 +655,14 @@ export default function GuestsPage() {
                       ) : (
                         <>
                           <div className="flex flex-wrap items-center gap-3">
-                            <h2 className="text-xl font-semibold text-gray-900">{group.f_name}</h2>
+                            <h2 className="text-xl font-semibold text-gray-900">
+                              {group.f_nationality && (
+                                <span className="mr-2" title={countryName(group.f_nationality)}>
+                                  {countryFlagEmoji(group.f_nationality)}
+                                </span>
+                              )}
+                              {group.f_name}
+                            </h2>
                             {group.f_group_type && (
                               <span className="px-2 py-1 text-xs rounded-full bg-indigo-50 text-indigo-700">
                                 {group.f_group_type}
@@ -615,6 +689,7 @@ export default function GuestsPage() {
                           setGroupEditForm({
                             f_name: group.f_name,
                             f_group_type: group.f_group_type || '',
+                            f_nationality: group.f_nationality || '',
                             f_phone: group.f_phone || '',
                             f_email: group.f_email || '',
                             f_notes: group.f_notes || '',
@@ -687,9 +762,9 @@ export default function GuestsPage() {
                         No individual guests registered yet for this group.
                       </div>
                     ) : (
-                      <div className="mt-3 space-y-3">
+                      <div className="mt-3 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
                         {group.guests.map((guest: Guest) => (
-                          <div key={guest.id} className="rounded-lg border border-gray-200 p-4">
+                          <div key={guest.id} className={`rounded-lg border border-gray-200 p-4 ${editingGuestId === guest.id ? 'md:col-span-2 xl:col-span-3' : ''}`}>
                             {editingGuestId === guest.id ? (
                               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                                 {renderGuestFormFields(guestEditForm, (field, value) =>
@@ -962,6 +1037,24 @@ export default function GuestsPage() {
                                     )}
                                     {reservation.f_notes && <p>Notes: {reservation.f_notes}</p>}
                                   </div>
+
+                                  {financeByReservation[reservation.id] && (() => {
+                                    const fin = financeByReservation[reservation.id]
+                                    const balance = Number(fin.balance ?? 0)
+                                    return (
+                                      <div className="mt-3 flex flex-wrap gap-x-5 gap-y-1 rounded-md bg-slate-50 px-3 py-2 text-sm">
+                                        <span className="text-gray-600">Total geral: <span className="font-semibold text-gray-900">{formatMoney(fin.grand_total)}</span></span>
+                                        {Number(fin.extras_total ?? 0) > 0 && (
+                                          <span className="text-gray-600">Extras: <span className="font-medium text-gray-900">{formatMoney(fin.extras_total)}</span></span>
+                                        )}
+                                        <span className="text-gray-600">Pago: <span className="font-medium text-emerald-700">{formatMoney(fin.f_amount_paid)}</span></span>
+                                        <span className="text-gray-600">Saldo: <span className={`font-semibold ${balance > 0 ? 'text-rose-700' : 'text-emerald-700'}`}>{formatMoney(balance)}</span></span>
+                                        <span className={`px-2 py-0.5 rounded-full text-xs ${getPaymentStatusColor(fin.f_payment_status)}`}>
+                                          {fin.f_payment_status}
+                                        </span>
+                                      </div>
+                                    )
+                                  })()}
                                 </div>
                                 <div className="flex gap-2">
                                   <button
