@@ -402,6 +402,7 @@ export interface FinancialSummary {
   allocated_room_nights: number
   occupancy_rate: number
   reservation_count: number
+  contracted_revenue: string | number
   expected_revenue: string | number
   received_amount: string | number
   pending_amount: string | number

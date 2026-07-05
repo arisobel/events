@@ -62,7 +62,8 @@ class FinancialSummaryResponse(BaseModel):
     allocated_room_nights: int
     occupancy_rate: float
     reservation_count: int
-    expected_revenue: Decimal
+    contracted_revenue: Decimal  # somente valores negociados (f_amount_total)
+    expected_revenue: Decimal    # contratado + potencial (preço × noites) das reservas sem valor fechado
     received_amount: Decimal
     pending_amount: Decimal
     reservations_by_payment_status: Dict[str, int]

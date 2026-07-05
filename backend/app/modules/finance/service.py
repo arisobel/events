@@ -201,21 +201,44 @@ def get_event_financial_summary(db: Session, event_id: int) -> Optional[schemas.
         .all()
     )
 
-    expected_revenue = Decimal("0")
+    # Potencial de receita por reserva: preço efetivo dos quartos alocados × noites.
+    # Usado como fallback quando a reserva ainda não tem valor negociado (f_amount_total).
+    price_map = _get_event_price_map(db, event_id)
+    rooms_by_id = {
+        room.id: room
+        for room in db.query(hotel_models.HotelRoom)
+        .filter(hotel_models.HotelRoom.f_hotel_id == event.f_hotel_id)
+        .all()
+    }
+    potential_by_reservation: dict[int, Decimal] = {}
+    allocated_room_nights = 0
+    for allocation, reservation, _group in _get_event_allocations(db, event_id):
+        nights = _nights(allocation.f_start_date, allocation.f_end_date)
+        allocated_room_nights += nights
+        room = rooms_by_id.get(allocation.f_room_id)
+        if room is None:
+            continue
+        price = _effective_price(price_map, room)
+        if price is not None:
+            potential_by_reservation[reservation.id] = (
+                potential_by_reservation.get(reservation.id, Decimal("0")) + price * nights
+            )
+
+    contracted_revenue = Decimal("0")  # só o que foi negociado (f_amount_total)
+    expected_revenue = Decimal("0")    # contratado + potencial das reservas ainda sem valor fechado
     received_amount = Decimal("0")
     by_status = {"pending": 0, "partial": 0, "paid": 0}
     for reservation in reservations:
         if reservation.f_amount_total is not None:
-            expected_revenue += Decimal(reservation.f_amount_total)
+            amount = Decimal(reservation.f_amount_total)
+            contracted_revenue += amount
+            expected_revenue += amount
+        else:
+            expected_revenue += potential_by_reservation.get(reservation.id, Decimal("0"))
         if reservation.f_amount_paid is not None:
             received_amount += Decimal(reservation.f_amount_paid)
         status = reservation.f_payment_status or "pending"
         by_status[status] = by_status.get(status, 0) + 1
-
-    allocated_room_nights = sum(
-        _nights(allocation.f_start_date, allocation.f_end_date)
-        for allocation, _, _ in _get_event_allocations(db, event_id)
-    )
 
     event_nights = _nights(event.f_start_date, event.f_end_date)
     capacity_nights = total_rooms * event_nights
@@ -230,6 +253,7 @@ def get_event_financial_summary(db: Session, event_id: int) -> Optional[schemas.
         allocated_room_nights=allocated_room_nights,
         occupancy_rate=occupancy_rate,
         reservation_count=len(reservations),
+        contracted_revenue=contracted_revenue,
         expected_revenue=expected_revenue,
         received_amount=received_amount,
         pending_amount=expected_revenue - received_amount,

@@ -135,10 +135,93 @@ def test_financial_summary_totals_and_occupancy(db_session: Session) -> None:
     # 4 noites alocadas / (2 quartos * 9 noites) = 22.2%
     assert summary.occupancy_rate == 22.2
     assert summary.reservation_count == 1
+    # reserva tem f_amount_total=2000 → contratado e esperado batem
+    assert summary.contracted_revenue == Decimal("2000.00")
     assert summary.expected_revenue == Decimal("2000.00")
     assert summary.received_amount == Decimal("500.00")
     assert summary.pending_amount == Decimal("1500.00")
     assert summary.reservations_by_payment_status == {"pending": 0, "partial": 1, "paid": 0}
+
+
+def test_financial_summary_uses_room_price_potential_when_no_amount_total(db_session: Session) -> None:
+    _, room_a_id, _, event_id = create_priced_setup(db_session)
+
+    # reserva SEM valor negociado, mas com alocação em quarto precificado (500/noite × 4 noites)
+    group = guest_service.create_guest_group(
+        db_session,
+        guest_schemas.GuestGroupCreate(f_event_id=event_id, f_name="Levi Family"),
+    )
+    reservation = guest_service.create_reservation(
+        db_session,
+        event_id,
+        group.id,
+        guest_schemas.ReservationCreate(
+            f_event_id=event_id,
+            f_group_id=group.id,
+            f_start_date="2026-04-01",
+            f_end_date="2026-04-05",
+            f_status="confirmed",
+            f_total_guests=4,
+        ),
+    )
+    room_service.create_room_allocation(
+        db_session,
+        room_schemas.RoomAllocationCreate(
+            f_reservation_id=reservation.id,
+            f_room_id=room_a_id,
+            f_start_date="2026-04-01",
+            f_end_date="2026-04-05",
+        ),
+    )
+
+    summary = finance_service.get_event_financial_summary(db_session, event_id)
+
+    assert summary is not None
+    # nada contratado ainda, mas o potencial dos quartos alocados aparece na receita esperada
+    assert summary.contracted_revenue == Decimal("0")
+    assert summary.expected_revenue == Decimal("2000.00")  # 4 noites × 500
+    assert summary.pending_amount == Decimal("2000.00")
+
+
+def test_financial_summary_event_price_override_changes_potential(db_session: Session) -> None:
+    _, room_a_id, _, event_id = create_priced_setup(db_session)
+
+    group = guest_service.create_guest_group(
+        db_session,
+        guest_schemas.GuestGroupCreate(f_event_id=event_id, f_name="Levi Family"),
+    )
+    reservation = guest_service.create_reservation(
+        db_session,
+        event_id,
+        group.id,
+        guest_schemas.ReservationCreate(
+            f_event_id=event_id,
+            f_group_id=group.id,
+            f_start_date="2026-04-01",
+            f_end_date="2026-04-05",
+            f_status="confirmed",
+        ),
+    )
+    room_service.create_room_allocation(
+        db_session,
+        room_schemas.RoomAllocationCreate(
+            f_reservation_id=reservation.id,
+            f_room_id=room_a_id,
+            f_start_date="2026-04-01",
+            f_end_date="2026-04-05",
+        ),
+    )
+    finance_service.upsert_event_room_price(
+        db_session,
+        event_id,
+        room_a_id,
+        finance_schemas.EventRoomPriceUpsert(f_price_per_night=Decimal("800.00")),
+    )
+
+    summary = finance_service.get_event_financial_summary(db_session, event_id)
+    assert summary is not None
+    # potencial usa o preço do evento (800) e não o base (500): 4 × 800
+    assert summary.expected_revenue == Decimal("3200.00")
 
 
 def test_financial_summary_empty_event(db_session: Session) -> None:
@@ -148,6 +231,7 @@ def test_financial_summary_empty_event(db_session: Session) -> None:
 
     assert summary is not None
     assert summary.reservation_count == 0
+    assert summary.contracted_revenue == Decimal("0")
     assert summary.expected_revenue == Decimal("0")
     assert summary.received_amount == Decimal("0")
     assert summary.pending_amount == Decimal("0")

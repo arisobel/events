@@ -1,5 +1,28 @@
 # Decisions Log
 
+## [2026-07-03] Receita Esperada usa Potencial dos Quartos Precificados
+
+**Context:**
+Michel notou que a "Receita esperada" no dashboard do Room Grid mostrava R$ 0 mesmo com quartos precificados e alocados. Causa: `expected_revenue` somava apenas `reservation.f_amount_total` (valor negociado, digitado manualmente), que estava vazio.
+
+**Decision:**
+- `expected_revenue` passa a usar **fallback**: para cada reserva, usa `f_amount_total` se preenchido; senão, soma o **potencial** = preço efetivo dos quartos alocados × noites (mesmo preço efetivo do grid/extrato: override do evento > preço base do quarto)
+- Adicionado campo `contracted_revenue` ao summary (só valores negociados) para transparência — o dashboard distingue "R$ X esperado (inclui potencial) · R$ Y negociado"
+- `received_amount` continua sendo apenas `f_amount_paid` (o que de fato entrou); `pending = expected - received`
+
+**Rationale:**
+- Antes de fechar o valor com a família, o gestor precisa ver a receita potencial do evento — é o principal indicador de planejamento
+- Preserva a decisão anterior (valor negociado é autoritativo): quando `f_amount_total` existe, ele prevalece sobre o cálculo
+
+**Impact:**
+- 2 testes novos (fallback de potencial + override de preço do evento no potencial); suíte total: 30 verdes
+- Frontend: card "Receita esperada" indica quando inclui potencial; quadro de stats vira colapsável no mobile (toggle "▼ detalhes")
+
+**Participants:** Product (Michel) + Engineering  
+**Status:** ✅ Implementado
+
+---
+
 ## [2026-07-03] Feedback do Room Grid — Pacote de Melhorias (edição de evento, entrada padrão, preço por evento)
 
 **Context:**

@@ -60,6 +60,15 @@
 
 ---
 
+### Receita Potencial + Ajustes Mobile do Grid (2026-07-03)
+- [x] `financial-summary`: receita esperada usa potencial (preço efetivo × noites) quando a reserva não tem valor negociado; campo `contracted_revenue` novo para separar negociado vs potencial
+- [x] Card "Receita esperada" no grid indica quando inclui potencial e quanto já foi negociado
+- [x] Room Grid mobile: coluna do quarto só com número; quadro de stats colapsável (toggle "▼ detalhes")
+- [x] EventsPage mobile: botões em grid 2 colunas, sem estouro
+- [x] Suíte: 30 testes verdes
+
+---
+
 ### UX: Sequência de Quartos, Sidebar Mobile e Labels (2026-07-03)
 - [x] `HotelsPage`: botão "🔁 Sequence" por quarto — duplica o quarto selecionado, incrementa o número por um step configurável e gera de 1 a 50 quartos de uma vez (prévia dos números antes de confirmar)
 - [x] `HotelsPage`: componente `Field` — label discreto acima do input nos formulários de hotel e quarto (placeholder deixa de ser a única pista do campo depois de preenchido)
@@ -226,7 +235,7 @@
 ## Metrics
 
 ### Verification
-- Backend automated tests: **28 passing**
+- Backend automated tests: **30 passing**
 - Frontend build: **passing** (validado por último em Codespaces; node/docker indisponíveis na estação Windows atual)
 
 ### Module Completion

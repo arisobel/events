@@ -81,6 +81,7 @@ export default function RoomGridPage() {
   })
   const [saving, setSaving] = useState(false)
   const [eventPriceInput, setEventPriceInput] = useState('')
+  const [showStatsMobile, setShowStatsMobile] = useState(false)
 
   useEffect(() => {
     if (eventId) {
@@ -312,32 +313,51 @@ export default function RoomGridPage() {
         </div>
 
         {summary && (
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
-            <div className="bg-white rounded-lg shadow px-4 py-3">
-              <p className="text-xs text-slate-500">Ocupação</p>
-              <p className="text-xl font-semibold text-slate-900">{summary.occupancy_rate}%</p>
-              <p className="text-xs text-slate-500">
-                {summary.allocated_room_nights} de {summary.total_rooms * summary.event_nights} noites·quarto
-              </p>
+          <>
+            {/* Toggle do resumo — só no mobile; no desktop os cards ficam sempre visíveis */}
+            <button
+              onClick={() => setShowStatsMobile((current) => !current)}
+              className="md:hidden w-full flex items-center justify-between bg-white rounded-lg shadow px-4 py-3 mb-3 text-sm font-medium text-slate-700"
+            >
+              <span>
+                Resumo financeiro · {summary.occupancy_rate}% ocupação
+              </span>
+              <span className="text-slate-400">{showStatsMobile ? '▲ ocultar' : '▼ detalhes'}</span>
+            </button>
+
+            <div className={`${showStatsMobile ? 'grid' : 'hidden'} md:grid grid-cols-2 md:grid-cols-4 gap-3 mb-4`}>
+              <div className="bg-white rounded-lg shadow px-4 py-3">
+                <p className="text-xs text-slate-500">Ocupação</p>
+                <p className="text-xl font-semibold text-slate-900">{summary.occupancy_rate}%</p>
+                <p className="text-xs text-slate-500">
+                  {summary.allocated_room_nights} de {summary.total_rooms * summary.event_nights} noites·quarto
+                </p>
+              </div>
+              <div className="bg-white rounded-lg shadow px-4 py-3">
+                <p className="text-xs text-slate-500">Receita esperada</p>
+                <p className="text-xl font-semibold text-slate-900">{formatMoney(summary.expected_revenue)}</p>
+                {Number(summary.expected_revenue) > Number(summary.contracted_revenue) ? (
+                  <p className="text-xs text-violet-600">
+                    inclui potencial · {formatMoney(summary.contracted_revenue)} negociado
+                  </p>
+                ) : (
+                  <p className="text-xs text-slate-500">{summary.reservation_count} reservas</p>
+                )}
+              </div>
+              <div className="bg-white rounded-lg shadow px-4 py-3">
+                <p className="text-xs text-slate-500">Recebido</p>
+                <p className="text-xl font-semibold text-emerald-700">{formatMoney(summary.received_amount)}</p>
+                <p className="text-xs text-slate-500">{summary.reservations_by_payment_status['paid'] || 0} reservas quitadas</p>
+              </div>
+              <div className="bg-white rounded-lg shadow px-4 py-3">
+                <p className="text-xs text-slate-500">Pendente</p>
+                <p className="text-xl font-semibold text-rose-700">{formatMoney(summary.pending_amount)}</p>
+                <p className="text-xs text-slate-500">
+                  {(summary.reservations_by_payment_status['pending'] || 0) + (summary.reservations_by_payment_status['partial'] || 0)} reservas em aberto
+                </p>
+              </div>
             </div>
-            <div className="bg-white rounded-lg shadow px-4 py-3">
-              <p className="text-xs text-slate-500">Receita esperada</p>
-              <p className="text-xl font-semibold text-slate-900">{formatMoney(summary.expected_revenue)}</p>
-              <p className="text-xs text-slate-500">{summary.reservation_count} reservas</p>
-            </div>
-            <div className="bg-white rounded-lg shadow px-4 py-3">
-              <p className="text-xs text-slate-500">Recebido</p>
-              <p className="text-xl font-semibold text-emerald-700">{formatMoney(summary.received_amount)}</p>
-              <p className="text-xs text-slate-500">{summary.reservations_by_payment_status['paid'] || 0} reservas quitadas</p>
-            </div>
-            <div className="bg-white rounded-lg shadow px-4 py-3">
-              <p className="text-xs text-slate-500">Pendente</p>
-              <p className="text-xl font-semibold text-rose-700">{formatMoney(summary.pending_amount)}</p>
-              <p className="text-xs text-slate-500">
-                {(summary.reservations_by_payment_status['pending'] || 0) + (summary.reservations_by_payment_status['partial'] || 0)} reservas em aberto
-              </p>
-            </div>
-          </div>
+          </>
         )}
 
         {/* Legend */}
