@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { ReactNode, useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
 import {
@@ -9,6 +9,27 @@ import {
   hotelService,
 } from '../services/api'
 import AdminLayout from '../components/AdminLayout'
+
+// Pequeno rótulo acima do campo — evita depender só do placeholder, que some ao digitar
+function Field({ label, className, children }: { label: string; className?: string; children: ReactNode }) {
+  return (
+    <label className={`flex flex-col gap-1 ${className || ''}`}>
+      <span className="text-xs font-medium text-gray-500">{label}</span>
+      {children}
+    </label>
+  )
+}
+
+// Incrementa a parte numérica final do número do quarto, preservando prefixo e zeros à esquerda
+// ex: incrementRoomNumber("101", 2) -> "103"; incrementRoomNumber("A007", 2) -> "A009"
+function incrementRoomNumber(roomNumber: string, step: number): string {
+  const match = roomNumber.match(/^(.*?)(\d+)$/)
+  if (!match) return roomNumber
+  const [, prefix, digits] = match
+  const nextValue = Math.max(parseInt(digits, 10) + step, 0)
+  const nextDigits = String(nextValue).padStart(digits.length, '0')
+  return `${prefix}${nextDigits}`
+}
 
 type HotelFormState = {
   f_name: string
@@ -64,6 +85,13 @@ export default function HotelsPage() {
   const [selectedHotelForRooms, setSelectedHotelForRooms] = useState<number | null>(null)
   const [editingHotelId, setEditingHotelId] = useState<number | null>(null)
   const [editingRoomId, setEditingRoomId] = useState<number | null>(null)
+  const [isSequenceMode, setIsSequenceMode] = useState(false)
+  const [sequenceStep, setSequenceStep] = useState(1)
+  const [sequenceQuantity, setSequenceQuantity] = useState(1)
+  // Step/quantidade ficam visíveis na lista de quartos (não escondidos dentro do modal) —
+  // são os parâmetros usados quando o botão "Sequence" de um quarto é clicado
+  const [bulkStep, setBulkStep] = useState(1)
+  const [bulkQuantity, setBulkQuantity] = useState(1)
 
   const [hotelForm, setHotelForm] = useState<HotelFormState>(emptyHotelForm)
   const [roomForm, setRoomForm] = useState<RoomFormState>(emptyRoomForm)
@@ -169,6 +197,7 @@ export default function HotelsPage() {
 
   const openNewRoomForm = (hotelId?: number) => {
     setEditingRoomId(null)
+    setIsSequenceMode(false)
     setRoomForm({
       ...emptyRoomForm,
       hotelId: hotelId ?? (hotels[0]?.id ?? ''),
@@ -179,6 +208,7 @@ export default function HotelsPage() {
 
   const openEditRoomForm = (hotelId: number, room: HotelRoom) => {
     setEditingRoomId(room.id)
+    setIsSequenceMode(false)
     setRoomForm({
       hotelId,
       f_room_number: room.f_room_number || '',
@@ -194,11 +224,45 @@ export default function HotelsPage() {
     setError('')
   }
 
+  // Duplica um quarto existente como modelo, incrementando o número pelo step definido na lista de quartos
+  const openSequenceForm = (hotelId: number, room: HotelRoom) => {
+    setEditingRoomId(null)
+    setIsSequenceMode(true)
+    setSequenceStep(bulkStep)
+    setSequenceQuantity(bulkQuantity)
+    setRoomForm({
+      hotelId,
+      f_room_number: incrementRoomNumber(room.f_room_number, bulkStep),
+      f_room_type: room.f_room_type || '',
+      f_room_type_label: room.f_room_type_label || '',
+      f_floor: room.f_floor || '',
+      f_block: room.f_block || '',
+      f_capacity: room.f_capacity ?? 1,
+      f_price_per_night: room.f_price_per_night != null ? String(room.f_price_per_night) : '',
+      f_notes: room.f_notes || '',
+    })
+    setShowRoomForm(true)
+    setError('')
+  }
+
   const closeRoomForm = () => {
     setShowRoomForm(false)
     setEditingRoomId(null)
+    setIsSequenceMode(false)
     setRoomForm((current) => ({ ...emptyRoomForm, hotelId: current.hotelId }))
   }
+
+  // Prévia dos números que serão gerados, a partir do número inicial + step, até a quantidade escolhida
+  const sequencePreview = useMemo(() => {
+    if (!isSequenceMode) return []
+    const numbers: string[] = []
+    let current = roomForm.f_room_number
+    for (let i = 0; i < sequenceQuantity && i < 50; i += 1) {
+      numbers.push(current)
+      current = incrementRoomNumber(current, sequenceStep)
+    }
+    return numbers
+  }, [isSequenceMode, roomForm.f_room_number, sequenceQuantity, sequenceStep])
 
   const handleSubmitRoom = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -222,11 +286,29 @@ export default function HotelsPage() {
       f_notes: roomForm.f_notes || undefined,
     }
 
+    if (isSequenceMode && (sequenceQuantity < 1 || sequenceQuantity > 50)) {
+      setError('Quantity must be between 1 and 50')
+      return
+    }
+    if (isSequenceMode && sequenceQuantity > 1 && !/\d+$/.test(roomForm.f_room_number)) {
+      setError('Room number must end with digits to generate more than one room')
+      return
+    }
+
     try {
       setSavingRoom(true)
       setError('')
       const hotelId = Number(roomForm.hotelId)
-      if (editingRoomId) {
+      if (isSequenceMode) {
+        let currentNumber = roomForm.f_room_number
+        for (let i = 0; i < sequenceQuantity; i += 1) {
+          await hotelService.createHotelRoom(hotelId, {
+            ...payload,
+            f_room_number: currentNumber,
+          } as HotelRoomCreate)
+          currentNumber = incrementRoomNumber(currentNumber, sequenceStep)
+        }
+      } else if (editingRoomId) {
         await hotelService.updateHotelRoom(hotelId, editingRoomId, payload)
       } else {
         await hotelService.createHotelRoom(hotelId, payload as HotelRoomCreate)
@@ -288,49 +370,55 @@ export default function HotelsPage() {
               {editingHotelId ? 'Edit hotel' : 'Create hotel'}
             </h2>
             <form onSubmit={handleSubmitHotel} className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <input
-                type="text"
-                placeholder="Hotel name *"
-                value={hotelForm.f_name}
-                onChange={(e) => setHotelForm((current) => ({ ...current, f_name: e.target.value }))}
-                className="px-3 py-2 border border-gray-300 rounded-md"
-                required
-              />
-              <input
-                type="text"
-                placeholder="Trade name"
-                value={hotelForm.f_trade_name}
-                onChange={(e) => setHotelForm((current) => ({ ...current, f_trade_name: e.target.value }))}
-                className="px-3 py-2 border border-gray-300 rounded-md"
-              />
-              <input
-                type="text"
-                placeholder="City"
-                value={hotelForm.f_city}
-                onChange={(e) => setHotelForm((current) => ({ ...current, f_city: e.target.value }))}
-                className="px-3 py-2 border border-gray-300 rounded-md"
-              />
-              <input
-                type="text"
-                placeholder="State"
-                value={hotelForm.f_state}
-                onChange={(e) => setHotelForm((current) => ({ ...current, f_state: e.target.value }))}
-                className="px-3 py-2 border border-gray-300 rounded-md"
-              />
-              <input
-                type="text"
-                placeholder="Country"
-                value={hotelForm.f_country}
-                onChange={(e) => setHotelForm((current) => ({ ...current, f_country: e.target.value }))}
-                className="px-3 py-2 border border-gray-300 rounded-md"
-              />
-              <input
-                type="text"
-                placeholder="Notes"
-                value={hotelForm.f_notes}
-                onChange={(e) => setHotelForm((current) => ({ ...current, f_notes: e.target.value }))}
-                className="px-3 py-2 border border-gray-300 rounded-md"
-              />
+              <Field label="Hotel name *">
+                <input
+                  type="text"
+                  value={hotelForm.f_name}
+                  onChange={(e) => setHotelForm((current) => ({ ...current, f_name: e.target.value }))}
+                  className="px-3 py-2 border border-gray-300 rounded-md w-full"
+                  required
+                />
+              </Field>
+              <Field label="Trade name">
+                <input
+                  type="text"
+                  value={hotelForm.f_trade_name}
+                  onChange={(e) => setHotelForm((current) => ({ ...current, f_trade_name: e.target.value }))}
+                  className="px-3 py-2 border border-gray-300 rounded-md w-full"
+                />
+              </Field>
+              <Field label="City">
+                <input
+                  type="text"
+                  value={hotelForm.f_city}
+                  onChange={(e) => setHotelForm((current) => ({ ...current, f_city: e.target.value }))}
+                  className="px-3 py-2 border border-gray-300 rounded-md w-full"
+                />
+              </Field>
+              <Field label="State">
+                <input
+                  type="text"
+                  value={hotelForm.f_state}
+                  onChange={(e) => setHotelForm((current) => ({ ...current, f_state: e.target.value }))}
+                  className="px-3 py-2 border border-gray-300 rounded-md w-full"
+                />
+              </Field>
+              <Field label="Country">
+                <input
+                  type="text"
+                  value={hotelForm.f_country}
+                  onChange={(e) => setHotelForm((current) => ({ ...current, f_country: e.target.value }))}
+                  className="px-3 py-2 border border-gray-300 rounded-md w-full"
+                />
+              </Field>
+              <Field label="Notes">
+                <input
+                  type="text"
+                  value={hotelForm.f_notes}
+                  onChange={(e) => setHotelForm((current) => ({ ...current, f_notes: e.target.value }))}
+                  className="px-3 py-2 border border-gray-300 rounded-md w-full"
+                />
+              </Field>
               <div className="md:col-span-2 flex gap-3">
                 <button
                   type="submit"
@@ -354,90 +442,118 @@ export default function HotelsPage() {
         {showRoomForm && (
           <div className="bg-white rounded-lg shadow p-6 mb-6">
             <h2 className="text-lg font-semibold text-gray-900 mb-4">
-              {editingRoomId ? 'Edit hotel room' : 'Create hotel room'}
+              {isSequenceMode ? 'Generate rooms in sequence' : editingRoomId ? 'Edit hotel room' : 'Create hotel room'}
             </h2>
             <form onSubmit={handleSubmitRoom} className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <select
-                value={roomForm.hotelId}
-                onChange={(e) => setRoomForm((current) => ({ ...current, hotelId: Number(e.target.value) || '' }))}
-                className="px-3 py-2 border border-gray-300 rounded-md disabled:bg-gray-100"
-                required
-                disabled={editingRoomId != null}
-              >
-                <option value="">Select hotel</option>
-                {hotels.map((hotel) => (
-                  <option key={hotel.id} value={hotel.id}>
-                    {hotel.f_name}
-                  </option>
-                ))}
-              </select>
-              <input
-                type="text"
-                placeholder="Room number *"
-                value={roomForm.f_room_number}
-                onChange={(e) => setRoomForm((current) => ({ ...current, f_room_number: e.target.value }))}
-                className="px-3 py-2 border border-gray-300 rounded-md"
-                required
-              />
-              <input
-                type="text"
-                placeholder="Room type (standard, suite...)"
-                value={roomForm.f_room_type}
-                onChange={(e) => setRoomForm((current) => ({ ...current, f_room_type: e.target.value }))}
-                className="px-3 py-2 border border-gray-300 rounded-md"
-              />
-              <input
-                type="text"
-                placeholder="Commercial label (ex: Família Vista Mar)"
-                value={roomForm.f_room_type_label}
-                onChange={(e) => setRoomForm((current) => ({ ...current, f_room_type_label: e.target.value }))}
-                className="px-3 py-2 border border-gray-300 rounded-md"
-              />
-              <input
-                type="number"
-                min={1}
-                placeholder="Capacity"
-                value={roomForm.f_capacity}
-                onChange={(e) => setRoomForm((current) => ({ ...current, f_capacity: Number(e.target.value) }))}
-                className="px-3 py-2 border border-gray-300 rounded-md"
-              />
-              <input
-                type="number"
-                min={0}
-                step="0.01"
-                placeholder="Price per night (R$)"
-                value={roomForm.f_price_per_night}
-                onChange={(e) => setRoomForm((current) => ({ ...current, f_price_per_night: e.target.value }))}
-                className="px-3 py-2 border border-gray-300 rounded-md"
-              />
-              <input
-                type="text"
-                placeholder="Floor"
-                value={roomForm.f_floor}
-                onChange={(e) => setRoomForm((current) => ({ ...current, f_floor: e.target.value }))}
-                className="px-3 py-2 border border-gray-300 rounded-md"
-              />
-              <input
-                type="text"
-                placeholder="Block"
-                value={roomForm.f_block}
-                onChange={(e) => setRoomForm((current) => ({ ...current, f_block: e.target.value }))}
-                className="px-3 py-2 border border-gray-300 rounded-md"
-              />
-              <input
-                type="text"
-                placeholder="Notes"
-                value={roomForm.f_notes}
-                onChange={(e) => setRoomForm((current) => ({ ...current, f_notes: e.target.value }))}
-                className="px-3 py-2 border border-gray-300 rounded-md md:col-span-2"
-              />
+              <Field label="Hotel">
+                <select
+                  value={roomForm.hotelId}
+                  onChange={(e) => setRoomForm((current) => ({ ...current, hotelId: Number(e.target.value) || '' }))}
+                  className="px-3 py-2 border border-gray-300 rounded-md disabled:bg-gray-100 w-full"
+                  required
+                  disabled={editingRoomId != null || isSequenceMode}
+                >
+                  <option value="">Select hotel</option>
+                  {hotels.map((hotel) => (
+                    <option key={hotel.id} value={hotel.id}>
+                      {hotel.f_name}
+                    </option>
+                  ))}
+                </select>
+              </Field>
+              <Field label={isSequenceMode ? 'Starting room number *' : 'Room number *'}>
+                <input
+                  type="text"
+                  value={roomForm.f_room_number}
+                  onChange={(e) => setRoomForm((current) => ({ ...current, f_room_number: e.target.value }))}
+                  className="px-3 py-2 border border-gray-300 rounded-md w-full"
+                  required
+                />
+              </Field>
+              <Field label="Room type">
+                <input
+                  type="text"
+                  placeholder="standard, suite..."
+                  value={roomForm.f_room_type}
+                  onChange={(e) => setRoomForm((current) => ({ ...current, f_room_type: e.target.value }))}
+                  className="px-3 py-2 border border-gray-300 rounded-md w-full"
+                />
+              </Field>
+              <Field label="Commercial label">
+                <input
+                  type="text"
+                  placeholder="ex: Família Vista Mar"
+                  value={roomForm.f_room_type_label}
+                  onChange={(e) => setRoomForm((current) => ({ ...current, f_room_type_label: e.target.value }))}
+                  className="px-3 py-2 border border-gray-300 rounded-md w-full"
+                />
+              </Field>
+              <Field label="Capacity">
+                <input
+                  type="number"
+                  min={1}
+                  value={roomForm.f_capacity}
+                  onChange={(e) => setRoomForm((current) => ({ ...current, f_capacity: Number(e.target.value) }))}
+                  className="px-3 py-2 border border-gray-300 rounded-md w-full"
+                />
+              </Field>
+              <Field label="Price per night (R$)">
+                <input
+                  type="number"
+                  min={0}
+                  step="0.01"
+                  value={roomForm.f_price_per_night}
+                  onChange={(e) => setRoomForm((current) => ({ ...current, f_price_per_night: e.target.value }))}
+                  className="px-3 py-2 border border-gray-300 rounded-md w-full"
+                />
+              </Field>
+              <Field label="Floor">
+                <input
+                  type="text"
+                  value={roomForm.f_floor}
+                  onChange={(e) => setRoomForm((current) => ({ ...current, f_floor: e.target.value }))}
+                  className="px-3 py-2 border border-gray-300 rounded-md w-full"
+                />
+              </Field>
+              <Field label="Block">
+                <input
+                  type="text"
+                  value={roomForm.f_block}
+                  onChange={(e) => setRoomForm((current) => ({ ...current, f_block: e.target.value }))}
+                  className="px-3 py-2 border border-gray-300 rounded-md w-full"
+                />
+              </Field>
+              <Field label="Notes" className="md:col-span-2">
+                <input
+                  type="text"
+                  value={roomForm.f_notes}
+                  onChange={(e) => setRoomForm((current) => ({ ...current, f_notes: e.target.value }))}
+                  className="px-3 py-2 border border-gray-300 rounded-md w-full"
+                />
+              </Field>
+
+              {isSequenceMode && (
+                <div className="md:col-span-2 text-sm text-violet-700 bg-violet-50 rounded-md px-3 py-2">
+                  Step {sequenceStep} · Quantity {sequenceQuantity} —{' '}
+                  {sequencePreview.length > 1
+                    ? `will create ${sequencePreview.length} rooms: ${sequencePreview.join(', ')}`
+                    : `will create room: ${sequencePreview[0] || roomForm.f_room_number}`}
+                </div>
+              )}
+
               <div className="md:col-span-2 flex gap-3">
                 <button
                   type="submit"
                   disabled={savingRoom}
                   className="bg-emerald-600 text-white px-5 py-2 rounded-md hover:bg-emerald-700 disabled:opacity-50"
                 >
-                  {savingRoom ? 'Saving...' : editingRoomId ? 'Save changes' : 'Create room'}
+                  {savingRoom
+                    ? 'Saving...'
+                    : isSequenceMode
+                    ? `Generate ${sequenceQuantity} room${sequenceQuantity > 1 ? 's' : ''}`
+                    : editingRoomId
+                    ? 'Save changes'
+                    : 'Create room'}
                 </button>
                 <button
                   type="button"
@@ -512,16 +628,38 @@ export default function HotelsPage() {
 
                   {selectedHotelForRooms === hotel.id && (
                     <div className="mt-5">
-                      <div className="flex items-center justify-between mb-2">
-                        <h3 className="text-sm font-semibold text-gray-900">
+                      <div className="flex items-center justify-between mb-2 gap-3">
+                        <h3 className="text-sm font-semibold text-gray-900 whitespace-nowrap">
                           Rooms ({rooms.length})
                         </h3>
-                        <button
-                          onClick={() => openNewRoomForm(hotel.id)}
-                          className="text-xs text-emerald-700 hover:text-emerald-900"
-                        >
-                          + Add room here
-                        </button>
+                        <div className="flex items-center gap-3">
+                          <label className="flex items-center gap-1 text-xs text-gray-500" title="Used by the Sequence button on each room">
+                            Step
+                            <input
+                              type="number"
+                              value={bulkStep}
+                              onChange={(e) => setBulkStep(Number(e.target.value) || 1)}
+                              className="w-14 px-1.5 py-1 border border-gray-300 rounded-md text-xs"
+                            />
+                          </label>
+                          <label className="flex items-center gap-1 text-xs text-gray-500" title="Used by the Sequence button on each room">
+                            Qty
+                            <input
+                              type="number"
+                              min={1}
+                              max={50}
+                              value={bulkQuantity}
+                              onChange={(e) => setBulkQuantity(Number(e.target.value) || 1)}
+                              className="w-14 px-1.5 py-1 border border-gray-300 rounded-md text-xs"
+                            />
+                          </label>
+                          <button
+                            onClick={() => openNewRoomForm(hotel.id)}
+                            className="text-xs text-emerald-700 hover:text-emerald-900 whitespace-nowrap"
+                          >
+                            + Add room here
+                          </button>
+                        </div>
                       </div>
                       {rooms.length === 0 ? (
                         <div className="text-sm text-gray-500 bg-gray-50 rounded-md p-3">
@@ -555,6 +693,13 @@ export default function HotelsPage() {
                                     className="text-xs text-blue-700 hover:text-blue-900"
                                   >
                                     Edit
+                                  </button>
+                                  <button
+                                    onClick={() => openSequenceForm(hotel.id, room)}
+                                    title={`Duplicate this room and generate ${bulkQuantity} room(s), step ${bulkStep}`}
+                                    className="text-xs text-violet-700 hover:text-violet-900"
+                                  >
+                                    🔁 Sequence
                                   </button>
                                 </div>
                               </div>

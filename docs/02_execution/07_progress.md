@@ -60,6 +60,14 @@
 
 ---
 
+### UX: Sequência de Quartos, Sidebar Mobile e Labels (2026-07-03)
+- [x] `HotelsPage`: botão "🔁 Sequence" por quarto — duplica o quarto selecionado, incrementa o número por um step configurável e gera de 1 a 50 quartos de uma vez (prévia dos números antes de confirmar)
+- [x] `HotelsPage`: componente `Field` — label discreto acima do input nos formulários de hotel e quarto (placeholder deixa de ser a única pista do campo depois de preenchido)
+- [x] `AdminLayout`: sidebar retrátil no mobile — vira drawer com hambúrguer, overlay e fecha ao navegar; desktop inalterado
+- [ ] Mesmo padrão de labels ainda não aplicado nas demais páginas (Events, Guests, Rooms, Tasks, RoomGrid) — mesmo problema existe lá
+
+---
+
 ### Pacote Feedback do Grid (2026-07-03)
 - [x] **Edição de evento**: `EventUpdate` completo (datas, tipo, families, entry default) + validação de datas + UI na EventsPage
 - [x] **Evento de entrada padrão**: `f_is_entry_default` exclusivo + redirect de entrada (flag → evento em curso → lista); destino room-grid durante o evento, guests fora dele

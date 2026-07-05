@@ -1,4 +1,4 @@
-import { ReactNode } from 'react'
+import { ReactNode, useState } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 
@@ -55,12 +55,37 @@ function LogOutIcon({ className }: IconProps) {
   )
 }
 
+function MenuIcon({ className }: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className={className}>
+      <path d="M4 6h16" />
+      <path d="M4 12h16" />
+      <path d="M4 18h16" />
+    </svg>
+  )
+}
+
+function XIcon({ className }: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className={className}>
+      <path d="M6 6l12 12" />
+      <path d="M18 6L6 18" />
+    </svg>
+  )
+}
+
 export default function AdminLayout({ children, title }: AdminLayoutProps) {
   const { user, logout } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false)
 
   const isActive = (path: string) => location.pathname === path
+
+  const goTo = (path: string) => {
+    navigate(path)
+    setIsSidebarOpen(false)
+  }
 
   const initials = user?.f_username
     ? user.f_username.slice(0, 2).toUpperCase()
@@ -68,12 +93,35 @@ export default function AdminLayout({ children, title }: AdminLayoutProps) {
 
   return (
     <div className="h-full flex bg-slate-50 overflow-hidden">
+      {/* Mobile backdrop */}
+      {isSidebarOpen && (
+        <div
+          className="fixed inset-0 bg-black/50 z-30 md:hidden"
+          onClick={() => setIsSidebarOpen(false)}
+        />
+      )}
+
       {/* Sidebar */}
-      <aside className="w-64 bg-gradient-to-b from-slate-900 to-slate-800 text-white flex flex-col flex-shrink-0">
+      <aside
+        className={[
+          'fixed md:static inset-y-0 left-0 z-40 w-64 bg-gradient-to-b from-slate-900 to-slate-800 text-white flex flex-col flex-shrink-0',
+          'transform transition-transform duration-200 ease-in-out md:translate-x-0',
+          isSidebarOpen ? 'translate-x-0' : '-translate-x-full',
+        ].join(' ')}
+      >
         {/* Brand */}
-        <div className="p-5 border-b border-slate-700">
-          <h1 className="text-lg font-bold tracking-tight">Event Operations</h1>
-          <p className="text-xs text-slate-400 mt-1">Platform v1.0</p>
+        <div className="p-5 border-b border-slate-700 flex items-center justify-between">
+          <div>
+            <h1 className="text-lg font-bold tracking-tight">Event Operations</h1>
+            <p className="text-xs text-slate-400 mt-1">Platform v1.0</p>
+          </div>
+          <button
+            onClick={() => setIsSidebarOpen(false)}
+            aria-label="Close menu"
+            className="md:hidden text-slate-400 hover:text-white transition-colors"
+          >
+            <XIcon className="w-5 h-5" />
+          </button>
         </div>
 
         {/* Navigation */}
@@ -82,7 +130,7 @@ export default function AdminLayout({ children, title }: AdminLayoutProps) {
             <a
               key={path}
               href="#"
-              onClick={(e) => { e.preventDefault(); navigate(path) }}
+              onClick={(e) => { e.preventDefault(); goTo(path) }}
               className={['sidebar-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm', isActive(path) ? 'active' : ''].filter(Boolean).join(' ')}
             >
               <Icon className="w-4 h-4 flex-shrink-0" />
@@ -115,9 +163,18 @@ export default function AdminLayout({ children, title }: AdminLayoutProps) {
       {/* Main area */}
       <div className="flex-1 flex flex-col min-w-0">
         {/* Top header */}
-        <header className="bg-white border-b border-slate-200 px-6 py-3 flex items-center justify-between flex-shrink-0">
-          <h2 className="text-lg font-semibold text-slate-800">{title}</h2>
-          <span className="text-sm text-slate-500">{user?.f_username}</span>
+        <header className="bg-white border-b border-slate-200 px-4 md:px-6 py-3 flex items-center justify-between flex-shrink-0">
+          <div className="flex items-center gap-3 min-w-0">
+            <button
+              onClick={() => setIsSidebarOpen(true)}
+              aria-label="Open menu"
+              className="md:hidden text-slate-600 hover:text-slate-900 flex-shrink-0"
+            >
+              <MenuIcon className="w-6 h-6" />
+            </button>
+            <h2 className="text-lg font-semibold text-slate-800 truncate">{title}</h2>
+          </div>
+          <span className="text-sm text-slate-500 hidden sm:inline">{user?.f_username}</span>
         </header>
 
         {/* Scrollable content */}

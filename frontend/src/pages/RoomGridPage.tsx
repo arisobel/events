@@ -166,7 +166,8 @@ export default function RoomGridPage() {
     return map
   }, [grid, dayISOs])
 
-  const gridTemplate = `200px repeat(${days.length}, minmax(42px, 1fr))`
+  // No mobile a coluna do quarto mostra só o número (72px); no desktop expande para exibir tipo/capacidade/preço (200px)
+  const gridTemplate = `var(--room-col-width, 200px) repeat(${days.length}, minmax(42px, 1fr))`
 
   // ---- selection handlers ----
 
@@ -373,10 +374,10 @@ export default function RoomGridPage() {
 
         {!loading && grid && grid.rooms.length > 0 && (
           <div className="bg-white rounded-lg shadow overflow-x-auto">
-            <div className="min-w-max">
+            <div className="min-w-max [--room-col-width:64px] md:[--room-col-width:200px]">
               {/* Header row */}
               <div className="grid border-b border-slate-200" style={{ gridTemplateColumns: gridTemplate }}>
-                <div className="sticky left-0 z-20 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-600 border-r border-slate-200">
+                <div className="sticky left-0 z-20 bg-slate-50 px-2 md:px-3 py-2 text-xs font-semibold text-slate-600 border-r border-slate-200">
                   Quarto
                 </div>
                 {days.map((day, index) => (
@@ -407,10 +408,10 @@ export default function RoomGridPage() {
                   <button
                     onClick={() => openRoomPrice(room)}
                     title="Editar preço deste quarto no evento"
-                    className="sticky left-0 z-10 bg-white px-3 py-2 border-r border-slate-200 text-left hover:bg-slate-50 transition-colors"
+                    className="sticky left-0 z-10 bg-white px-2 md:px-3 py-2 border-r border-slate-200 text-left hover:bg-slate-50 transition-colors"
                   >
                     <p className="text-sm font-semibold text-slate-900">{room.f_room_number}</p>
-                    <p className="text-xs text-slate-500 truncate">
+                    <p className="hidden md:block text-xs text-slate-500 truncate">
                       {room.f_room_type_label || room.f_room_type || 'Standard'} · {room.f_capacity}p
                       {room.f_price_per_night != null ? (
                         <span className={room.f_has_event_price ? 'text-violet-700 font-semibold' : ''}>

@@ -340,7 +340,7 @@ export default function EventsPage() {
                       : 'bg-white shadow hover:shadow-md'
                   }`}
                 >
-                  <div className="flex items-start justify-between gap-4">
+                  <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
                     <div className="flex-1">
                       <div className="flex items-center gap-3">
                         <h2 className="text-xl font-semibold text-gray-900">
@@ -375,34 +375,34 @@ export default function EventsPage() {
                       </div>
                     </div>
 
-                    <div className="ml-4 flex flex-col gap-2">
+                    <div className="grid grid-cols-2 gap-2 md:flex md:flex-col md:ml-4 md:w-auto">
                       <button
                         onClick={() => openEditForm(event)}
-                        className="bg-blue-50 text-blue-700 px-4 py-2 rounded-md hover:bg-blue-100 text-sm font-medium whitespace-nowrap"
+                        className="bg-blue-50 text-blue-700 px-3 md:px-4 py-2 rounded-md hover:bg-blue-100 text-xs md:text-sm font-medium"
                       >
                         ✏️ Edit Event
                       </button>
                       <button
                         onClick={() => navigate(`/events/${event.id}/guests`)}
-                        className="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 text-sm font-medium whitespace-nowrap"
+                        className="bg-indigo-600 text-white px-3 md:px-4 py-2 rounded-md hover:bg-indigo-700 text-xs md:text-sm font-medium md:whitespace-nowrap"
                       >
                         Guests & Reservations
                       </button>
                       <button
                         onClick={() => navigate(`/events/${event.id}/rooms`)}
-                        className="bg-emerald-600 text-white px-4 py-2 rounded-md hover:bg-emerald-700 text-sm font-medium whitespace-nowrap"
+                        className="bg-emerald-600 text-white px-3 md:px-4 py-2 rounded-md hover:bg-emerald-700 text-xs md:text-sm font-medium md:whitespace-nowrap"
                       >
                         Room Allocations
                       </button>
                       <button
                         onClick={() => navigate(`/events/${event.id}/room-grid`)}
-                        className="bg-amber-500 text-white px-4 py-2 rounded-md hover:bg-amber-600 text-sm font-medium whitespace-nowrap"
+                        className="bg-amber-500 text-white px-3 md:px-4 py-2 rounded-md hover:bg-amber-600 text-xs md:text-sm font-medium md:whitespace-nowrap"
                       >
                         📅 Room Grid
                       </button>
                       <button
                         onClick={() => navigate(`/events/${event.id}/tasks`)}
-                        className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 text-sm font-medium whitespace-nowrap"
+                        className="col-span-2 md:col-span-1 bg-blue-600 text-white px-3 md:px-4 py-2 rounded-md hover:bg-blue-700 text-xs md:text-sm font-medium md:whitespace-nowrap"
                       >
                         Tasks
                       </button>
