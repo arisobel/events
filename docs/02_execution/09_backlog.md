@@ -148,6 +148,85 @@
 
 ---
 
+### 🧩 Hóspedes/Famílias a Nível Raiz (desacoplamento de eventos) ⭐ ESTRUTURAL
+> Originado em sessão 2026-07-03: famílias recorrem entre eventos (Pessach todo ano) — recadastrar a cada evento é ruim
+>
+> **Decisão pendente antes de implementar** — muda o modelo de dados central
+
+**Problema atual:**
+- `GuestGroup.f_event_id` e `Guest.f_group_id` amarram grupo/hóspede a UM evento
+- Uma família que volta em outro evento precisa ser recadastrada do zero
+
+**Abordagem recomendada — "entidade permanente + participação por evento":**
+- Novo módulo raiz `people` (menu ao lado de Hotels/Events): `Household` (família permanente) + `Person` (pessoa permanente, dados que não mudam: nome, documento, nascimento)
+- `GuestGroup` ganha `f_household_id` opcional; `Guest` ganha `f_person_id` opcional — a participação-por-evento passa a referenciar a entidade raiz
+- Fluxo: ao montar um grupo no evento, "importar de família existente" (copia dados + vincula) OU criar do zero e opcionalmente "promover" para família raiz
+- Migração incremental: FKs opcionais, nada quebra; dados atuais seguem funcionando
+
+**Backend:**
+- [ ] Modelos `Household` + `Person` (raiz, sem event)
+- [ ] FKs opcionais `f_household_id` / `f_person_id` em GuestGroup/Guest
+- [ ] CRUD raiz + endpoint "importar família para evento"
+- [ ] (Decidir) o que é dado permanente (pessoa) vs. dado do evento (participação)
+
+**Frontend:**
+- [ ] Menu + página `PeoplePage` (lista de famílias/pessoas)
+- [ ] No fluxo de Guests do evento: seletor "importar família existente"
+
+**Estimativa**: 10-16h  
+**Valor**: elimina recadastro; base para histórico do hóspede e para a conta corrente
+
+---
+
+### 💳 Conta Corrente por Família (financeiro entre eventos) ⭐ ESTRUTURAL
+> Originado em sessão 2026-07-03: valores altos, dívidas podem se acumular entre eventos
+>
+> **Depende de:** Hóspedes/Famílias a nível raiz (a conta é da família permanente)
+
+**Conceito (razão / ledger):**
+- Conta corrente por `Household`: **débitos** = valores dos eventos (o que a família deve), **créditos** = pagamentos/depósitos
+- Saldo corrente = créditos − débitos, atravessando eventos
+- "Leve desacoplamento": o financeiro por reserva continua, mas alimenta lançamentos na conta da família
+
+**Backend:**
+- [ ] Modelo `LedgerEntry` — família, tipo (débito/crédito), valor, data, descrição, ref. opcional a evento/reserva
+- [ ] Débito gerado quando o valor de uma reserva/evento é fechado; crédito ao registrar pagamento
+- [ ] Endpoint de extrato consolidado da família (todos os eventos) + saldo
+- [ ] (Decidir) débito automático a partir de `f_amount_total`, ou lançamento manual pelo gestor
+
+**Frontend:**
+- [ ] Extrato da família na `PeoplePage`: lista de lançamentos + saldo
+- [ ] Registrar pagamento (crédito) e ver histórico entre eventos
+
+**Estimativa**: 8-12h  
+**Valor**: visão financeira real do relacionamento com a família ao longo do tempo; suporta cobrança de saldo acumulado
+
+---
+
+### 🌐 Multi-idiomas (i18n)
+> Decisão de 2026-07-01 previa i18n desde o início; agora registrado como item
+- [ ] Escolher lib (react-i18next) e estrutura de mensagens
+- [ ] Extrair strings da gestão para chaves de tradução
+- [ ] PT-BR + EN inicialmente; base para o app do hóspede internacional
+- [ ] (Decidir) idioma por usuário vs. por navegador
+
+**Estimativa**: 6-10h (setup) + esforço contínuo  
+**Valor**: mercado internacional; pré-requisito do app do hóspede multi-idioma
+
+---
+
+### 🔐 RBAC — Usuários e Papéis
+> Originado em sessão 2026-07-03; expande "Auth: Troca de Senha + Roles na UI"
+- [ ] Modelo de papéis (ex.: gestor_financeiro, gestor_campo, gestor_chef, admin) — tabelas já existem parcialmente (`Role`, `UserRole`)
+- [ ] Proteção de rotas/endpoints por papel (backend + frontend)
+- [ ] Tela de gestão de usuários e papéis
+- [ ] **Entrada automática configurável por papel**: o redirect para o Room Grid faz sentido para o Gestor Financeiro, não para todos — destino de entrada passa a depender do papel
+
+**Estimativa**: 8-12h  
+**Valor**: segrega as 3 interfaces de gestão; personaliza a entrada por perfil
+
+---
+
 ### 📺 Displays de TV — Grade do Dia
 > Telas espalhadas pelo hotel mostrando cronograma e evento iminente, segmentadas por público
 >

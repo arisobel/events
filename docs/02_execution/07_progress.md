@@ -60,6 +60,14 @@
 
 ---
 
+### Ajustes de Layout do Grid — Sticky Header e Mobile (2026-07-03)
+- [x] Cabeçalho do grid (linha de dias) fixo ao rolar verticalmente — container com scroll próprio + `sticky top-0`
+- [x] Botão Refresh agora na mesma linha de Allocations/Guests no mobile
+- [x] Legendas em linha única rolável no mobile (texto aglutinado)
+- [ ] Backlog estruturado: hóspedes/famílias raiz, conta corrente, i18n, RBAC (com entrada por papel)
+
+---
+
 ### Receita Potencial + Ajustes Mobile do Grid (2026-07-03)
 - [x] `financial-summary`: receita esperada usa potencial (preço efetivo × noites) quando a reserva não tem valor negociado; campo `contracted_revenue` novo para separar negociado vs potencial
 - [x] Card "Receita esperada" no grid indica quando inclui potencial e quanto já foi negociado
@@ -132,7 +140,7 @@
 - [x] `frontend/Dockerfile` — multi-stage: build Node + serve Nginx com SPA fallback
 - [x] `frontend/nginx.conf` — SPA fallback para React Router, cache headers para assets
 - [x] `frontend/captain-definition` — aponta para `./frontend/Dockerfile` (app `events-web`)
-- [x] `build.ps1` — substitui `deploy-caprover.ps1` com suporte a `-Target api|web`, mantém últimos 5 tarballs em `/dist/`
+- [x] `build.ps1` — substitui `deploy-caprover.ps1` com suporte a `-Target api|web`; deixa o tarball mais recente na raiz de `/dist/` e arquiva os anteriores em `/dist/legacy/` (até 5 de cada target)
 - [x] CORS corrigido em `backend/app/main.py` — usa `settings.CORS_ORIGINS` (env var) + regex Codespaces; era hardcoded para Codespaces only
 - [x] `VITE_API_URL` adicionado em `frontend/src/services/api.ts` — checado antes de qualquer detecção de hostname
 - [ ] Criar apps no CapRover (events-postgres, events-api, events-web)

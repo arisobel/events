@@ -27,7 +27,7 @@ Atualizado em 2026-06-30: todos os arquivos de infraestrutura de produção fora
 - `frontend/Dockerfile` criado — multi-stage build: Node 20 para `npm ci && npm run build`, depois Nginx Alpine para servir `/dist`.
 - `frontend/nginx.conf` criado — SPA fallback para React Router, cache headers para assets estáticos.
 - `frontend/captain-definition` criado — aponta para `./frontend/Dockerfile` (app `events-web`).
-- `build.ps1` criado na raiz — gera tarball timestampado em `/dist/`, aceita `-Target api|web`, mantém apenas os últimos 5 de cada tipo.
+- `build.ps1` criado na raiz — gera tarball timestampado em `/dist/`, aceita `-Target api|web`; o mais recente fica na raiz de `/dist/` e os anteriores vão para `/dist/legacy/` (até 5 de cada target).
 - CORS corrigido em `backend/app/main.py` — usa `settings.CORS_ORIGINS` (env var) combinado com regex Codespaces; antes estava hardcoded para Codespaces only e ignorava produção.
 - `VITE_API_URL` adicionado em `frontend/src/services/api.ts` — tem prioridade sobre detecção de hostname; basta setar o build arg no CapRover.
 - Redis adiado — confirmado que o MVP atual não depende de Redis; será adicionado como `events-redis` (one-click app) em ciclo futuro.
@@ -171,7 +171,7 @@ Comportamento:
 - exclui `.git`, `dist`, `node_modules`, caches, `.env`, logs e pid files
 - copia o `captain-definition` correto para a raiz do pacote (raiz para api, `frontend/captain-definition` para web)
 - cria o `.tar` com `tar.exe` e move para `dist/`
-- mantém apenas os últimos 5 tarballs de cada tipo em `dist/`
+- mantém o tarball mais recente de cada target na raiz de `dist/`; arquiva os anteriores em `dist/legacy/`, guardando no máximo 5 de cada target
 
 O script `deploy-caprover.ps1` (legado) continua existindo mas não deve ser usado para novos deploys — ele aponta para `infrastructure/captain-definition` que usa `./backend/Dockerfile` (contexto de desenvolvimento).
 

@@ -282,15 +282,17 @@ export default function RoomGridPage() {
     <AdminLayout title="Room Grid">
       <div className="max-w-full mx-auto">
         {/* Navigation + summary */}
-        <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
-          <div className="flex flex-wrap items-center gap-2 text-sm">
+        <div className="mb-4 space-y-2">
+          <div className="flex items-center gap-2 text-sm">
             <button
               onClick={() => navigate('/events')}
-              className="text-slate-600 hover:text-slate-900 border border-slate-300 px-3 py-1.5 rounded-md hover:bg-slate-50"
+              className="text-slate-600 hover:text-slate-900 border border-slate-300 px-3 py-1.5 rounded-md hover:bg-slate-50 whitespace-nowrap"
             >
               ← Events
             </button>
-            {grid && <span className="font-semibold text-slate-800">{grid.event_name}</span>}
+            {grid && <span className="font-semibold text-slate-800 truncate">{grid.event_name}</span>}
+          </div>
+          <div className="flex flex-wrap items-center gap-2 text-sm">
             <button
               onClick={() => navigate(`/events/${eventId}/rooms`)}
               className="bg-emerald-600 text-white px-3 py-1.5 rounded-md hover:bg-emerald-700"
@@ -303,13 +305,13 @@ export default function RoomGridPage() {
             >
               Guests
             </button>
+            <button
+              onClick={loadData}
+              className="bg-slate-900 text-white px-3 py-1.5 rounded-md hover:bg-black md:ml-auto"
+            >
+              ↻ Refresh
+            </button>
           </div>
-          <button
-            onClick={loadData}
-            className="bg-slate-900 text-white px-4 py-2 rounded-md hover:bg-black text-sm"
-          >
-            ↻ Refresh
-          </button>
         </div>
 
         {summary && (
@@ -360,21 +362,21 @@ export default function RoomGridPage() {
           </>
         )}
 
-        {/* Legend */}
-        <div className="flex flex-wrap items-center gap-4 text-xs text-slate-600 mb-3">
-          <span className="flex items-center gap-1.5">
+        {/* Legend — rola horizontalmente numa linha no mobile; quebra livre no desktop */}
+        <div className="flex md:flex-wrap items-center gap-3 md:gap-4 text-xs text-slate-600 mb-3 overflow-x-auto whitespace-nowrap pb-1">
+          <span className="flex items-center gap-1.5 flex-shrink-0">
             <span className="inline-block w-3 h-3 rounded bg-emerald-500" /> Pago
           </span>
-          <span className="flex items-center gap-1.5">
+          <span className="flex items-center gap-1.5 flex-shrink-0">
             <span className="inline-block w-3 h-3 rounded bg-amber-400" /> Parcial
           </span>
-          <span className="flex items-center gap-1.5">
+          <span className="flex items-center gap-1.5 flex-shrink-0">
             <span className="inline-block w-3 h-3 rounded bg-rose-500" /> Pendente
           </span>
-          <span className="flex items-center gap-1.5">
-            <span className="inline-block w-3 h-3 rounded border border-slate-300 bg-white" /> Livre (clique para alocar)
+          <span className="flex items-center gap-1.5 flex-shrink-0">
+            <span className="inline-block w-3 h-3 rounded border border-slate-300 bg-white" /> Livre
           </span>
-          <span className="flex items-center gap-1.5">✓ = check-in feito · cada célula = 1 noite · * = preço específico do evento</span>
+          <span className="flex items-center gap-1.5 flex-shrink-0">✓ check-in · célula = 1 noite · * preço do evento</span>
         </div>
 
         {error && (
@@ -393,17 +395,17 @@ export default function RoomGridPage() {
         )}
 
         {!loading && grid && grid.rooms.length > 0 && (
-          <div className="bg-white rounded-lg shadow overflow-x-auto">
+          <div className="bg-white rounded-lg shadow overflow-auto max-h-[70vh]">
             <div className="min-w-max [--room-col-width:64px] md:[--room-col-width:200px]">
-              {/* Header row */}
+              {/* Header row (sticky top ao rolar verticalmente) */}
               <div className="grid border-b border-slate-200" style={{ gridTemplateColumns: gridTemplate }}>
-                <div className="sticky left-0 z-20 bg-slate-50 px-2 md:px-3 py-2 text-xs font-semibold text-slate-600 border-r border-slate-200">
+                <div className="sticky left-0 top-0 z-40 bg-slate-50 px-2 md:px-3 py-2 text-xs font-semibold text-slate-600 border-r border-slate-200">
                   Quarto
                 </div>
                 {days.map((day, index) => (
                   <div
                     key={dayISOs[index]}
-                    className={`px-1 py-2 text-center text-xs border-r border-slate-100 ${
+                    className={`sticky top-0 z-30 px-1 py-2 text-center text-xs border-r border-slate-100 ${
                       index === todayIndex
                         ? 'bg-blue-600 text-white font-semibold'
                         : 'bg-slate-50 text-slate-600'

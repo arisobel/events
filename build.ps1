@@ -67,15 +67,29 @@ try {
 Move-Item -LiteralPath $TempPackagePath -Destination $PackagePath -Force
 Remove-Item -LiteralPath $StageDir -Recurse -Force
 
-$OldFiles = Get-ChildItem -Path $DistDir -Filter "events-$Target-*.tar" |
+# Retention: keep only the newest tarball of this target in dist/ root;
+# archive older ones into dist/legacy/, keeping at most 5 of each target there.
+# Timestamp (yyyyMMdd-HHmmss) is embedded in the name, so a descending Name sort is chronological.
+$LegacyDir = Join-Path $DistDir "legacy"
+New-Item -ItemType Directory -Force -Path $LegacyDir | Out-Null
+
+$RootPackages = Get-ChildItem -Path $DistDir -Filter "events-$Target-*.tar" |
+    Sort-Object Name -Descending
+foreach ($f in ($RootPackages | Select-Object -Skip 1)) {
+    Move-Item -LiteralPath $f.FullName -Destination (Join-Path $LegacyDir $f.Name) -Force
+    Write-Host "Archived to legacy: $($f.Name)"
+}
+
+$OldLegacy = Get-ChildItem -Path $LegacyDir -Filter "events-$Target-*.tar" |
     Sort-Object Name -Descending |
     Select-Object -Skip 5
-foreach ($f in $OldFiles) {
+foreach ($f in $OldLegacy) {
     Remove-Item -LiteralPath $f.FullName -Force
-    Write-Host "Removed old package: $($f.Name)"
+    Write-Host "Removed old legacy package: $($f.Name)"
 }
 
 Write-Host ""
 Write-Host "Package ready : $PackagePath"
+Write-Host "Legacy folder : $LegacyDir  (keeps up to 5 older $Target tarballs)"
 Write-Host "Upload to app : events-$Target  (CapRover > Apps > events-$Target > Deploy > Tarball)"
 Write-Host ""
