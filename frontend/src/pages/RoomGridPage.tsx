@@ -18,7 +18,7 @@ import {
   roomAllocationService,
 } from '../services/api'
 import AdminLayout from '../components/AdminLayout'
-import { countryFlagEmoji, countryName } from '../utils/countries'
+import Flag from '../components/Flag'
 
 // ---- date helpers (YYYY-MM-DD strings, local time) ----
 
@@ -134,7 +134,6 @@ export default function RoomGridPage() {
         group.reservations.map((reservation) => ({
           ...reservation,
           groupName: group.f_name,
-          groupNationality: group.f_nationality,
         }))
       ),
     [groups]
@@ -645,7 +644,9 @@ export default function RoomGridPage() {
                         style={{ gridColumn: `${startIndex + 2} / ${endIndex + 3}` }}
                       >
                         {allocation.f_checkin_status === 'checked_in' ? '✓ ' : ''}
-                        {allocation.group_nationality ? `${countryFlagEmoji(allocation.group_nationality)} ` : ''}
+                        {allocation.group_nationality && (
+                          <Flag code={allocation.group_nationality} size={14} className="mr-1" />
+                        )}
                         {allocation.group_name}
                       </button>
                     )
@@ -661,11 +662,9 @@ export default function RoomGridPage() {
           <div className="bg-white rounded-lg shadow p-6 mt-4">
             <div className="flex items-start justify-between gap-4 mb-4">
               <div>
-                <h2 className="text-lg font-semibold text-gray-900">
+                <h2 className="flex items-center gap-1.5 text-lg font-semibold text-gray-900">
                   {selection.allocation.group_nationality && (
-                    <span className="mr-1.5" title={countryName(selection.allocation.group_nationality)}>
-                      {countryFlagEmoji(selection.allocation.group_nationality)}
-                    </span>
+                    <Flag code={selection.allocation.group_nationality} size={20} />
                   )}
                   {selection.allocation.group_name} — Reserva
                 </h2>
@@ -984,7 +983,6 @@ export default function RoomGridPage() {
                   <option value={0}>Selecione a reserva</option>
                   {reservations.map((reservation) => (
                     <option key={reservation.id} value={reservation.id}>
-                      {reservation.groupNationality ? `${countryFlagEmoji(reservation.groupNationality)} ` : ''}
                       {reservation.groupName} · {reservation.f_start_date} → {reservation.f_end_date}
                     </option>
                   ))}

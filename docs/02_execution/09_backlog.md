@@ -210,8 +210,9 @@
 - [x] Adicionar `f_nationality` (código ISO 3166-1 alpha-2, ex.: BR, AR, US, IL) a `GuestGroup` (migration `d4a7f0c1e256`)
 - [x] Seletor de país no cadastro/edição do grupo (GuestsPage)
 - [x] Exibir bandeira (emoji derivado do código ISO — sem assets de imagem) na barra do Room Grid, no painel e na lista de grupos
-- [x] Conjunto de países comuns pré-listado (BR, AR, US, IL, UY, MX…) em `utils/countries.ts`
-- [ ] (Futuro) busca/autocomplete quando a lista crescer
+- [x] Conjunto de países comuns pré-listado (BR, AR, US, IL, UY, MX…) + lista completa (~90) em `utils/countries.ts`
+- [x] Seletor com busca/autocomplete (`CountryPicker`) e bandeira em imagem
+- [x] Bandeira renderizada como imagem SVG (Twemoji via CDN) — funciona no Windows; fallback para emoji offline
 
 **Estimativa**: 2-3h  
 **Valor**: leitura rápida da composição internacional do evento; combina com o i18n e o app do hóspede

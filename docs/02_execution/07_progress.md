@@ -62,10 +62,14 @@
 
 ### Bandeira de Nacionalidade do Grupo (2026-07-05)
 - [x] `GuestGroup.f_nationality` (ISO 3166-1 alpha-2) + normalização para maiúsculo no schema (migration `d4a7f0c1e256`)
-- [x] `utils/countries.ts` no frontend: lista de países comuns + `countryFlagEmoji` (emoji derivado do código, sem assets) + `countryName`
-- [x] Seletor de país no cadastro e na edição do grupo (GuestsPage); bandeira ao lado do nome do grupo
-- [x] `group_nationality` exposto no room-grid; bandeira na barra da alocação, no painel de detalhe e no seletor de reserva (RoomGridPage)
-- [x] 1 teste novo (`test_group_nationality_normalized_and_exposed_in_room_grid`) — normalização + exposição no grid; suíte deve ir a 35 (validar no Codespaces)
+- [x] `utils/countries.ts`: lista comum (24, aparece primeiro) + lista completa (~90 países) para busca; helpers `countryFlagEmoji`, `flagImageUrl` (Twemoji SVG via CDN), `countryName`
+- [x] **Bandeira como imagem SVG (Twemoji @14.0.2 via jsDelivr)** — funciona no Windows (onde o emoji de bandeira vira "BR"); componente `Flag` renderiza a imagem e **cai para emoji** se o CDN falhar (offline)
+- [x] **`CountryPicker`**: seletor com busca (autocomplete, acento-insensível), bandeira em imagem em cada opção; comuns primeiro, lista completa ao digitar; opção "Clear selection"
+- [x] Picker no cadastro e edição do grupo (GuestsPage); `Flag` ao lado do nome do grupo, na barra do Room Grid e no painel de detalhe
+- [x] `group_nationality` exposto no room-grid (backend)
+- [x] 1 teste backend novo (`test_group_nationality_normalized_and_exposed_in_room_grid`); suíte → 35 esperado (validar no Codespaces)
+- [x] **Labels nos formulários do grupo** (criação + edição): componente `LabeledField` mostra o nome do campo acima do input
+- ⓘ Twemoji via CDN = dependência de rede externa (aceitável p/ ferramenta interna); flags ficam em cache no navegador
 - ⓘ Build/pytest pendentes de execução no Codespaces (node/pytest indisponíveis na estação Windows)
 
 ---

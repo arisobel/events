@@ -24,12 +24,32 @@ import {
   reservationService,
 } from '../services/api'
 import AdminLayout from '../components/AdminLayout'
-import { COUNTRY_OPTIONS, countryFlagEmoji, countryName } from '../utils/countries'
+import CountryPicker from '../components/CountryPicker'
+import Flag from '../components/Flag'
 
 const GUEST_GENDER_VALUES = new Set(GUEST_GENDER_OPTIONS.map((option) => option.value))
 const GUEST_TYPE_VALUES = new Set(GUEST_TYPE_OPTIONS.map((option) => option.value))
 const GUEST_GENDER_LABELS = Object.fromEntries(GUEST_GENDER_OPTIONS.map((option) => [option.value, option.label]))
 const GUEST_TYPE_LABELS = Object.fromEntries(GUEST_TYPE_OPTIONS.map((option) => [option.value, option.label]))
+
+// Rótulo discreto acima do campo — o placeholder deixa de ser a única pista após preencher.
+// Definido em nível de módulo para não remontar (e perder o foco) a cada render.
+function LabeledField({
+  label,
+  className,
+  children,
+}: {
+  label: string
+  className?: string
+  children: React.ReactNode
+}) {
+  return (
+    <label className={`flex flex-col gap-1 ${className ?? ''}`}>
+      <span className="text-xs font-medium text-gray-500">{label}</span>
+      {children}
+    </label>
+  )
+}
 
 const emptyGuest: GuestCreate = {
   f_full_name: '',
@@ -504,54 +524,58 @@ export default function GuestsPage() {
           <div className="bg-white rounded-lg shadow p-6 mb-6">
             <h2 className="text-lg font-semibold text-gray-900 mb-4">Create guest group</h2>
             <form onSubmit={handleCreateGroup} className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <input
-                type="text"
-                placeholder="Group name *"
-                value={newGroup.f_name}
-                onChange={(e) => setNewGroup((current) => ({ ...current, f_name: e.target.value }))}
-                className="px-3 py-2 border border-gray-300 rounded-md"
-                required
-              />
-              <input
-                type="text"
-                placeholder="Group type"
-                value={newGroup.f_group_type}
-                onChange={(e) => setNewGroup((current) => ({ ...current, f_group_type: e.target.value }))}
-                className="px-3 py-2 border border-gray-300 rounded-md"
-              />
-              <select
-                value={newGroup.f_nationality || ''}
-                onChange={(e) => setNewGroup((current) => ({ ...current, f_nationality: e.target.value }))}
-                className="px-3 py-2 border border-gray-300 rounded-md bg-white"
-              >
-                <option value="">Nationality</option>
-                {COUNTRY_OPTIONS.map((country) => (
-                  <option key={country.code} value={country.code}>
-                    {countryFlagEmoji(country.code)} {country.name}
-                  </option>
-                ))}
-              </select>
-              <input
-                type="text"
-                placeholder="Phone"
-                value={newGroup.f_phone}
-                onChange={(e) => setNewGroup((current) => ({ ...current, f_phone: e.target.value }))}
-                className="px-3 py-2 border border-gray-300 rounded-md"
-              />
-              <input
-                type="email"
-                placeholder="Email"
-                value={newGroup.f_email}
-                onChange={(e) => setNewGroup((current) => ({ ...current, f_email: e.target.value }))}
-                className="px-3 py-2 border border-gray-300 rounded-md"
-              />
-              <input
-                type="text"
-                placeholder="Notes"
-                value={newGroup.f_notes}
-                onChange={(e) => setNewGroup((current) => ({ ...current, f_notes: e.target.value }))}
-                className="px-3 py-2 border border-gray-300 rounded-md md:col-span-2"
-              />
+              <LabeledField label="Group name *">
+                <input
+                  type="text"
+                  placeholder="e.g. Familia Zellerkraut"
+                  value={newGroup.f_name}
+                  onChange={(e) => setNewGroup((current) => ({ ...current, f_name: e.target.value }))}
+                  className="px-3 py-2 border border-gray-300 rounded-md"
+                  required
+                />
+              </LabeledField>
+              <LabeledField label="Group type">
+                <input
+                  type="text"
+                  placeholder="e.g. Family"
+                  value={newGroup.f_group_type}
+                  onChange={(e) => setNewGroup((current) => ({ ...current, f_group_type: e.target.value }))}
+                  className="px-3 py-2 border border-gray-300 rounded-md"
+                />
+              </LabeledField>
+              <LabeledField label="Nationality">
+                <CountryPicker
+                  value={newGroup.f_nationality || ''}
+                  onChange={(code) => setNewGroup((current) => ({ ...current, f_nationality: code }))}
+                />
+              </LabeledField>
+              <LabeledField label="Phone">
+                <input
+                  type="text"
+                  placeholder="+55 11 90000-0000"
+                  value={newGroup.f_phone}
+                  onChange={(e) => setNewGroup((current) => ({ ...current, f_phone: e.target.value }))}
+                  className="px-3 py-2 border border-gray-300 rounded-md"
+                />
+              </LabeledField>
+              <LabeledField label="Email">
+                <input
+                  type="email"
+                  placeholder="name@email.com"
+                  value={newGroup.f_email}
+                  onChange={(e) => setNewGroup((current) => ({ ...current, f_email: e.target.value }))}
+                  className="px-3 py-2 border border-gray-300 rounded-md"
+                />
+              </LabeledField>
+              <LabeledField label="Notes" className="md:col-span-2">
+                <input
+                  type="text"
+                  placeholder="Optional notes"
+                  value={newGroup.f_notes}
+                  onChange={(e) => setNewGroup((current) => ({ ...current, f_notes: e.target.value }))}
+                  className="px-3 py-2 border border-gray-300 rounded-md"
+                />
+              </LabeledField>
               <div className="md:col-span-2 flex gap-3">
                 <button
                   type="submit"
@@ -592,48 +616,52 @@ export default function GuestsPage() {
                     <div className="flex-1">
                       {editingGroupId === group.id ? (
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                          <input
-                            type="text"
-                            value={groupEditForm.f_name ?? ''}
-                            onChange={(e) => setGroupEditForm((current) => ({ ...current, f_name: e.target.value }))}
-                            className="px-3 py-2 border border-gray-300 rounded-md"
-                          />
-                          <input
-                            type="text"
-                            value={groupEditForm.f_group_type ?? ''}
-                            onChange={(e) => setGroupEditForm((current) => ({ ...current, f_group_type: e.target.value }))}
-                            className="px-3 py-2 border border-gray-300 rounded-md"
-                          />
-                          <select
-                            value={groupEditForm.f_nationality ?? ''}
-                            onChange={(e) => setGroupEditForm((current) => ({ ...current, f_nationality: e.target.value }))}
-                            className="px-3 py-2 border border-gray-300 rounded-md bg-white"
-                          >
-                            <option value="">Nationality</option>
-                            {COUNTRY_OPTIONS.map((country) => (
-                              <option key={country.code} value={country.code}>
-                                {countryFlagEmoji(country.code)} {country.name}
-                              </option>
-                            ))}
-                          </select>
-                          <input
-                            type="text"
-                            value={groupEditForm.f_phone ?? ''}
-                            onChange={(e) => setGroupEditForm((current) => ({ ...current, f_phone: e.target.value }))}
-                            className="px-3 py-2 border border-gray-300 rounded-md"
-                          />
-                          <input
-                            type="email"
-                            value={groupEditForm.f_email ?? ''}
-                            onChange={(e) => setGroupEditForm((current) => ({ ...current, f_email: e.target.value }))}
-                            className="px-3 py-2 border border-gray-300 rounded-md"
-                          />
-                          <input
-                            type="text"
-                            value={groupEditForm.f_notes ?? ''}
-                            onChange={(e) => setGroupEditForm((current) => ({ ...current, f_notes: e.target.value }))}
-                            className="px-3 py-2 border border-gray-300 rounded-md md:col-span-2"
-                          />
+                          <LabeledField label="Group name *">
+                            <input
+                              type="text"
+                              value={groupEditForm.f_name ?? ''}
+                              onChange={(e) => setGroupEditForm((current) => ({ ...current, f_name: e.target.value }))}
+                              className="px-3 py-2 border border-gray-300 rounded-md"
+                            />
+                          </LabeledField>
+                          <LabeledField label="Group type">
+                            <input
+                              type="text"
+                              value={groupEditForm.f_group_type ?? ''}
+                              onChange={(e) => setGroupEditForm((current) => ({ ...current, f_group_type: e.target.value }))}
+                              className="px-3 py-2 border border-gray-300 rounded-md"
+                            />
+                          </LabeledField>
+                          <LabeledField label="Nationality">
+                            <CountryPicker
+                              value={groupEditForm.f_nationality ?? ''}
+                              onChange={(code) => setGroupEditForm((current) => ({ ...current, f_nationality: code }))}
+                            />
+                          </LabeledField>
+                          <LabeledField label="Phone">
+                            <input
+                              type="text"
+                              value={groupEditForm.f_phone ?? ''}
+                              onChange={(e) => setGroupEditForm((current) => ({ ...current, f_phone: e.target.value }))}
+                              className="px-3 py-2 border border-gray-300 rounded-md"
+                            />
+                          </LabeledField>
+                          <LabeledField label="Email">
+                            <input
+                              type="email"
+                              value={groupEditForm.f_email ?? ''}
+                              onChange={(e) => setGroupEditForm((current) => ({ ...current, f_email: e.target.value }))}
+                              className="px-3 py-2 border border-gray-300 rounded-md"
+                            />
+                          </LabeledField>
+                          <LabeledField label="Notes" className="md:col-span-2">
+                            <input
+                              type="text"
+                              value={groupEditForm.f_notes ?? ''}
+                              onChange={(e) => setGroupEditForm((current) => ({ ...current, f_notes: e.target.value }))}
+                              className="px-3 py-2 border border-gray-300 rounded-md"
+                            />
+                          </LabeledField>
                           <div className="md:col-span-2 flex gap-2">
                             <button
                               onClick={() => handleUpdateGroup(group.id)}
@@ -655,12 +683,8 @@ export default function GuestsPage() {
                       ) : (
                         <>
                           <div className="flex flex-wrap items-center gap-3">
-                            <h2 className="text-xl font-semibold text-gray-900">
-                              {group.f_nationality && (
-                                <span className="mr-2" title={countryName(group.f_nationality)}>
-                                  {countryFlagEmoji(group.f_nationality)}
-                                </span>
-                              )}
+                            <h2 className="flex items-center gap-2 text-xl font-semibold text-gray-900">
+                              {group.f_nationality && <Flag code={group.f_nationality} size={22} />}
                               {group.f_name}
                             </h2>
                             {group.f_group_type && (
