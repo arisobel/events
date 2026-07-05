@@ -60,6 +60,14 @@
 
 ---
 
+### Polish Mobile da GuestsPage (2026-07-05)
+- [x] Barra de navegação do topo em **linha única** (← Events / Rooms / Tasks com scroll horizontal se preciso; nome do evento oculto no mobile via `hidden sm:inline`); botão "+ New Group" fixo à direita (`shrink-0`)
+- [x] Botões de controle do grupo (Edit group / + Guest / + Reservation / Delete) em **uma linha só** (`flex-nowrap overflow-x-auto`); **Delete virou ícone de lixeira** (SVG) para poupar espaço
+- [x] Lista de hóspedes **colapsável no mobile**: "Guests (N)" virou botão de toggle (chevron ▸ só no mobile); fechada por padrão no mobile, sempre visível no desktop (`md:block`); "+ Guest" abre a seção automaticamente
+- ⓘ Só CSS/estado — nenhuma mudança de backend
+
+---
+
 ### Bandeira de Nacionalidade do Grupo (2026-07-05)
 - [x] `GuestGroup.f_nationality` (ISO 3166-1 alpha-2) + normalização para maiúsculo no schema (migration `d4a7f0c1e256`)
 - [x] `utils/countries.ts`: lista comum (24, aparece primeiro) + lista completa (~90 países) para busca; helpers `countryFlagEmoji`, `flagImageUrl` (Twemoji SVG via CDN), `countryName`

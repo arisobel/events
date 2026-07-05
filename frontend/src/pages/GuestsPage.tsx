@@ -78,6 +78,8 @@ export default function GuestsPage() {
   const [creatingGuest, setCreatingGuest] = useState(false)
   const [activeGuestGroupId, setActiveGuestGroupId] = useState<number | null>(null)
   const [activeReservationGroupId, setActiveReservationGroupId] = useState<number | null>(null)
+  // Colapso da lista de hóspedes — no mobile começa fechada; no desktop (md+) sempre visível via CSS
+  const [openGuests, setOpenGuests] = useState<Record<number, boolean>>({})
   const [editingGroupId, setEditingGroupId] = useState<number | null>(null)
   const [editingGuestId, setEditingGuestId] = useState<number | null>(null)
   const [editingReservationId, setEditingReservationId] = useState<number | null>(null)
@@ -323,6 +325,8 @@ export default function GuestsPage() {
     setActiveGuestGroupId(group.id)
     setEditingGuestId(null)
     resetGuestCreateForm(group.guests.length === 0)
+    // garante que a seção de hóspedes esteja aberta no mobile ao adicionar
+    setOpenGuests((current) => ({ ...current, [group.id]: true }))
   }
 
   const startReservationCreate = (group: GuestGroup) => {
@@ -484,33 +488,33 @@ export default function GuestsPage() {
   return (
     <AdminLayout title="Guests & Reservations">
       <div className="max-w-7xl mx-auto">
-        <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
-          <div className="flex flex-wrap items-center gap-2 text-sm">
+        <div className="flex items-center justify-between gap-2 mb-6">
+          <div className="flex items-center gap-2 text-sm min-w-0 overflow-x-auto">
             <button
               onClick={() => navigate('/events')}
-              className="text-slate-600 hover:text-slate-900 border border-slate-300 px-3 py-1.5 rounded-md hover:bg-slate-50"
+              className="shrink-0 text-slate-600 hover:text-slate-900 border border-slate-300 px-3 py-1.5 rounded-md hover:bg-slate-50"
             >
               ← Events
             </button>
-            {event && <span className="text-slate-500">{event.f_name}</span>}
+            {event && <span className="hidden sm:inline shrink-0 text-slate-500 truncate">{event.f_name}</span>}
             <button
               onClick={() => navigate(`/events/${eventId}/rooms`)}
-              className="bg-emerald-600 text-white px-3 py-1.5 rounded-md hover:bg-emerald-700"
+              className="shrink-0 bg-emerald-600 text-white px-3 py-1.5 rounded-md hover:bg-emerald-700"
             >
               Rooms
             </button>
             <button
               onClick={() => navigate(`/events/${eventId}/tasks`)}
-              className="bg-blue-600 text-white px-3 py-1.5 rounded-md hover:bg-blue-700"
+              className="shrink-0 bg-blue-600 text-white px-3 py-1.5 rounded-md hover:bg-blue-700"
             >
               Tasks
             </button>
           </div>
           <button
             onClick={() => setShowGroupForm((current) => !current)}
-            className="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 text-sm"
+            className="shrink-0 whitespace-nowrap bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 text-sm"
           >
-            {showGroupForm ? 'Hide Group Form' : '+ New Group'}
+            {showGroupForm ? 'Hide' : '+ New Group'}
           </button>
         </div>
 
@@ -706,7 +710,7 @@ export default function GuestsPage() {
                       )}
                     </div>
 
-                    <div className="flex flex-wrap gap-2">
+                    <div className="flex flex-nowrap gap-2 overflow-x-auto">
                       <button
                         onClick={() => {
                           setEditingGroupId(group.id)
@@ -719,38 +723,50 @@ export default function GuestsPage() {
                             f_notes: group.f_notes || '',
                           })
                         }}
-                        className="bg-gray-100 text-gray-800 px-3 py-2 rounded-md hover:bg-gray-200 text-sm"
+                        className="shrink-0 whitespace-nowrap bg-gray-100 text-gray-800 px-3 py-2 rounded-md hover:bg-gray-200 text-sm"
                       >
                         Edit group
                       </button>
                       <button
                         onClick={() => startGuestCreate(group)}
-                        className="bg-indigo-50 text-indigo-700 px-3 py-2 rounded-md hover:bg-indigo-100 text-sm"
+                        className="shrink-0 whitespace-nowrap bg-indigo-50 text-indigo-700 px-3 py-2 rounded-md hover:bg-indigo-100 text-sm"
                       >
                         + Guest
                       </button>
                       <button
                         onClick={() => startReservationCreate(group)}
-                        className="bg-emerald-600 text-white px-3 py-2 rounded-md hover:bg-emerald-700 text-sm"
+                        className="shrink-0 whitespace-nowrap bg-emerald-600 text-white px-3 py-2 rounded-md hover:bg-emerald-700 text-sm"
                       >
                         + Reservation
                       </button>
                       <button
                         onClick={() => handleDeleteGroup(group.id)}
-                        className="bg-red-50 text-red-700 px-3 py-2 rounded-md hover:bg-red-100 text-sm"
+                        title="Delete group"
+                        aria-label="Delete group"
+                        className="shrink-0 bg-red-50 text-red-700 px-3 py-2 rounded-md hover:bg-red-100"
                       >
-                        Delete
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
+                          <path fillRule="evenodd" d="M8.75 1a1 1 0 0 0-.96.72L7.42 3H4a1 1 0 0 0 0 2h.09l.66 10.55A2 2 0 0 0 6.74 17.5h6.52a2 2 0 0 0 1.99-1.95L15.91 5H16a1 1 0 1 0 0-2h-3.42l-.37-1.28A1 1 0 0 0 11.25 1h-2.5ZM9 7a.75.75 0 0 0-1.5 0v6a.75.75 0 0 0 1.5 0V7Zm3.5 0a.75.75 0 0 0-1.5 0v6a.75.75 0 0 0 1.5 0V7Z" clipRule="evenodd" />
+                        </svg>
                       </button>
                     </div>
                   </div>
 
                   <div className="mt-5 border-t border-gray-200 pt-5">
-                    <div className="flex items-center justify-between">
+                    <button
+                      type="button"
+                      onClick={() => setOpenGuests((current) => ({ ...current, [group.id]: !current[group.id] }))}
+                      className="w-full flex items-center justify-between text-left md:cursor-default"
+                    >
                       <h3 className="text-sm font-semibold text-gray-900">
                         Guests ({group.guests.length})
                       </h3>
-                    </div>
+                      <span className={`md:hidden text-gray-400 text-lg leading-none transition-transform ${openGuests[group.id] ? 'rotate-90' : ''}`}>
+                        ▸
+                      </span>
+                    </button>
 
+                    <div className={`${openGuests[group.id] ? 'block' : 'hidden'} md:block`}>
                     {activeGuestGroupId === group.id && (
                       <form
                         onSubmit={(e) => handleCreateGuest(group.id, e)}
@@ -870,6 +886,7 @@ export default function GuestsPage() {
                         ))}
                       </div>
                     )}
+                    </div>
                   </div>
 
                   {activeReservationGroupId === group.id && (
