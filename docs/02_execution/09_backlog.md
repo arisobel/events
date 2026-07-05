@@ -160,10 +160,13 @@
 - [x] CRUD backend + `GET /clients/{id}/events` + `POST /clients/{id}/import-to-event/{event_id}`
 - [x] Sidebar "Clientes" + `ClientsPage` (CRUD cliente/pessoas, busca, participações)
 
+**✅ Entregue (2026-07-05, 2ª leva):**
+- [x] UI "Importar de cliente" na GuestsPage (picker com busca + bandeira)
+- [x] "★ Salvar como cliente" — promove grupo existente → cliente (`POST /clients/from-group/{group_id}`); badge "Cliente ✓" no grupo vinculado
+
 **Falta:**
-- [ ] UI "Importar de cliente" na GuestsPage do evento (endpoint pronto)
-- [ ] "Promover" grupo existente → cliente (criar cliente a partir de um grupo já cadastrado)
-- [ ] (Decidir) sincronização de edições: mudar dados de uma Pessoa raiz reflete nos hóspedes já importados?
+- [ ] (Decidir) sincronização de edições: mudar dados de uma Pessoa raiz reflete nos hóspedes já importados? (hoje é cópia no momento do import/promote, sem sync contínuo)
+- [ ] Na ClientsPage, permitir importar direto para um evento (hoje o import parte da tela do evento)
 
 ---
 

@@ -68,8 +68,9 @@
 - [x] Nacionalidade do cliente reaproveita a bandeira; delete de cliente **desvincula** grupos/hóspedes em vez de apagá-los
 - [x] 5 testes novos (`test_clients.py`): CRUD cliente/pessoa, normalização, import cria grupo+hóspedes, delete desvincula; suíte → ~40 esperado (validar no Codespaces)
 - [x] Frontend: `clientService` + tipos; **link "Clientes" na sidebar** (ao lado de Hotels/Events); rota `/clients`; `ClientsPage` (busca, CRUD cliente, CRUD pessoas, lista de eventos participados)
-- [ ] **Próximo passo**: botão "Importar de cliente" na GuestsPage (endpoint já existe) + vínculo reverso ao promover grupo→cliente
+- [x] **Ligação bidirecional (2026-07-05)**: "Importar de cliente" na GuestsPage (picker com busca + bandeira) cria grupo a partir do cliente; "★ Salvar como cliente" promove um grupo existente ao cadastro raiz (popula o registro a partir do que já existe). Endpoint novo `POST /clients/from-group/{group_id}`; badge "Cliente ✓" no grupo vinculado; `f_client_id`/`f_person_id` expostos nas respostas. +1 teste (suíte → ~41)
 - [ ] Base pronta para **conta corrente por cliente** (LedgerEntry) — próximo item estrutural
+- ⓘ Conceito registrado: Cliente ≠ Grupo (participação por evento). Tabelas separadas e ligadas, não fundidas — preserva composição/datas/preços que mudam por evento. Fluxo dos dois sentidos, sem forçar client-first.
 
 ---
 

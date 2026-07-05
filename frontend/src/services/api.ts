@@ -299,6 +299,7 @@ export const GUEST_TYPE_OPTIONS: Array<{ value: GuestType; label: string }> = [
 export interface Guest {
   id: number
   f_group_id: number
+  f_person_id: number | null
   f_full_name: string
   f_gender: string | null
   f_birth_date: string | null
@@ -337,6 +338,7 @@ export interface GuestUpdate {
 export interface GuestGroup {
   id: number
   f_event_id: number
+  f_client_id: number | null
   f_name: string
   f_group_type: string | null
   f_nationality: string | null
@@ -880,6 +882,11 @@ export const clientService = {
     const response = await api.post<ImportClientToEventResult>(
       `/clients/${clientId}/import-to-event/${eventId}`,
     )
+    return response.data
+  },
+
+  async promoteGroupToClient(groupId: number): Promise<Client> {
+    const response = await api.post<Client>(`/clients/from-group/${groupId}`)
     return response.data
   },
 }

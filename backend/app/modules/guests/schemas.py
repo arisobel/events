@@ -98,6 +98,7 @@ class GuestUpdate(BaseModel):
 class GuestResponse(BaseModel):
     id: int
     f_group_id: int
+    f_person_id: Optional[int] = None
     f_full_name: str
     f_gender: Optional[str] = None
     f_birth_date: Optional[date] = None
@@ -153,6 +154,7 @@ class GuestGroupUpdate(BaseModel):
 class GuestGroupResponse(GuestGroupBase):
     id: int
     f_event_id: int
+    f_client_id: Optional[int] = None
     guests: List[GuestResponse] = []
     reservations: List[ReservationResponse] = []
 

@@ -137,6 +137,24 @@ def list_client_events(
 
 
 @router.post(
+    "/clients/from-group/{group_id}",
+    response_model=schemas.ClientResponse,
+    status_code=status.HTTP_201_CREATED,
+)
+def promote_group_to_client(
+    group_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+):
+    try:
+        return service.promote_group_to_client(db, group_id)
+    except ValueError as exc:
+        detail = str(exc)
+        code = 404 if detail == "Group not found" else 400
+        raise HTTPException(status_code=code, detail=detail) from exc
+
+
+@router.post(
     "/clients/{client_id}/import-to-event/{event_id}",
     response_model=schemas.ImportClientToEventResult,
     status_code=status.HTTP_201_CREATED,

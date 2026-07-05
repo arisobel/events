@@ -1,9 +1,11 @@
+import pytest
 from sqlalchemy.orm import Session
 
 from app.modules.clients import schemas as client_schemas
 from app.modules.clients import service as client_service
 from app.modules.events import schemas as event_schemas
 from app.modules.events import service as event_service
+from app.modules.guests import schemas as guest_schemas
 from app.modules.guests import service as guest_service
 from app.modules.hotel import schemas as hotel_schemas
 from app.modules.hotel import service as hotel_service
@@ -133,3 +135,43 @@ def test_delete_client_unlinks_group(db_session: Session) -> None:
 def test_import_client_missing_client_returns_none(db_session: Session) -> None:
     event_id = _create_event(db_session)
     assert client_service.import_client_to_event(db_session, 999, event_id) is None
+
+
+def test_promote_group_to_client(db_session: Session) -> None:
+    event_id = _create_event(db_session)
+    # cria um grupo com hóspedes direto no evento (sem cliente)
+    group = guest_service.create_guest_group(
+        db_session,
+        guest_schemas.GuestGroupCreate(
+            f_event_id=event_id, f_name="Família Cohen", f_group_type="family", f_nationality="AR"
+        ),
+    )
+    guest_service.create_guest(
+        db_session,
+        event_id,
+        group.id,
+        guest_schemas.GuestCreate(f_group_id=group.id, f_full_name="Sara Cohen", f_is_group_leader=True),
+    )
+    guest_service.create_guest(
+        db_session,
+        event_id,
+        group.id,
+        guest_schemas.GuestCreate(f_group_id=group.id, f_full_name="David Cohen"),
+    )
+
+    client = client_service.promote_group_to_client(db_session, group.id)
+    assert client.f_name == "Família Cohen"
+    assert client.f_nationality == "AR"
+    assert len(client.persons) == 2
+    primary = [p for p in client.persons if p.f_is_primary]
+    assert len(primary) == 1 and primary[0].f_full_name == "Sara Cohen"
+
+    # o grupo agora aponta para o cliente e os hóspedes para as pessoas
+    refreshed = guest_service.get_event_group(db_session, event_id, group.id)
+    assert refreshed is not None
+    assert refreshed.f_client_id == client.id
+    assert all(g.f_person_id is not None for g in refreshed.guests)
+
+    # promover de novo o mesmo grupo é rejeitado
+    with pytest.raises(ValueError):
+        client_service.promote_group_to_client(db_session, group.id)

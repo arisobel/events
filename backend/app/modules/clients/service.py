@@ -183,3 +183,48 @@ def import_client_to_event(
     db.commit()
     db.refresh(group)
     return schemas.ImportClientToEventResult(group_id=group.id, persons_imported=len(persons))
+
+
+def promote_group_to_client(db: Session, group_id: int) -> models.Client:
+    """Cria um Cliente raiz a partir de um grupo já cadastrado em um evento.
+
+    Copia dados do grupo → cliente e os hóspedes → pessoas, e liga tudo de volta
+    (group.f_client_id, guest.f_person_id). Popula o cadastro a partir do que já existe.
+    """
+    group = db.query(GuestGroup).filter(GuestGroup.id == group_id).first()
+    if not group:
+        raise ValueError("Group not found")
+    if group.f_client_id:
+        raise ValueError("Grupo já está vinculado a um cliente")
+
+    client = models.Client(
+        f_name=group.f_name,
+        f_client_type=group.f_group_type,
+        f_nationality=group.f_nationality,
+        f_phone=group.f_phone,
+        f_email=group.f_email,
+        f_notes=group.f_notes,
+    )
+    db.add(client)
+    db.flush()
+
+    for guest in group.guests:
+        person = models.Person(
+            f_client_id=client.id,
+            f_full_name=guest.f_full_name,
+            f_gender=guest.f_gender,
+            f_birth_date=guest.f_birth_date,
+            f_document=guest.f_document,
+            f_phone=guest.f_phone,
+            f_email=guest.f_email,
+            f_is_primary=guest.f_is_group_leader,
+            f_notes=guest.f_notes,
+        )
+        db.add(person)
+        db.flush()
+        guest.f_person_id = person.id
+
+    group.f_client_id = client.id
+    db.commit()
+    db.refresh(client)
+    return client

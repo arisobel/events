@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 
 import {
+  Client,
   Event,
   Guest,
   GuestCreate,
@@ -17,6 +18,7 @@ import {
   Reservation,
   ReservationCreate,
   ReservationUpdate,
+  clientService,
   eventService,
   financeService,
   guestGroupService,
@@ -110,6 +112,13 @@ export default function GuestsPage() {
   // Colapso da lista de hóspedes — no mobile começa fechada; no desktop (md+) sempre visível via CSS
   const [openGuests, setOpenGuests] = useState<Record<number, boolean>>({})
   const [search, setSearch] = useState('')
+  // Importar de cliente (cliente raiz → grupo neste evento)
+  const [showClientPicker, setShowClientPicker] = useState(false)
+  const [clients, setClients] = useState<Client[]>([])
+  const [clientsLoaded, setClientsLoaded] = useState(false)
+  const [clientSearch, setClientSearch] = useState('')
+  const [busyClientId, setBusyClientId] = useState<number | null>(null)
+  const [promotingGroupId, setPromotingGroupId] = useState<number | null>(null)
   const [editingGroupId, setEditingGroupId] = useState<number | null>(null)
   const [editingGuestId, setEditingGuestId] = useState<number | null>(null)
   const [editingReservationId, setEditingReservationId] = useState<number | null>(null)
@@ -192,6 +201,59 @@ export default function GuestsPage() {
       // financeiro é complementar; se falhar, a lista de grupos segue funcionando
     }
   }
+
+  const openClientPicker = async () => {
+    setShowClientPicker(true)
+    setClientSearch('')
+    if (!clientsLoaded) {
+      try {
+        setClients(await clientService.getClients())
+        setClientsLoaded(true)
+      } catch (err: any) {
+        setError(err.response?.data?.detail || 'Falha ao carregar clientes')
+      }
+    }
+  }
+
+  const handleImportClient = async (clientId: number) => {
+    try {
+      setBusyClientId(clientId)
+      setError('')
+      await clientService.importClientToEvent(clientId, Number(eventId))
+      setShowClientPicker(false)
+      await loadData()
+    } catch (err: any) {
+      setError(err.response?.data?.detail || 'Falha ao importar cliente')
+    } finally {
+      setBusyClientId(null)
+    }
+  }
+
+  const handlePromoteGroup = async (group: GuestGroup) => {
+    if (!window.confirm(`Criar um cliente permanente a partir do grupo "${group.f_name}"? As pessoas serão copiadas para o cadastro raiz.`)) {
+      return
+    }
+    try {
+      setPromotingGroupId(group.id)
+      setError('')
+      await clientService.promoteGroupToClient(group.id)
+      setClientsLoaded(false) // força recarregar a lista de clientes no próximo picker
+      await loadData()
+    } catch (err: any) {
+      setError(err.response?.data?.detail || 'Falha ao promover grupo a cliente')
+    } finally {
+      setPromotingGroupId(null)
+    }
+  }
+
+  const visibleClients = useMemo(() => {
+    const q = normalizeText(clientSearch.trim())
+    if (!q) return clients
+    return clients.filter((client) => {
+      const haystack = [client.f_name, ...client.persons.map((p) => p.f_full_name)]
+      return haystack.some((value) => normalizeText(value).includes(q))
+    })
+  }, [clients, clientSearch])
 
   const resetGuestCreateForm = (makeLeader = false) => {
     setNewGuest({
@@ -556,6 +618,16 @@ export default function GuestsPage() {
               Tasks
             </button>
           </div>
+          <div className="flex items-center gap-2 shrink-0">
+          <button
+            onClick={openClientPicker}
+            title="Importar de cliente"
+            aria-label="Importar de cliente"
+            className="shrink-0 whitespace-nowrap border border-indigo-200 bg-white text-indigo-700 px-3 py-2 rounded-md hover:bg-indigo-50 text-sm flex items-center gap-1.5"
+          >
+            <GroupIcon className="w-5 h-5 sm:hidden" />
+            <span className="hidden sm:inline">Importar de cliente</span>
+          </button>
           <button
             onClick={() => setShowGroupForm((current) => !current)}
             title={showGroupForm ? 'Hide group form' : 'New group'}
@@ -571,7 +643,62 @@ export default function GuestsPage() {
             </span>
             <span className="hidden sm:inline">{showGroupForm ? 'Hide' : '+ New Group'}</span>
           </button>
+          </div>
         </div>
+
+        {showClientPicker && (
+          <div className="bg-white rounded-lg shadow p-6 mb-6">
+            <div className="flex items-center justify-between mb-3">
+              <div>
+                <h2 className="text-lg font-semibold text-gray-900">Importar de cliente</h2>
+                <p className="text-sm text-gray-500">Cria um grupo neste evento a partir de um cliente do cadastro raiz.</p>
+              </div>
+              <button
+                onClick={() => setShowClientPicker(false)}
+                className="text-gray-500 hover:text-gray-800 text-sm"
+              >
+                Fechar
+              </button>
+            </div>
+            <input
+              type="search"
+              value={clientSearch}
+              onChange={(e) => setClientSearch(e.target.value)}
+              placeholder="Buscar cliente…"
+              className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm mb-3"
+            />
+            {!clientsLoaded ? (
+              <p className="text-sm text-gray-500 py-4 text-center">Carregando clientes…</p>
+            ) : visibleClients.length === 0 ? (
+              <p className="text-sm text-gray-500 py-4 text-center">
+                {clients.length === 0
+                  ? 'Nenhum cliente cadastrado ainda. Cadastre em Clientes, ou promova um grupo existente a cliente.'
+                  : 'Nenhum cliente corresponde à busca.'}
+              </p>
+            ) : (
+              <div className="max-h-72 overflow-auto divide-y divide-gray-100">
+                {visibleClients.map((client) => (
+                  <div key={client.id} className="flex items-center gap-3 py-2">
+                    {client.f_nationality && <Flag code={client.f_nationality} size={18} />}
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-medium text-gray-900 truncate">{client.f_name}</p>
+                      <p className="text-xs text-gray-500">
+                        {client.persons.length} pessoa{client.persons.length === 1 ? '' : 's'}
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => handleImportClient(client.id)}
+                      disabled={busyClientId === client.id}
+                      className="shrink-0 bg-indigo-600 text-white px-3 py-1.5 rounded-md hover:bg-indigo-700 text-sm disabled:opacity-50"
+                    >
+                      {busyClientId === client.id ? 'Importando…' : 'Importar'}
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
 
         {error && (
           <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-6">
@@ -779,6 +906,11 @@ export default function GuestsPage() {
                             <span className="px-2 py-1 text-xs rounded-full bg-slate-100 text-slate-700">
                               {group.guests.length} guest{group.guests.length === 1 ? '' : 's'}
                             </span>
+                            {group.f_client_id && (
+                              <span className="px-2 py-1 text-xs rounded-full bg-emerald-50 text-emerald-700" title="Vinculado a um cliente do cadastro raiz">
+                                Cliente ✓
+                              </span>
+                            )}
                           </div>
                           <div className="mt-2 space-y-1 text-sm text-gray-600">
                             {leader && <p>Leader: {leader.f_full_name}</p>}
@@ -828,6 +960,20 @@ export default function GuestsPage() {
                       >
                         + Reservation
                       </button>
+                      {!group.f_client_id && (
+                        <button
+                          onClick={() => handlePromoteGroup(group)}
+                          disabled={promotingGroupId === group.id}
+                          title="Salvar como cliente"
+                          aria-label="Salvar como cliente"
+                          className="shrink-0 whitespace-nowrap bg-amber-50 text-amber-700 px-3 py-2 rounded-md hover:bg-amber-100 text-sm flex items-center disabled:opacity-50"
+                        >
+                          <GroupIcon className="w-4 h-4 sm:hidden" />
+                          <span className="hidden sm:inline">
+                            {promotingGroupId === group.id ? 'Salvando…' : '★ Salvar como cliente'}
+                          </span>
+                        </button>
+                      )}
                       <button
                         onClick={() => handleDeleteGroup(group.id)}
                         title="Delete group"
