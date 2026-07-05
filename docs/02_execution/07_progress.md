@@ -60,6 +60,14 @@
 
 ---
 
+### Refinos do Painel Financeiro (2026-07-03)
+- [x] Botão "↺ Calcular pela ocupação" preenche o valor da hospedagem somando preço × noites de **todos os quartos da reserva** (editável depois, para negociação)
+- [x] Painel deixa explícito que o financeiro é **da reserva inteira** (grupo), não do quarto clicado — lista os quartos da reserva + noites·quarto
+- [x] Formulário de pagamento ganhou **campo de data** (default hoje), além de valor e forma
+- [ ] Bandeira de nacionalidade do grupo → backlog
+
+---
+
 ### Financeiro Phase 2 — Extras e Pagamentos Múltiplos (2026-07-03)
 - [x] Modelo `ReservationExtra` (sala especial, sub-evento, serviço) + CRUD; total geral = hospedagem + Σ extras
 - [x] Modelo `Payment` (parcelas): vários pagamentos por reserva; `f_amount_paid` recalculado como a soma automática

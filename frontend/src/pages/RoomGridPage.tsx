@@ -35,6 +35,11 @@ const addDays = (date: Date, days: number): Date => {
   return next
 }
 
+const nightsBetween = (start: string, end: string): number => {
+  const diff = Math.round((parseDate(end).getTime() - parseDate(start).getTime()) / 86400000)
+  return Math.max(diff, 1)
+}
+
 const formatMoney = (value: string | number | null | undefined): string => {
   const num = Number(value ?? 0)
   return (Number.isNaN(num) ? 0 : num).toLocaleString('pt-BR', {
@@ -95,7 +100,7 @@ export default function RoomGridPage() {
   const [payments, setPayments] = useState<Payment[]>([])
   const [reservationPaid, setReservationPaid] = useState(0)
   const [newExtra, setNewExtra] = useState({ f_description: '', f_amount: '' })
-  const [newPayment, setNewPayment] = useState({ f_amount: '', f_method: '' })
+  const [newPayment, setNewPayment] = useState({ f_amount: '', f_method: '', f_paid_at: toISO(new Date()) })
 
   useEffect(() => {
     if (eventId) {
@@ -184,6 +189,36 @@ export default function RoomGridPage() {
   // No mobile a coluna do quarto mostra só o número (72px); no desktop expande para exibir tipo/capacidade/preço (200px)
   const gridTemplate = `var(--room-col-width, 200px) repeat(${days.length}, minmax(42px, 1fr))`
 
+  // Todos os quartos/alocações da reserva selecionada (não só o quarto clicado) — o financeiro é da reserva inteira
+  const selectedReservationRooms = useMemo(() => {
+    if (selection?.kind !== 'alloc' || !grid) return []
+    const rid = selection.allocation.reservation_id
+    return grid.rooms.flatMap((room) =>
+      room.allocations
+        .filter((a) => a.reservation_id === rid)
+        .map((alloc) => ({ room, alloc })),
+    )
+  }, [selection, grid])
+
+  const calculatedLodging = useMemo(
+    () =>
+      selectedReservationRooms.reduce(
+        (sum, { room, alloc }) =>
+          sum + Number(room.f_price_per_night || 0) * nightsBetween(alloc.f_start_date, alloc.f_end_date),
+        0,
+      ),
+    [selectedReservationRooms],
+  )
+
+  const reservationRoomNights = useMemo(
+    () =>
+      selectedReservationRooms.reduce(
+        (sum, { alloc }) => sum + nightsBetween(alloc.f_start_date, alloc.f_end_date),
+        0,
+      ),
+    [selectedReservationRooms],
+  )
+
   // ---- selection handlers ----
 
   const refreshReservationFinance = async (reservationId: number) => {
@@ -215,7 +250,7 @@ export default function RoomGridPage() {
     setPayments([])
     setReservationPaid(0)
     setNewExtra({ f_description: '', f_amount: '' })
-    setNewPayment({ f_amount: '', f_method: '' })
+    setNewPayment({ f_amount: '', f_method: '', f_paid_at: toISO(new Date()) })
     setError('')
     try {
       await refreshReservationFinance(allocation.reservation_id)
@@ -292,8 +327,9 @@ export default function RoomGridPage() {
       await financeService.createPayment(selection.allocation.reservation_id, {
         f_amount: newPayment.f_amount,
         f_method: newPayment.f_method || undefined,
+        f_paid_at: newPayment.f_paid_at || undefined,
       })
-      setNewPayment({ f_amount: '', f_method: '' })
+      setNewPayment({ f_amount: '', f_method: '', f_paid_at: toISO(new Date()) })
       await refreshReservationFinance(selection.allocation.reservation_id)
       await loadData()
     } catch (err: any) {
@@ -623,11 +659,17 @@ export default function RoomGridPage() {
             <div className="flex items-start justify-between gap-4 mb-4">
               <div>
                 <h2 className="text-lg font-semibold text-gray-900">
-                  {selection.allocation.group_name} — Quarto {selection.room.f_room_number}
+                  {selection.allocation.group_name} — Reserva
                 </h2>
                 <p className="text-sm text-gray-600 mt-1">
                   {selection.allocation.f_start_date} → {selection.allocation.f_end_date} ·{' '}
                   Pagamento: {paymentLabels[selection.allocation.f_payment_status] || selection.allocation.f_payment_status}
+                </p>
+                <p className="text-xs text-gray-500 mt-1">
+                  Quartos da reserva:{' '}
+                  {[...new Set(selectedReservationRooms.map((x) => x.room.f_room_number))].join(', ') ||
+                    selection.room.f_room_number}
+                  {reservationRoomNights > 0 ? ` · ${reservationRoomNights} noites·quarto` : ''}
                 </p>
               </div>
               <button
@@ -699,7 +741,7 @@ export default function RoomGridPage() {
 
                   {/* Hospedagem + status */}
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                    <label className="flex flex-col gap-1">
+                    <div className="flex flex-col gap-1">
                       <span className="text-xs text-gray-500">Valor da hospedagem (R$)</span>
                       <input
                         type="number"
@@ -709,7 +751,15 @@ export default function RoomGridPage() {
                         onChange={(e) => setFinanceForm((c) => ({ ...c, f_amount_total: e.target.value }))}
                         className="px-3 py-2 border border-gray-300 rounded-md"
                       />
-                    </label>
+                      <button
+                        type="button"
+                        onClick={() => setFinanceForm((c) => ({ ...c, f_amount_total: String(calculatedLodging) }))}
+                        className="text-xs text-blue-700 hover:text-blue-900 text-left"
+                        title="Preenche com a soma de preço × noites de todos os quartos desta reserva"
+                      >
+                        ↺ Calcular pela ocupação ({formatMoney(calculatedLodging)})
+                      </button>
+                    </div>
                     <label className="flex flex-col gap-1">
                       <span className="text-xs text-gray-500">Status de pagamento</span>
                       <select
@@ -802,6 +852,13 @@ export default function RoomGridPage() {
                       </div>
                     )}
                     <div className="flex flex-col md:flex-row gap-2">
+                      <input
+                        type="date"
+                        value={newPayment.f_paid_at}
+                        onChange={(e) => setNewPayment((c) => ({ ...c, f_paid_at: e.target.value }))}
+                        className="px-3 py-2 border border-gray-300 rounded-md md:w-44"
+                        title="Data do pagamento"
+                      />
                       <input
                         type="number"
                         min={0}

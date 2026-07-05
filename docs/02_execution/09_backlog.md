@@ -205,6 +205,18 @@
 
 ---
 
+### 🏳️ Bandeira de Nacionalidade do Grupo/Família
+> Originado em sessão 2026-07-03 (lateral): em evento internacional, identificar de relance a nacionalidade da família
+- [ ] Adicionar `f_nationality` (código ISO 3166-1 alpha-2, ex.: BR, AR, US, IL) a `GuestGroup`
+- [ ] Seletor de país no cadastro/edição do grupo (GuestsPage)
+- [ ] Exibir bandeira (emoji derivado do código ISO — sem assets de imagem) na barra do Room Grid, no painel e na lista de grupos
+- [ ] Conjunto de países comuns pré-listado (BR, AR, US, IL, UY, MX…) + busca
+
+**Estimativa**: 2-3h  
+**Valor**: leitura rápida da composição internacional do evento; combina com o i18n e o app do hóspede
+
+---
+
 ### 🌐 Multi-idiomas (i18n)
 > Decisão de 2026-07-01 previa i18n desde o início; agora registrado como item
 - [ ] Escolher lib (react-i18next) e estrutura de mensagens
