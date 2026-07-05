@@ -92,3 +92,97 @@ def delete_event_room_price(
     if not deleted:
         raise HTTPException(status_code=404, detail="Event room price not found")
     return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
+# ---- Reservation extras ----
+
+@router.get("/reservations/{reservation_id}/extras", response_model=List[schemas.ReservationExtraResponse])
+def list_reservation_extras(
+    reservation_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+):
+    """Itens adicionais cobrados na reserva (sala especial, sub-evento, serviço)."""
+    return service.get_reservation_extras(db, reservation_id)
+
+
+@router.post(
+    "/reservations/{reservation_id}/extras",
+    response_model=schemas.ReservationExtraResponse,
+    status_code=status.HTTP_201_CREATED,
+)
+def create_reservation_extra(
+    reservation_id: int,
+    payload: schemas.ReservationExtraCreate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+):
+    """Adiciona um item extra à reserva; soma-se por cima da hospedagem."""
+    try:
+        return service.create_reservation_extra(db, reservation_id, payload)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+
+@router.delete(
+    "/reservations/{reservation_id}/extras/{extra_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+)
+def delete_reservation_extra(
+    reservation_id: int,
+    extra_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+):
+    """Remove um item extra da reserva."""
+    deleted = service.delete_reservation_extra(db, reservation_id, extra_id)
+    if not deleted:
+        raise HTTPException(status_code=404, detail="Extra not found for reservation")
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
+# ---- Payments ----
+
+@router.get("/reservations/{reservation_id}/payments", response_model=List[schemas.PaymentResponse])
+def list_reservation_payments(
+    reservation_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+):
+    """Pagamentos (parcelas) registrados na reserva."""
+    return service.get_reservation_payments(db, reservation_id)
+
+
+@router.post(
+    "/reservations/{reservation_id}/payments",
+    response_model=schemas.PaymentResponse,
+    status_code=status.HTTP_201_CREATED,
+)
+def create_payment(
+    reservation_id: int,
+    payload: schemas.PaymentCreate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+):
+    """Registra um pagamento; atualiza automaticamente o total pago da reserva."""
+    try:
+        return service.create_payment(db, reservation_id, payload)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+
+@router.delete(
+    "/reservations/{reservation_id}/payments/{payment_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+)
+def delete_payment(
+    reservation_id: int,
+    payment_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+):
+    """Remove um pagamento; atualiza automaticamente o total pago da reserva."""
+    deleted = service.delete_payment(db, reservation_id, payment_id)
+    if not deleted:
+        raise HTTPException(status_code=404, detail="Payment not found for reservation")
+    return Response(status_code=status.HTTP_204_NO_CONTENT)

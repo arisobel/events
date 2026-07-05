@@ -96,10 +96,12 @@
 - [x] Endpoint `GET /events/{id}/financial-summary` — totais: receita esperada, recebida, pendente, ocupação %
 - [x] Endpoint `GET /events/{event_id}/groups/{group_id}/invoice` — extrato por família: quartos, períodos, total, pago, saldo (extras ficam para Phase 2)
 
-**Backend — Phase 2 (Extras e exclusivos):**
-- [ ] Modelo `ReservationExtra`: item extra por reserva (sala exclusiva de refeição, serviço) com valor
-- [ ] Endpoint de adição/remoção de extras por reserva
-- [ ] Incluir extras no extrato da família
+**Backend — Phase 2 (Extras e pagamentos múltiplos):** ✅ **IMPLEMENTADO 2026-07-03**
+- [x] Modelo `ReservationExtra`: item extra por reserva (sala especial, sub-evento, serviço) com valor
+- [x] Endpoint de adição/remoção de extras por reserva
+- [x] Incluir extras no extrato da família (total geral = hospedagem + extras) e no resumo financeiro
+- [x] Modelo `Payment`: vários pagamentos por reserva; `f_amount_paid` vira a soma automática (base da conta corrente futura)
+- [x] Endpoints de adição/remoção de pagamentos por reserva
 
 **Frontend (Gestão — Financeiro):**
 - [x] Grade visual de quartos × datas (estilo planilha/calendar grid) com cor por status de pagamento — `RoomGridPage` (2026-07-02)

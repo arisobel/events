@@ -4,7 +4,9 @@ import { useNavigate, useParams } from 'react-router-dom'
 import {
   FinancialSummary,
   GuestGroup,
+  Payment,
   PaymentStatus,
+  ReservationExtra,
   RoomAllocationCreate,
   RoomAllocationUpdate,
   RoomGrid,
@@ -84,12 +86,16 @@ export default function RoomGridPage() {
   const [saving, setSaving] = useState(false)
   const [eventPriceInput, setEventPriceInput] = useState('')
   const [showStatsMobile, setShowStatsMobile] = useState(false)
-  const [paymentForm, setPaymentForm] = useState<{
+  const [financeForm, setFinanceForm] = useState<{
     f_amount_total: string
-    f_amount_paid: string
     f_payment_status: PaymentStatus
     f_payment_notes: string
-  }>({ f_amount_total: '', f_amount_paid: '', f_payment_status: 'pending', f_payment_notes: '' })
+  }>({ f_amount_total: '', f_payment_status: 'pending', f_payment_notes: '' })
+  const [extras, setExtras] = useState<ReservationExtra[]>([])
+  const [payments, setPayments] = useState<Payment[]>([])
+  const [reservationPaid, setReservationPaid] = useState(0)
+  const [newExtra, setNewExtra] = useState({ f_description: '', f_amount: '' })
+  const [newPayment, setNewPayment] = useState({ f_amount: '', f_method: '' })
 
   useEffect(() => {
     if (eventId) {
@@ -180,6 +186,22 @@ export default function RoomGridPage() {
 
   // ---- selection handlers ----
 
+  const refreshReservationFinance = async (reservationId: number) => {
+    const [reservation, ex, pay] = await Promise.all([
+      reservationService.getReservation(reservationId),
+      financeService.getReservationExtras(reservationId),
+      financeService.getReservationPayments(reservationId),
+    ])
+    setFinanceForm({
+      f_amount_total: reservation.f_amount_total != null ? String(reservation.f_amount_total) : '',
+      f_payment_status: reservation.f_payment_status || 'pending',
+      f_payment_notes: reservation.f_payment_notes || '',
+    })
+    setReservationPaid(Number(reservation.f_amount_paid || 0))
+    setExtras(ex)
+    setPayments(pay)
+  }
+
   const openAllocation = async (room: RoomGridRoom, allocation: RoomGridAllocation) => {
     setSelection({ kind: 'alloc', room, allocation })
     setEditForm({
@@ -188,37 +210,109 @@ export default function RoomGridPage() {
       f_end_date: allocation.f_end_date,
       f_checkin_status: allocation.f_checkin_status,
     })
-    // valores de pagamento vêm da reserva (não da alocação) — busca para pré-preencher
-    setPaymentForm({ f_amount_total: '', f_amount_paid: '', f_payment_status: allocation.f_payment_status, f_payment_notes: '' })
+    setFinanceForm({ f_amount_total: '', f_payment_status: allocation.f_payment_status, f_payment_notes: '' })
+    setExtras([])
+    setPayments([])
+    setReservationPaid(0)
+    setNewExtra({ f_description: '', f_amount: '' })
+    setNewPayment({ f_amount: '', f_method: '' })
     setError('')
     try {
-      const reservation = await reservationService.getReservation(allocation.reservation_id)
-      setPaymentForm({
-        f_amount_total: reservation.f_amount_total != null ? String(reservation.f_amount_total) : '',
-        f_amount_paid: reservation.f_amount_paid != null ? String(reservation.f_amount_paid) : '',
-        f_payment_status: reservation.f_payment_status || 'pending',
-        f_payment_notes: reservation.f_payment_notes || '',
-      })
+      await refreshReservationFinance(allocation.reservation_id)
     } catch {
       // se a busca falhar, mantém os campos vazios — não bloqueia o painel
     }
   }
 
-  const handleSavePayment = async () => {
+  const handleSaveReservationFinance = async () => {
     if (selection?.kind !== 'alloc') return
     try {
       setSaving(true)
       setError('')
       await reservationService.updateReservation(selection.allocation.reservation_id, {
-        f_amount_total: paymentForm.f_amount_total === '' ? undefined : paymentForm.f_amount_total,
-        f_amount_paid: paymentForm.f_amount_paid === '' ? undefined : paymentForm.f_amount_paid,
-        f_payment_status: paymentForm.f_payment_status,
-        f_payment_notes: paymentForm.f_payment_notes || undefined,
+        f_amount_total: financeForm.f_amount_total === '' ? undefined : financeForm.f_amount_total,
+        f_payment_status: financeForm.f_payment_status,
+        f_payment_notes: financeForm.f_payment_notes || undefined,
       })
-      closePanel()
       await loadData()
     } catch (err: any) {
-      setError(err.response?.data?.detail || 'Failed to save payment')
+      setError(err.response?.data?.detail || 'Failed to save reservation finance')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const handleAddExtra = async () => {
+    if (selection?.kind !== 'alloc') return
+    if (!newExtra.f_description.trim() || newExtra.f_amount === '') {
+      setError('Descrição e valor do extra são obrigatórios')
+      return
+    }
+    try {
+      setSaving(true)
+      setError('')
+      await financeService.createReservationExtra(selection.allocation.reservation_id, {
+        f_description: newExtra.f_description,
+        f_amount: newExtra.f_amount,
+      })
+      setNewExtra({ f_description: '', f_amount: '' })
+      await refreshReservationFinance(selection.allocation.reservation_id)
+      await loadData()
+    } catch (err: any) {
+      setError(err.response?.data?.detail || 'Failed to add extra')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const handleDeleteExtra = async (extraId: number) => {
+    if (selection?.kind !== 'alloc') return
+    try {
+      setSaving(true)
+      setError('')
+      await financeService.deleteReservationExtra(selection.allocation.reservation_id, extraId)
+      await refreshReservationFinance(selection.allocation.reservation_id)
+      await loadData()
+    } catch (err: any) {
+      setError(err.response?.data?.detail || 'Failed to remove extra')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const handleAddPayment = async () => {
+    if (selection?.kind !== 'alloc') return
+    if (newPayment.f_amount === '') {
+      setError('Valor do pagamento é obrigatório')
+      return
+    }
+    try {
+      setSaving(true)
+      setError('')
+      await financeService.createPayment(selection.allocation.reservation_id, {
+        f_amount: newPayment.f_amount,
+        f_method: newPayment.f_method || undefined,
+      })
+      setNewPayment({ f_amount: '', f_method: '' })
+      await refreshReservationFinance(selection.allocation.reservation_id)
+      await loadData()
+    } catch (err: any) {
+      setError(err.response?.data?.detail || 'Failed to add payment')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const handleDeletePayment = async (paymentId: number) => {
+    if (selection?.kind !== 'alloc') return
+    try {
+      setSaving(true)
+      setError('')
+      await financeService.deletePayment(selection.allocation.reservation_id, paymentId)
+      await refreshReservationFinance(selection.allocation.reservation_id)
+      await loadData()
+    } catch (err: any) {
+      setError(err.response?.data?.detail || 'Failed to remove payment')
     } finally {
       setSaving(false)
     }
@@ -593,70 +687,154 @@ export default function RoomGridPage() {
               </button>
             </div>
 
-            {/* Pagamento da reserva */}
-            <div className="mt-5 pt-5 border-t border-gray-200">
-              <h3 className="text-sm font-semibold text-gray-900 mb-3">Pagamento da reserva</h3>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                <label className="flex flex-col gap-1">
-                  <span className="text-xs text-gray-500">Valor total (R$)</span>
-                  <input
-                    type="number"
-                    min={0}
-                    step="0.01"
-                    value={paymentForm.f_amount_total}
-                    onChange={(e) => setPaymentForm((c) => ({ ...c, f_amount_total: e.target.value }))}
-                    className="px-3 py-2 border border-gray-300 rounded-md"
-                  />
-                </label>
-                <label className="flex flex-col gap-1">
-                  <span className="text-xs text-gray-500">Valor pago (R$)</span>
-                  <input
-                    type="number"
-                    min={0}
-                    step="0.01"
-                    value={paymentForm.f_amount_paid}
-                    onChange={(e) => setPaymentForm((c) => ({ ...c, f_amount_paid: e.target.value }))}
-                    className="px-3 py-2 border border-gray-300 rounded-md"
-                  />
-                </label>
-                <label className="flex flex-col gap-1">
-                  <span className="text-xs text-gray-500">Status</span>
-                  <select
-                    value={paymentForm.f_payment_status}
-                    onChange={(e) => setPaymentForm((c) => ({ ...c, f_payment_status: e.target.value as PaymentStatus }))}
-                    className="px-3 py-2 border border-gray-300 rounded-md"
+            {/* Financeiro da reserva */}
+            {(() => {
+              const extrasTotal = extras.reduce((sum, e) => sum + Number(e.f_amount || 0), 0)
+              const lodging = Number(financeForm.f_amount_total || 0)
+              const grandTotal = lodging + extrasTotal
+              const balance = grandTotal - reservationPaid
+              return (
+                <div className="mt-5 pt-5 border-t border-gray-200">
+                  <h3 className="text-sm font-semibold text-gray-900 mb-3">Financeiro da reserva</h3>
+
+                  {/* Hospedagem + status */}
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    <label className="flex flex-col gap-1">
+                      <span className="text-xs text-gray-500">Valor da hospedagem (R$)</span>
+                      <input
+                        type="number"
+                        min={0}
+                        step="0.01"
+                        value={financeForm.f_amount_total}
+                        onChange={(e) => setFinanceForm((c) => ({ ...c, f_amount_total: e.target.value }))}
+                        className="px-3 py-2 border border-gray-300 rounded-md"
+                      />
+                    </label>
+                    <label className="flex flex-col gap-1">
+                      <span className="text-xs text-gray-500">Status de pagamento</span>
+                      <select
+                        value={financeForm.f_payment_status}
+                        onChange={(e) => setFinanceForm((c) => ({ ...c, f_payment_status: e.target.value as PaymentStatus }))}
+                        className="px-3 py-2 border border-gray-300 rounded-md"
+                      >
+                        <option value="pending">Pendente</option>
+                        <option value="partial">Parcial</option>
+                        <option value="paid">Pago</option>
+                      </select>
+                    </label>
+                    <label className="flex flex-col gap-1">
+                      <span className="text-xs text-gray-500">Observação</span>
+                      <input
+                        type="text"
+                        value={financeForm.f_payment_notes}
+                        onChange={(e) => setFinanceForm((c) => ({ ...c, f_payment_notes: e.target.value }))}
+                        className="px-3 py-2 border border-gray-300 rounded-md"
+                      />
+                    </label>
+                  </div>
+                  <button
+                    onClick={handleSaveReservationFinance}
+                    disabled={saving}
+                    className="mt-3 bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 disabled:opacity-50 text-sm"
                   >
-                    <option value="pending">Pendente</option>
-                    <option value="partial">Parcial</option>
-                    <option value="paid">Pago</option>
-                  </select>
-                </label>
-                <div className="flex flex-col gap-1">
-                  <span className="text-xs text-gray-500">Saldo</span>
-                  <div className="px-3 py-2 text-sm font-medium text-gray-800">
-                    {formatMoney(
-                      Number(paymentForm.f_amount_total || 0) - Number(paymentForm.f_amount_paid || 0),
+                    {saving ? 'Saving...' : 'Salvar hospedagem/status'}
+                  </button>
+
+                  {/* Extras */}
+                  <div className="mt-5">
+                    <h4 className="text-sm font-semibold text-gray-800 mb-2">Extras (sala especial, sub-evento, serviço)</h4>
+                    {extras.length > 0 && (
+                      <div className="space-y-1 mb-2">
+                        {extras.map((extra) => (
+                          <div key={extra.id} className="flex items-center justify-between text-sm border border-gray-200 rounded-md px-3 py-1.5">
+                            <span>{extra.f_description}</span>
+                            <span className="flex items-center gap-3">
+                              <span className="font-medium">{formatMoney(extra.f_amount)}</span>
+                              <button onClick={() => handleDeleteExtra(extra.id)} disabled={saving} className="text-rose-600 hover:text-rose-800 text-xs">
+                                remover
+                              </button>
+                            </span>
+                          </div>
+                        ))}
+                      </div>
                     )}
+                    <div className="flex flex-col md:flex-row gap-2">
+                      <input
+                        type="text"
+                        placeholder="Descrição do extra"
+                        value={newExtra.f_description}
+                        onChange={(e) => setNewExtra((c) => ({ ...c, f_description: e.target.value }))}
+                        className="px-3 py-2 border border-gray-300 rounded-md flex-1"
+                      />
+                      <input
+                        type="number"
+                        min={0}
+                        step="0.01"
+                        placeholder="Valor (R$)"
+                        value={newExtra.f_amount}
+                        onChange={(e) => setNewExtra((c) => ({ ...c, f_amount: e.target.value }))}
+                        className="px-3 py-2 border border-gray-300 rounded-md md:w-40"
+                      />
+                      <button onClick={handleAddExtra} disabled={saving} className="bg-violet-600 text-white px-4 py-2 rounded-md hover:bg-violet-700 disabled:opacity-50 text-sm whitespace-nowrap">
+                        + Adicionar extra
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Pagamentos */}
+                  <div className="mt-5">
+                    <h4 className="text-sm font-semibold text-gray-800 mb-2">Pagamentos (parcelas)</h4>
+                    {payments.length > 0 && (
+                      <div className="space-y-1 mb-2">
+                        {payments.map((payment) => (
+                          <div key={payment.id} className="flex items-center justify-between text-sm border border-gray-200 rounded-md px-3 py-1.5">
+                            <span className="text-gray-600">
+                              {payment.f_paid_at}{payment.f_method ? ` · ${payment.f_method}` : ''}
+                            </span>
+                            <span className="flex items-center gap-3">
+                              <span className="font-medium text-emerald-700">{formatMoney(payment.f_amount)}</span>
+                              <button onClick={() => handleDeletePayment(payment.id)} disabled={saving} className="text-rose-600 hover:text-rose-800 text-xs">
+                                remover
+                              </button>
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    <div className="flex flex-col md:flex-row gap-2">
+                      <input
+                        type="number"
+                        min={0}
+                        step="0.01"
+                        placeholder="Valor pago (R$)"
+                        value={newPayment.f_amount}
+                        onChange={(e) => setNewPayment((c) => ({ ...c, f_amount: e.target.value }))}
+                        className="px-3 py-2 border border-gray-300 rounded-md md:w-40"
+                      />
+                      <input
+                        type="text"
+                        placeholder="Forma (PIX, dinheiro...)"
+                        value={newPayment.f_method}
+                        onChange={(e) => setNewPayment((c) => ({ ...c, f_method: e.target.value }))}
+                        className="px-3 py-2 border border-gray-300 rounded-md flex-1"
+                      />
+                      <button onClick={handleAddPayment} disabled={saving} className="bg-emerald-600 text-white px-4 py-2 rounded-md hover:bg-emerald-700 disabled:opacity-50 text-sm whitespace-nowrap">
+                        + Registrar pagamento
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Totais */}
+                  <div className="mt-5 pt-4 border-t border-gray-200 flex flex-wrap gap-x-8 gap-y-2 text-sm">
+                    <span className="text-gray-600">Hospedagem: <span className="font-medium text-gray-900">{formatMoney(lodging)}</span></span>
+                    <span className="text-gray-600">Extras: <span className="font-medium text-gray-900">{formatMoney(extrasTotal)}</span></span>
+                    <span className="text-gray-600">Total geral: <span className="font-semibold text-gray-900">{formatMoney(grandTotal)}</span></span>
+                    <span className="text-gray-600">Pago: <span className="font-medium text-emerald-700">{formatMoney(reservationPaid)}</span></span>
+                    <span className="text-gray-600">Saldo: <span className={`font-semibold ${balance > 0 ? 'text-rose-700' : 'text-emerald-700'}`}>{formatMoney(balance)}</span></span>
                   </div>
                 </div>
-              </div>
-              <label className="flex flex-col gap-1 mt-3">
-                <span className="text-xs text-gray-500">Observação de pagamento</span>
-                <input
-                  type="text"
-                  value={paymentForm.f_payment_notes}
-                  onChange={(e) => setPaymentForm((c) => ({ ...c, f_payment_notes: e.target.value }))}
-                  className="px-3 py-2 border border-gray-300 rounded-md"
-                />
-              </label>
-              <button
-                onClick={handleSavePayment}
-                disabled={saving}
-                className="mt-3 bg-emerald-600 text-white px-5 py-2 rounded-md hover:bg-emerald-700 disabled:opacity-50"
-              >
-                {saving ? 'Saving...' : 'Salvar pagamento'}
-              </button>
-            </div>
+              )
+            })()}
           </div>
         )}
 

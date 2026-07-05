@@ -1,5 +1,29 @@
 # Decisions Log
 
+## [2026-07-03] Financeiro Phase 2 — Extras e Pagamentos Múltiplos
+
+**Context:**
+Michel apontou duas necessidades: (1) registrar adicionais cobrados (sala especial, sub-evento) para ver o total geral; (2) permitir vários pagamentos por reserva (parcelas), já que os valores são altos.
+
+**Decisions (confirmadas via AskUserQuestion):**
+- **Extras**: `ReservationExtra` (linha por reserva: descrição + valor). Total a cobrar = **hospedagem (`f_amount_total`, negociada) + Σ extras**. Extras entram no `contracted_revenue` e no `expected_revenue` do resumo (são cobranças explícitas).
+- **Pagamentos múltiplos**: `Payment` (parcela: valor, data, forma). `Reservation.f_amount_paid` deixa de ser editado manualmente e passa a ser **a soma dos pagamentos**, recalculada pelo service a cada add/remove. O campo vira cache; a tabela `Payment` é a fonte de verdade.
+- **Status de pagamento continua manual** (mantém a decisão de warning não-bloqueante) — não é derivado dos valores.
+- Modelos `ReservationExtra`/`Payment` no módulo `finance` (não no `guests`), consultados por `f_reservation_id`, sem relationship reverso — evita ciclo de import.
+- **`Payment` é intencionalmente a fundação da conta corrente por família**: quando famílias virarem entidade raiz, os pagamentos sobem para o razão da família. Não é trabalho descartável.
+
+**Impact:**
+- Migration `c8f1a2b6e934` (t_reservation_extra, t_payment)
+- Endpoints GET/POST/DELETE para extras e pagamentos por reserva
+- Invoice e summary incluem extras e total geral; 4 testes novos; suíte: 34 verdes
+- Painel do Room Grid reformulado (hospedagem + extras + pagamentos + totais)
+- **Risco de transição**: reservas legadas com `f_amount_paid` manual (sem Payments) têm o valor sobrescrito ao registrar o primeiro pagamento real — aceitável no estágio MVP
+
+**Participants:** Product (Michel) + Engineering  
+**Status:** ✅ Implementado
+
+---
+
 ## [2026-07-03] Receita Esperada usa Potencial dos Quartos Precificados
 
 **Context:**

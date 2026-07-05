@@ -20,6 +20,42 @@ class EventRoomPriceResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
+# Reservation extra schemas
+class ReservationExtraCreate(BaseModel):
+    f_description: str
+    f_amount: Decimal
+    f_notes: Optional[str] = None
+
+
+class ReservationExtraResponse(BaseModel):
+    id: int
+    f_reservation_id: int
+    f_description: str
+    f_amount: Decimal
+    f_notes: Optional[str] = None
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+# Payment schemas
+class PaymentCreate(BaseModel):
+    f_amount: Decimal
+    f_paid_at: Optional[date] = None
+    f_method: Optional[str] = None
+    f_notes: Optional[str] = None
+
+
+class PaymentResponse(BaseModel):
+    id: int
+    f_reservation_id: int
+    f_amount: Decimal
+    f_paid_at: date
+    f_method: Optional[str] = None
+    f_notes: Optional[str] = None
+
+    model_config = ConfigDict(from_attributes=True)
+
+
 # Room grid schemas
 class RoomGridAllocation(BaseModel):
     allocation_id: int
@@ -88,12 +124,16 @@ class InvoiceReservation(BaseModel):
     f_end_date: date
     f_status: str
     f_payment_status: str
-    f_amount_total: Optional[Decimal] = None
+    f_amount_total: Optional[Decimal] = None  # hospedagem negociada
+    extras_total: Decimal = Decimal("0")
+    grand_total: Optional[Decimal] = None  # (amount_total ou calculado) + extras
     f_amount_paid: Decimal
-    balance: Optional[Decimal] = None
+    balance: Optional[Decimal] = None  # grand_total - pago
     f_payment_notes: Optional[str] = None
-    calculated_total: Optional[Decimal] = None
+    calculated_total: Optional[Decimal] = None  # potencial dos quartos (preço × noites)
     lines: List[InvoiceLine] = []
+    extras: List[ReservationExtraResponse] = []
+    payments: List[PaymentResponse] = []
 
 
 class InvoiceResponse(BaseModel):

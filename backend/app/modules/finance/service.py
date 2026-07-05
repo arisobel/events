@@ -110,6 +110,131 @@ def delete_event_room_price(db: Session, event_id: int, room_id: int) -> bool:
     return True
 
 
+# ---- Reservation extras ----
+
+def _get_reservation(db: Session, reservation_id: int) -> Optional[guest_models.Reservation]:
+    return (
+        db.query(guest_models.Reservation)
+        .filter(guest_models.Reservation.id == reservation_id)
+        .first()
+    )
+
+
+def get_reservation_extras(db: Session, reservation_id: int) -> List[models.ReservationExtra]:
+    return (
+        db.query(models.ReservationExtra)
+        .filter(models.ReservationExtra.f_reservation_id == reservation_id)
+        .order_by(models.ReservationExtra.id)
+        .all()
+    )
+
+
+def create_reservation_extra(
+    db: Session,
+    reservation_id: int,
+    payload: schemas.ReservationExtraCreate,
+) -> models.ReservationExtra:
+    if not _get_reservation(db, reservation_id):
+        raise ValueError("Reservation not found")
+
+    db_extra = models.ReservationExtra(
+        f_reservation_id=reservation_id,
+        f_description=payload.f_description,
+        f_amount=payload.f_amount,
+        f_notes=payload.f_notes,
+    )
+    db.add(db_extra)
+    db.commit()
+    db.refresh(db_extra)
+    return db_extra
+
+
+def delete_reservation_extra(db: Session, reservation_id: int, extra_id: int) -> bool:
+    db_extra = (
+        db.query(models.ReservationExtra)
+        .filter(
+            models.ReservationExtra.id == extra_id,
+            models.ReservationExtra.f_reservation_id == reservation_id,
+        )
+        .first()
+    )
+    if not db_extra:
+        return False
+    db.delete(db_extra)
+    db.commit()
+    return True
+
+
+def _extras_total(db: Session, reservation_id: int) -> Decimal:
+    total = Decimal("0")
+    for extra in get_reservation_extras(db, reservation_id):
+        total += Decimal(extra.f_amount)
+    return total
+
+
+# ---- Payments ----
+
+def get_reservation_payments(db: Session, reservation_id: int) -> List[models.Payment]:
+    return (
+        db.query(models.Payment)
+        .filter(models.Payment.f_reservation_id == reservation_id)
+        .order_by(models.Payment.f_paid_at, models.Payment.id)
+        .all()
+    )
+
+
+def _recompute_amount_paid(db: Session, reservation_id: int) -> None:
+    """Mantém Reservation.f_amount_paid como a soma dos pagamentos registrados."""
+    reservation = _get_reservation(db, reservation_id)
+    if not reservation:
+        return
+    total = Decimal("0")
+    for payment in get_reservation_payments(db, reservation_id):
+        total += Decimal(payment.f_amount)
+    reservation.f_amount_paid = total
+
+
+def create_payment(
+    db: Session,
+    reservation_id: int,
+    payload: schemas.PaymentCreate,
+) -> models.Payment:
+    if not _get_reservation(db, reservation_id):
+        raise ValueError("Reservation not found")
+
+    db_payment = models.Payment(
+        f_reservation_id=reservation_id,
+        f_amount=payload.f_amount,
+        f_paid_at=payload.f_paid_at or date.today(),
+        f_method=payload.f_method,
+        f_notes=payload.f_notes,
+    )
+    db.add(db_payment)
+    db.flush()
+    _recompute_amount_paid(db, reservation_id)
+    db.commit()
+    db.refresh(db_payment)
+    return db_payment
+
+
+def delete_payment(db: Session, reservation_id: int, payment_id: int) -> bool:
+    db_payment = (
+        db.query(models.Payment)
+        .filter(
+            models.Payment.id == payment_id,
+            models.Payment.f_reservation_id == reservation_id,
+        )
+        .first()
+    )
+    if not db_payment:
+        return False
+    db.delete(db_payment)
+    db.flush()
+    _recompute_amount_paid(db, reservation_id)
+    db.commit()
+    return True
+
+
 def _get_event_allocations(db: Session, event_id: int) -> List[tuple]:
     """Alocações do evento com reserva e grupo, via join."""
     return (
@@ -224,17 +349,19 @@ def get_event_financial_summary(db: Session, event_id: int) -> Optional[schemas.
                 potential_by_reservation.get(reservation.id, Decimal("0")) + price * nights
             )
 
-    contracted_revenue = Decimal("0")  # só o que foi negociado (f_amount_total)
-    expected_revenue = Decimal("0")    # contratado + potencial das reservas ainda sem valor fechado
+    contracted_revenue = Decimal("0")  # hospedagem negociada + extras (cobranças explícitas)
+    expected_revenue = Decimal("0")    # (negociado ou potencial) + extras
     received_amount = Decimal("0")
     by_status = {"pending": 0, "partial": 0, "paid": 0}
     for reservation in reservations:
+        extras_total = _extras_total(db, reservation.id)
         if reservation.f_amount_total is not None:
             amount = Decimal(reservation.f_amount_total)
-            contracted_revenue += amount
-            expected_revenue += amount
+            contracted_revenue += amount + extras_total
+            expected_revenue += amount + extras_total
         else:
-            expected_revenue += potential_by_reservation.get(reservation.id, Decimal("0"))
+            contracted_revenue += extras_total
+            expected_revenue += potential_by_reservation.get(reservation.id, Decimal("0")) + extras_total
         if reservation.f_amount_paid is not None:
             received_amount += Decimal(reservation.f_amount_paid)
         status = reservation.f_payment_status or "pending"
@@ -327,10 +454,22 @@ def get_group_invoice(db: Session, event_id: int, group_id: int) -> Optional[sch
         amount_paid = (
             Decimal(reservation.f_amount_paid) if reservation.f_amount_paid is not None else Decimal("0")
         )
-        balance = amount_total - amount_paid if amount_total is not None else None
 
-        if amount_total is not None:
-            total_amount += amount_total
+        extras = get_reservation_extras(db, reservation.id)
+        extras_total = sum((Decimal(e.f_amount) for e in extras), Decimal("0"))
+        payments = get_reservation_payments(db, reservation.id)
+
+        # base de hospedagem: valor negociado se houver, senão o potencial calculado dos quartos
+        lodging = amount_total if amount_total is not None else calculated_total
+        grand_total = (
+            (lodging or Decimal("0")) + extras_total
+            if (lodging is not None or extras_total > 0)
+            else None
+        )
+        balance = grand_total - amount_paid if grand_total is not None else None
+
+        if grand_total is not None:
+            total_amount += grand_total
         total_paid += amount_paid
 
         invoice_reservations.append(
@@ -341,11 +480,15 @@ def get_group_invoice(db: Session, event_id: int, group_id: int) -> Optional[sch
                 f_status=reservation.f_status or "confirmed",
                 f_payment_status=reservation.f_payment_status or "pending",
                 f_amount_total=amount_total,
+                extras_total=extras_total,
+                grand_total=grand_total,
                 f_amount_paid=amount_paid,
                 balance=balance,
                 f_payment_notes=reservation.f_payment_notes,
                 calculated_total=calculated_total,
                 lines=lines,
+                extras=[schemas.ReservationExtraResponse.model_validate(e) for e in extras],
+                payments=[schemas.PaymentResponse.model_validate(p) for p in payments],
             )
         )
 

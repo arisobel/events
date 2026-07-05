@@ -60,6 +60,18 @@
 
 ---
 
+### Financeiro Phase 2 — Extras e Pagamentos Múltiplos (2026-07-03)
+- [x] Modelo `ReservationExtra` (sala especial, sub-evento, serviço) + CRUD; total geral = hospedagem + Σ extras
+- [x] Modelo `Payment` (parcelas): vários pagamentos por reserva; `f_amount_paid` recalculado como a soma automática
+- [x] Migration `c8f1a2b6e934`; endpoints `/reservations/{id}/extras` e `/reservations/{id}/payments` (GET/POST/DELETE)
+- [x] Invoice e financial-summary passam a incluir extras (contratado + esperado) e o total geral
+- [x] Painel do Room Grid reformulado: hospedagem/status/observação + lista de extras + lista de pagamentos + rodapé com Hospedagem/Extras/Total geral/Pago/Saldo
+- [x] `Payment` é a fundação da conta corrente por família (backlog)
+- [x] 4 testes novos; suíte total: 34 verdes
+- ⚠️ Transição: reservas legadas com `f_amount_paid` manual (sem linhas de Payment) têm o valor sobrescrito ao registrar o primeiro pagamento real
+
+---
+
 ### UI de Pagamento no Room Grid (2026-07-03)
 - [x] Painel de detalhe da alocação ganhou seção "Pagamento da reserva": valor total, valor pago, status (pendente/parcial/pago), saldo calculado e observação
 - [x] Ao abrir a alocação, busca a reserva (`GET /reservations/{id}`) para pré-preencher os valores atuais; salva via `PUT /reservations/{id}`
@@ -252,7 +264,7 @@
 ## Metrics
 
 ### Verification
-- Backend automated tests: **30 passing**
+- Backend automated tests: **34 passing**
 - Frontend build: **passing** (validado por último em Codespaces; node/docker indisponíveis na estação Windows atual)
 
 ### Module Completion

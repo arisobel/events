@@ -251,6 +251,36 @@ export interface ReservationUpdate {
   f_notes?: string
 }
 
+export interface ReservationExtra {
+  id: number
+  f_reservation_id: number
+  f_description: string
+  f_amount: string | number
+  f_notes: string | null
+}
+
+export interface ReservationExtraCreate {
+  f_description: string
+  f_amount: string | number
+  f_notes?: string
+}
+
+export interface Payment {
+  id: number
+  f_reservation_id: number
+  f_amount: string | number
+  f_paid_at: string
+  f_method: string | null
+  f_notes: string | null
+}
+
+export interface PaymentCreate {
+  f_amount: string | number
+  f_paid_at?: string
+  f_method?: string
+  f_notes?: string
+}
+
 export type GuestGender = 'male' | 'female'
 export type GuestType = 'adult' | 'child' | 'infant' | 'staff'
 
@@ -646,6 +676,34 @@ export const financeService = {
 
   async deleteEventRoomPrice(eventId: number, roomId: number): Promise<void> {
     await api.delete(`/events/${eventId}/room-prices/${roomId}`)
+  },
+
+  async getReservationExtras(reservationId: number): Promise<ReservationExtra[]> {
+    const response = await api.get<ReservationExtra[]>(`/reservations/${reservationId}/extras`)
+    return response.data
+  },
+
+  async createReservationExtra(reservationId: number, extra: ReservationExtraCreate): Promise<ReservationExtra> {
+    const response = await api.post<ReservationExtra>(`/reservations/${reservationId}/extras`, extra)
+    return response.data
+  },
+
+  async deleteReservationExtra(reservationId: number, extraId: number): Promise<void> {
+    await api.delete(`/reservations/${reservationId}/extras/${extraId}`)
+  },
+
+  async getReservationPayments(reservationId: number): Promise<Payment[]> {
+    const response = await api.get<Payment[]>(`/reservations/${reservationId}/payments`)
+    return response.data
+  },
+
+  async createPayment(reservationId: number, payment: PaymentCreate): Promise<Payment> {
+    const response = await api.post<Payment>(`/reservations/${reservationId}/payments`, payment)
+    return response.data
+  },
+
+  async deletePayment(reservationId: number, paymentId: number): Promise<void> {
+    await api.delete(`/reservations/${reservationId}/payments/${paymentId}`)
   },
 }
 
