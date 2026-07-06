@@ -1,4 +1,4 @@
-import { ReactNode, useState } from 'react'
+import { ReactElement, ReactNode, useState } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 
@@ -14,7 +14,7 @@ interface IconProps {
 interface NavLink {
   label: string
   path: string
-  icon: (props: IconProps) => JSX.Element
+  icon: (props: IconProps) => ReactElement
   adminOnly?: boolean
 }
 
