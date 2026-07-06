@@ -351,12 +351,22 @@
 
 ---
 
-### Schedule Module (Cronograma de Atividades)
-> Base para o App do Hóspede e para a Gestão
-- [ ] Backend: modelo `Activity` — tipo, horário, local, público-alvo, duração
-- [ ] Tipos: religioso, infantil, refeições, entretenimento/piscina/ACAD
-- [ ] Backend: CRUD com filtros por tipo e período
-- [ ] Frontend (gestão): `SchedulePage.tsx` — cadastro e edição de atividades
+### Schedule Module (Cronograma de Atividades) — 🟡 EM ANDAMENTO (2026-07-06)
+> Base para o App do Hóspede e para a Gestão. Modelo calibrado pelo programa impresso real de Pessach (colunas = dias com Yom Tov/Chol Hamoed/Shabat; linhas = atividades com hora, título, local; cor por categoria).
+
+**✅ Entregue (2026-07-06):**
+- [x] Backend: modelo `Activity` (t_activity) — título, tipo, público, local, `f_date` + `f_start_time`/`f_end_time` ("HH:MM"), descrição, sort; migration `a3d9e5c7b410`
+- [x] Tipos derivados do doc real: religioso, refeicao, infantil, palestra, entretenimento, geral (cores batendo com o programa impresso)
+- [x] Público: all/men/women/children/youth (filtro por público inclui os 'all')
+- [x] Backend: CRUD (`GET/POST /events/{id}/activities`, `PUT/DELETE /activities/{id}`) com filtros por dia/tipo/público; validação HH:MM
+- [x] Frontend (gestão): `SchedulePage.tsx` — abas por dia (colunas do programa), lista por horário colorida por tipo, criar/editar/excluir + botão "Cronograma" na nav do evento
+- [x] Testes backend (`test_schedule.py`): CRUD, ordenação por horário, filtro por dia/tipo, filtro de público incluindo 'all', rejeição de HH:MM inválido
+
+**Falta (próximas fatias):**
+- [ ] Períodos judaicos no cabeçalho (Yom Tov/Chol Hamoed/Shabat) — casa com o item 🕎 do backlog
+- [ ] Segmentação por idioma nas Palestras (Português/Inglês) — hoje vai em observação
+- [ ] Endpoints públicos `GET /display/{event_id}/today|now` (sem auth) para App do Hóspede e Displays de TV
+- [ ] Nusach (Sefaradi/Ashkenazi) como campo próprio vs. no título
 
 **Valor**: backbone do cronograma que tanto o hóspede quanto a gestão vão consumir
 

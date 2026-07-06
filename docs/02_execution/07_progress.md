@@ -73,6 +73,23 @@
 
 ---
 
+### Módulo Cronograma (Schedule) — Fatia 1 (2026-07-06) ⭐ ESTRUTURAL
+> Backbone do App do Hóspede e dos Displays de TV. Modelo calibrado pelo programa impresso real de Pessach enviado pelo Michel (colunas = dias c/ Yom Tov/Chol Hamoed/Shabat; linhas = atividades com hora/título/local; cor por categoria).
+- [x] **Backend** `schedule`: modelo `Activity` (t_activity) — título, tipo, público, local, `f_date` + `f_start_time`/`f_end_time` ("HH:MM"), descrição, sort; migration `a3d9e5c7b410`
+- [x] Tipos derivados do doc real: **religioso** (marrom), **refeicao** (verde), **infantil** (laranja), **palestra** (bege), **entretenimento**, **geral** — cores da UI batendo com o impresso
+- [x] Público: all/men/women/children/**youth** (Jovens); filtro por público inclui automaticamente os marcados 'all'
+- [x] CRUD `GET/POST /events/{id}/activities`, `PUT/DELETE /activities/{id}` com filtros day/type/audience; validação HH:MM no schema (Literal p/ tipo e público)
+- [x] **Frontend** `SchedulePage`: abas por dia (colunas do programa), lista por horário colorida por tipo, criar/editar/excluir; botão "Cronograma" na nav de Guests/Rooms/Tasks; rota `/events/:id/schedule`
+- [x] Testes `test_schedule.py`: CRUD, ordenação por horário, filtro dia/tipo, filtro de público incluindo 'all', rejeição de HH:MM inválido
+- ⓘ Gestão do cronograma é **operacional** (não financeira): qualquer usuário ativo gerencia. Endpoints públicos (display/TV) e cabeçalho de períodos judaicos ficam para próximas fatias.
+
+---
+
+### Room Grid: dropdown de status agora read-only (2026-07-06)
+- [x] Com status derivado + baixa pelo cliente, o dropdown manual de status virou redundante → trocado por **badge read-only** que exibe o status derivado ao vivo (pago vs. total), coerente com backend. Rótulo do botão ajustado para "Salvar hospedagem".
+
+---
+
 ### RBAC — Papéis e Gating Financeiro (2026-07-06) ⭐
 > 3 papéis: admin (tudo), gestor_financeiro (vê valores), gestor_campo (operação sem R$). Gate = "ver financeiro" (admin ou financeiro).
 - [x] `require_financial_access` e `require_admin` (RoleChecker) já com base pronta (Role/UserRole/get_user_roles existiam)
