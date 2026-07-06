@@ -8,6 +8,7 @@ import GuestsPage from './pages/GuestsPage'
 import RoomsPage from './pages/RoomsPage'
 import RoomGridPage from './pages/RoomGridPage'
 import TasksPage from './pages/TasksPage'
+import SchedulePage from './pages/SchedulePage'
 import UsersPage from './pages/UsersPage'
 import PrivateRoute from './components/PrivateRoute'
 import RoleRoute from './components/RoleRoute'
@@ -57,6 +58,11 @@ function App() {
           <Route path="/events/:eventId/tasks" element={
             <PrivateRoute>
               <TasksPage />
+            </PrivateRoute>
+          } />
+          <Route path="/events/:eventId/schedule" element={
+            <PrivateRoute>
+              <SchedulePage />
             </PrivateRoute>
           } />
           <Route path="/" element={<AppEntryRedirect />} />

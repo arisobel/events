@@ -619,6 +619,12 @@ export default function GuestsPage() {
             >
               Tasks
             </button>
+            <button
+              onClick={() => navigate(`/events/${eventId}/schedule`)}
+              className="shrink-0 bg-amber-600 text-white px-3 py-1.5 rounded-md hover:bg-amber-700"
+            >
+              Cronograma
+            </button>
           </div>
           <div className="flex items-center gap-2 shrink-0">
           <button

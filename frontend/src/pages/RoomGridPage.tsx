@@ -767,18 +767,24 @@ export default function RoomGridPage() {
                         ↺ Calcular pela ocupação ({formatMoney(calculatedLodging)})
                       </button>
                     </div>
-                    <label className="flex flex-col gap-1">
-                      <span className="text-xs text-gray-500">Status de pagamento</span>
-                      <select
-                        value={financeForm.f_payment_status}
-                        onChange={(e) => setFinanceForm((c) => ({ ...c, f_payment_status: e.target.value as PaymentStatus }))}
-                        className="px-3 py-2 border border-gray-300 rounded-md"
-                      >
-                        <option value="pending">Pendente</option>
-                        <option value="partial">Parcial</option>
-                        <option value="paid">Pago</option>
-                      </select>
-                    </label>
+                    <div className="flex flex-col gap-1">
+                      <span className="text-xs text-gray-500">Status de pagamento (derivado)</span>
+                      {(() => {
+                        const derivedStatus: PaymentStatus =
+                          reservationPaid <= 0 ? 'pending' : reservationPaid >= grandTotal ? 'paid' : 'partial'
+                        return (
+                          <span
+                            className={[
+                              'inline-flex items-center justify-center px-3 py-2 rounded-md text-sm font-medium',
+                              paymentStyles[derivedStatus] || paymentStyles.pending,
+                            ].join(' ')}
+                            title="Calculado automaticamente a partir do total pago vs. valor da reserva"
+                          >
+                            {paymentLabels[derivedStatus] || derivedStatus}
+                          </span>
+                        )
+                      })()}
+                    </div>
                     <label className="flex flex-col gap-1">
                       <span className="text-xs text-gray-500">Observação</span>
                       <input
@@ -794,7 +800,7 @@ export default function RoomGridPage() {
                     disabled={saving}
                     className="mt-3 bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 disabled:opacity-50 text-sm"
                   >
-                    {saving ? 'Saving...' : 'Salvar hospedagem/status'}
+                    {saving ? 'Saving...' : 'Salvar hospedagem'}
                   </button>
 
                   {/* Extras */}

@@ -163,6 +163,12 @@ export default function RoomsPage() {
             >
               Tasks
             </button>
+            <button
+              onClick={() => navigate(`/events/${eventId}/schedule`)}
+              className="bg-amber-600 text-white px-3 py-1.5 rounded-md hover:bg-amber-700"
+            >
+              Cronograma
+            </button>
             {canSeeFinancials && (
               <button
                 onClick={() => navigate(`/events/${eventId}/room-grid`)}

@@ -987,3 +987,60 @@ export const clientService = {
     await api.delete(`/clients/${clientId}/ledger-entries/${entryId}`)
   },
 }
+
+// ---- Schedule (cronograma de atividades do evento) ----
+export type ActivityType = 'religioso' | 'refeicao' | 'infantil' | 'palestra' | 'entretenimento' | 'geral'
+export type Audience = 'all' | 'men' | 'women' | 'children' | 'youth'
+
+export interface Activity {
+  id: number
+  f_event_id: number
+  f_title: string
+  f_activity_type: ActivityType
+  f_audience: Audience
+  f_location: string | null
+  f_date: string          // YYYY-MM-DD
+  f_start_time: string    // HH:MM
+  f_end_time: string | null
+  f_description: string | null
+  f_sort_order: number
+  f_created_at: string | null
+}
+
+export interface ActivityCreate {
+  f_title: string
+  f_activity_type: ActivityType
+  f_audience: Audience
+  f_location?: string | null
+  f_date: string
+  f_start_time: string
+  f_end_time?: string | null
+  f_description?: string | null
+  f_sort_order?: number
+}
+
+export type ActivityUpdate = Partial<ActivityCreate>
+
+export const scheduleService = {
+  async getActivities(
+    eventId: number,
+    params?: { day?: string; activity_type?: ActivityType; audience?: Audience },
+  ): Promise<Activity[]> {
+    const response = await api.get<Activity[]>(`/events/${eventId}/activities`, { params })
+    return response.data
+  },
+
+  async createActivity(eventId: number, activity: ActivityCreate): Promise<Activity> {
+    const response = await api.post<Activity>(`/events/${eventId}/activities`, activity)
+    return response.data
+  },
+
+  async updateActivity(activityId: number, activity: ActivityUpdate): Promise<Activity> {
+    const response = await api.put<Activity>(`/activities/${activityId}`, activity)
+    return response.data
+  },
+
+  async deleteActivity(activityId: number): Promise<void> {
+    await api.delete(`/activities/${activityId}`)
+  },
+}

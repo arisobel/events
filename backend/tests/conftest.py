@@ -21,6 +21,7 @@ from app.modules.finance import models as finance_models
 from app.modules.guests import models as guest_models
 from app.modules.hotel import models as hotel_models
 from app.modules.rooms import models as room_models
+from app.modules.schedule import models as schedule_models
 from app.modules.tasks import models as task_models
 
 

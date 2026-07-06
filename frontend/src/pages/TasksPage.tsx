@@ -160,6 +160,12 @@ export default function TasksPage() {
             >
               Rooms
             </button>
+            <button
+              onClick={() => navigate(`/events/${eventId}/schedule`)}
+              className="bg-amber-600 text-white px-3 py-1.5 rounded-md hover:bg-amber-700"
+            >
+              Cronograma
+            </button>
           </div>
           <button
             onClick={() => setShowCreateForm(!showCreateForm)}

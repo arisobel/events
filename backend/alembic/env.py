@@ -24,6 +24,7 @@ from app.modules.rooms.models import RoomAllocation  # noqa
 from app.modules.tasks.models import Task, TaskComment, TaskStatusHistory  # noqa
 from app.modules.finance.models import EventRoomPrice, ReservationExtra, Payment  # noqa
 from app.modules.clients.models import Client, Person, LedgerEntry  # noqa
+from app.modules.schedule.models import Activity  # noqa
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
