@@ -183,15 +183,31 @@ def get_reservation_payments(db: Session, reservation_id: int) -> List[models.Pa
     )
 
 
+def _derive_payment_status(total_paid: Decimal, grand_total: Optional[Decimal]) -> str:
+    """Status a partir do pago vs. total geral: pending / partial / paid."""
+    if total_paid <= 0:
+        return "pending"
+    if grand_total is not None and grand_total > 0 and total_paid >= grand_total:
+        return "paid"
+    return "partial"
+
+
 def _recompute_amount_paid(db: Session, reservation_id: int) -> None:
-    """Mantém Reservation.f_amount_paid como a soma dos pagamentos registrados."""
+    """Mantém f_amount_paid = soma dos pagamentos e deriva f_payment_status.
+
+    Assim a cor da grade reflete os pagamentos registrados sem ajuste manual.
+    """
     reservation = _get_reservation(db, reservation_id)
     if not reservation:
         return
-    total = Decimal("0")
+    total_paid = Decimal("0")
     for payment in get_reservation_payments(db, reservation_id):
-        total += Decimal(payment.f_amount)
-    reservation.f_amount_paid = total
+        total_paid += Decimal(payment.f_amount)
+    reservation.f_amount_paid = total_paid
+
+    base = Decimal(reservation.f_amount_total) if reservation.f_amount_total is not None else Decimal("0")
+    grand_total = base + _extras_total(db, reservation_id)
+    reservation.f_payment_status = _derive_payment_status(total_paid, grand_total)
 
 
 def create_payment(
@@ -267,6 +283,10 @@ def get_event_room_grid(db: Session, event_id: int) -> Optional[schemas.RoomGrid
 
     allocations_by_room: dict[int, List[schemas.RoomGridAllocation]] = {}
     for allocation, reservation, group in _get_event_allocations(db, event_id):
+        # status derivado ao vivo (pago vs. total geral) para a cor refletir os pagamentos
+        base = Decimal(reservation.f_amount_total) if reservation.f_amount_total is not None else Decimal("0")
+        paid = Decimal(reservation.f_amount_paid) if reservation.f_amount_paid is not None else Decimal("0")
+        grand_total = base + _extras_total(db, reservation.id)
         allocations_by_room.setdefault(allocation.f_room_id, []).append(
             schemas.RoomGridAllocation(
                 allocation_id=allocation.id,
@@ -276,7 +296,7 @@ def get_event_room_grid(db: Session, event_id: int) -> Optional[schemas.RoomGrid
                 group_nationality=group.f_nationality,
                 f_start_date=allocation.f_start_date,
                 f_end_date=allocation.f_end_date,
-                f_payment_status=reservation.f_payment_status or "pending",
+                f_payment_status=_derive_payment_status(paid, grand_total),
                 f_checkin_status=allocation.f_checkin_status or "planned",
             )
         )
@@ -356,16 +376,19 @@ def get_event_financial_summary(db: Session, event_id: int) -> Optional[schemas.
     by_status = {"pending": 0, "partial": 0, "paid": 0}
     for reservation in reservations:
         extras_total = _extras_total(db, reservation.id)
+        paid = Decimal(reservation.f_amount_paid) if reservation.f_amount_paid is not None else Decimal("0")
         if reservation.f_amount_total is not None:
             amount = Decimal(reservation.f_amount_total)
             contracted_revenue += amount + extras_total
             expected_revenue += amount + extras_total
+            grand_total = amount + extras_total
         else:
             contracted_revenue += extras_total
             expected_revenue += potential_by_reservation.get(reservation.id, Decimal("0")) + extras_total
-        if reservation.f_amount_paid is not None:
-            received_amount += Decimal(reservation.f_amount_paid)
-        status = reservation.f_payment_status or "pending"
+            grand_total = extras_total
+        received_amount += paid
+        # status derivado (consistente com grade e extrato)
+        status = _derive_payment_status(paid, grand_total)
         by_status[status] = by_status.get(status, 0) + 1
 
     event_nights = _nights(event.f_start_date, event.f_end_date)
@@ -479,7 +502,7 @@ def get_group_invoice(db: Session, event_id: int, group_id: int) -> Optional[sch
                 f_start_date=reservation.f_start_date,
                 f_end_date=reservation.f_end_date,
                 f_status=reservation.f_status or "confirmed",
-                f_payment_status=reservation.f_payment_status or "pending",
+                f_payment_status=_derive_payment_status(amount_paid, grand_total),
                 f_amount_total=amount_total,
                 extras_total=extras_total,
                 grand_total=grand_total,

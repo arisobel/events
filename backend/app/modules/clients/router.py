@@ -136,6 +136,49 @@ def list_client_events(
     return service.get_client_events(db, client_id)
 
 
+# ---- Conta corrente (extrato) ----
+@router.get("/clients/{client_id}/statement", response_model=schemas.ClientStatementResponse)
+def get_client_statement(
+    client_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+):
+    statement = service.get_client_statement(db, client_id)
+    if statement is None:
+        raise HTTPException(status_code=404, detail="Client not found")
+    return statement
+
+
+@router.post(
+    "/clients/{client_id}/ledger-entries",
+    response_model=schemas.LedgerEntryResponse,
+    status_code=status.HTTP_201_CREATED,
+)
+def create_ledger_entry(
+    client_id: int,
+    entry: schemas.LedgerEntryCreate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+):
+    if not service.get_client(db, client_id):
+        raise HTTPException(status_code=404, detail="Client not found")
+    return service.create_ledger_entry(db, client_id, entry)
+
+
+@router.delete(
+    "/clients/{client_id}/ledger-entries/{entry_id}", status_code=status.HTTP_204_NO_CONTENT
+)
+def delete_ledger_entry(
+    client_id: int,
+    entry_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+):
+    if not service.delete_ledger_entry(db, client_id, entry_id):
+        raise HTTPException(status_code=404, detail="Ledger entry not found for client")
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
 @router.post(
     "/clients/from-group/{group_id}",
     response_model=schemas.ClientResponse,

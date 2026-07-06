@@ -7,7 +7,9 @@ Entidades raiz (independentes de evento):
 A ligação com a operação por evento é feita por FKs opcionais em GuestGroup/Guest
 (ver módulo guests), de forma incremental — nada existente quebra.
 """
-from sqlalchemy import Boolean, Column, Date, ForeignKey, Integer, String, Text
+from datetime import date
+
+from sqlalchemy import Boolean, Column, Date, ForeignKey, Integer, Numeric, String, Text
 from sqlalchemy.orm import relationship
 
 from app.db.base import Base
@@ -43,3 +45,21 @@ class Person(Base):
     f_notes = Column(Text)
 
     client = relationship("Client", back_populates="persons")
+
+
+class LedgerEntry(Base):
+    """Lançamento manual na conta corrente do cliente (ajustes fora das reservas).
+
+    Débitos/créditos derivados das reservas e pagamentos NÃO ficam aqui — são
+    calculados on-the-fly no extrato (get_client_statement). Esta tabela guarda só
+    ajustes manuais: depósito, desconto, dívida antiga, multa, etc.
+    """
+    __tablename__ = "t_ledger_entry"
+
+    id = Column(Integer, primary_key=True, index=True)
+    f_client_id = Column(Integer, ForeignKey("t_client.id"), nullable=False)
+    f_entry_type = Column(String(10), nullable=False)  # 'debit' | 'credit'
+    f_amount = Column(Numeric(10, 2), nullable=False)
+    f_date = Column(Date, nullable=False, default=date.today)
+    f_description = Column(String(200), nullable=False)
+    f_notes = Column(Text)

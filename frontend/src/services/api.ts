@@ -832,6 +832,36 @@ export interface ImportClientToEventResult {
   persons_imported: number
 }
 
+export type LedgerEntryType = 'debit' | 'credit'
+
+export interface LedgerEntryCreate {
+  f_entry_type: LedgerEntryType
+  f_amount: string | number
+  f_date?: string
+  f_description: string
+  f_notes?: string
+}
+
+export interface StatementEntry {
+  date: string | null
+  entry_type: LedgerEntryType
+  amount: string | number
+  description: string
+  source: 'reservation' | 'payment' | 'manual'
+  event_id: number | null
+  event_name: string | null
+  reservation_id: number | null
+  ledger_entry_id: number | null
+}
+
+export interface ClientStatement {
+  client_id: number
+  entries: StatementEntry[]
+  total_debit: string | number
+  total_credit: string | number
+  balance: string | number
+}
+
 export const clientService = {
   async getClients(search?: string): Promise<Client[]> {
     const response = await api.get<Client[]>('/clients', {
@@ -888,5 +918,18 @@ export const clientService = {
   async promoteGroupToClient(groupId: number): Promise<Client> {
     const response = await api.post<Client>(`/clients/from-group/${groupId}`)
     return response.data
+  },
+
+  async getClientStatement(clientId: number): Promise<ClientStatement> {
+    const response = await api.get<ClientStatement>(`/clients/${clientId}/statement`)
+    return response.data
+  },
+
+  async createLedgerEntry(clientId: number, entry: LedgerEntryCreate): Promise<void> {
+    await api.post(`/clients/${clientId}/ledger-entries`, entry)
+  },
+
+  async deleteLedgerEntry(clientId: number, entryId: number): Promise<void> {
+    await api.delete(`/clients/${clientId}/ledger-entries/${entryId}`)
   },
 }

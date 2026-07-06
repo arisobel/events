@@ -198,10 +198,16 @@
 
 ---
 
-### 💳 Conta Corrente por Família (financeiro entre eventos) ⭐ ESTRUTURAL
-> Originado em sessão 2026-07-03: valores altos, dívidas podem se acumular entre eventos
->
-> **Depende de:** Hóspedes/Famílias a nível raiz (a conta é da família permanente)
+### 💳 Conta Corrente por Cliente (financeiro entre eventos) ⭐ ESTRUTURAL — ✅ IMPLEMENTADO (2026-07-05)
+> Modelo escolhido: "Derivado + ajustes manuais". Extrato consolidado por Cliente, atravessando eventos.
+
+**✅ Entregue (2026-07-05):**
+- [x] `LedgerEntry` (t_ledger_entry) para ajustes manuais; migration `f2c8a4e6b1d3`
+- [x] `get_client_statement`: deriva débitos (total das reservas) + créditos (pagamentos) reutilizando o finance, soma manuais; saldo atravessa eventos
+- [x] `GET /clients/{id}/statement`, `POST/DELETE /clients/{id}/ledger-entries`; seção "Conta corrente" na ClientsPage
+- [ ] (Futuro) filtro por evento no extrato, exportação, e decisão de sync ao editar Pessoa raiz
+
+**Notas originais da proposta (referência):**
 
 **Conceito (razão / ledger):**
 - Conta corrente por `Household`: **débitos** = valores dos eventos (o que a família deve), **créditos** = pagamentos/depósitos

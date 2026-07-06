@@ -69,8 +69,26 @@
 - [x] 5 testes novos (`test_clients.py`): CRUD cliente/pessoa, normalização, import cria grupo+hóspedes, delete desvincula; suíte → ~40 esperado (validar no Codespaces)
 - [x] Frontend: `clientService` + tipos; **link "Clientes" na sidebar** (ao lado de Hotels/Events); rota `/clients`; `ClientsPage` (busca, CRUD cliente, CRUD pessoas, lista de eventos participados)
 - [x] **Ligação bidirecional (2026-07-05)**: "Importar de cliente" na GuestsPage (picker com busca + bandeira) cria grupo a partir do cliente; "★ Salvar como cliente" promove um grupo existente ao cadastro raiz (popula o registro a partir do que já existe). Endpoint novo `POST /clients/from-group/{group_id}`; badge "Cliente ✓" no grupo vinculado; `f_client_id`/`f_person_id` expostos nas respostas. +1 teste (suíte → ~41)
-- [ ] Base pronta para **conta corrente por cliente** (LedgerEntry) — próximo item estrutural
 - ⓘ Conceito registrado: Cliente ≠ Grupo (participação por evento). Tabelas separadas e ligadas, não fundidas — preserva composição/datas/preços que mudam por evento. Fluxo dos dois sentidos, sem forçar client-first.
+
+---
+
+### Fixes: 500 no extrato + status de pagamento derivado (2026-07-05)
+- [x] **Bug 500 no `/clients/{id}/statement`**: o campo `date` do `StatementEntry` fazia **shadowing** do tipo `date` → Pydantic inferia `NoneType` e qualquer data real quebrava. Corrigido com alias `date as date_type` no annotation (chave JSON continua `date`). Reproduzido e validado com pydantic isolado.
+- [x] **Grade vermelha apesar de pago parcial**: `f_payment_status` era manual e ficava "pending". Agora é **derivado ao vivo** (`_derive_payment_status`: pago vs. total geral) na **grade**, no **invoice** e no **financial-summary** — além de recalculado no `_recompute_amount_paid` ao registrar/excluir pagamento. Dados existentes passam a refletir sem re-tocar o pagamento.
+- ⓘ Consequência: o dropdown manual de status no painel do Room Grid ficou **cosmético** (grade/invoice ignoram e derivam). Candidato a virar read-only ou sumir.
+
+---
+
+### Conta Corrente por Cliente — Extrato (2026-07-05) ⭐ ESTRUTURAL
+> Escolha do usuário: modelo "Derivado + ajustes manuais"
+- [x] Backend: `LedgerEntry` (t_ledger_entry) guarda só **ajustes manuais** (depósito, desconto, dívida antiga, multa); migration `f2c8a4e6b1d3`
+- [x] `get_client_statement` **deriva** débitos (total geral das reservas) e créditos (pagamentos já registrados) reutilizando `finance.get_group_invoice` / `get_reservation_payments` — sem duplicar lógica nem digitar pagamento duas vezes; soma os ajustes manuais por cima
+- [x] Saldo = créditos − débitos (negativo = cliente deve), **atravessando eventos**; entradas ordenadas por data com fonte (reservation/payment/manual)
+- [x] Endpoints: `GET /clients/{id}/statement`, `POST/DELETE /clients/{id}/ledger-entries`; +2 testes (deriva reserva+pagamento+manual; CRUD manual)
+- [x] Frontend: seção **"Conta corrente"** na ClientsPage (expandir cliente) — tabela do extrato (data/descrição/débito/crédito), resumo débitos/créditos/saldo, form de lançamento manual + excluir manual
+- ⓘ Build/deploy agora no **CapRover** (não Codespaces); suíte total esperada ~43
+- [ ] (Futuro) na ClientsPage, filtrar extrato por evento; exportar; e decidir sync de edição de Pessoa raiz
 
 ---
 

@@ -1,10 +1,13 @@
 """Clients module - service layer."""
+from datetime import date
+from decimal import Decimal
 from typing import List, Optional
 
 from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
 from app.modules.events.models import Event
+from app.modules.finance import service as finance_service
 from app.modules.guests.models import Guest, GuestGroup
 
 from . import models, schemas
@@ -228,3 +231,123 @@ def promote_group_to_client(db: Session, group_id: int) -> models.Client:
     db.commit()
     db.refresh(client)
     return client
+
+
+# ---- Conta corrente (extrato) ----
+def list_ledger_entries(db: Session, client_id: int) -> List[models.LedgerEntry]:
+    return (
+        db.query(models.LedgerEntry)
+        .filter(models.LedgerEntry.f_client_id == client_id)
+        .order_by(models.LedgerEntry.f_date)
+        .all()
+    )
+
+
+def create_ledger_entry(
+    db: Session, client_id: int, entry: schemas.LedgerEntryCreate
+) -> models.LedgerEntry:
+    data = entry.model_dump()
+    if data.get("f_date") is None:
+        data["f_date"] = date.today()
+    db_entry = models.LedgerEntry(**data, f_client_id=client_id)
+    db.add(db_entry)
+    db.commit()
+    db.refresh(db_entry)
+    return db_entry
+
+
+def delete_ledger_entry(db: Session, client_id: int, entry_id: int) -> bool:
+    entry = (
+        db.query(models.LedgerEntry)
+        .filter(models.LedgerEntry.id == entry_id, models.LedgerEntry.f_client_id == client_id)
+        .first()
+    )
+    if not entry:
+        return False
+    db.delete(entry)
+    db.commit()
+    return True
+
+
+def get_client_statement(
+    db: Session, client_id: int
+) -> Optional[schemas.ClientStatementResponse]:
+    client = get_client(db, client_id)
+    if not client:
+        return None
+
+    entries: List[schemas.StatementEntry] = []
+    total_debit = Decimal("0")
+    total_credit = Decimal("0")
+
+    # ---- Derivado das reservas/pagamentos dos grupos ligados a este cliente ----
+    groups = db.query(GuestGroup).filter(GuestGroup.f_client_id == client_id).all()
+    for group in groups:
+        invoice = finance_service.get_group_invoice(db, group.f_event_id, group.id)
+        if not invoice:
+            continue
+        event = db.query(Event).filter(Event.id == group.f_event_id).first()
+        event_name = event.f_name if event else ""
+
+        for res in invoice.reservations:
+            # débito = total geral da reserva (hospedagem + extras)
+            if res.grand_total:
+                amount = Decimal(str(res.grand_total))
+                if amount != 0:
+                    entries.append(
+                        schemas.StatementEntry(
+                            date=res.f_start_date,
+                            entry_type="debit",
+                            amount=amount,
+                            description=f"Hospedagem + extras — {event_name}",
+                            source="reservation",
+                            event_id=group.f_event_id,
+                            event_name=event_name,
+                            reservation_id=res.reservation_id,
+                        )
+                    )
+                    total_debit += amount
+
+            # crédito = cada pagamento registrado na reserva (datado)
+            for payment in finance_service.get_reservation_payments(db, res.reservation_id):
+                amount = Decimal(str(payment.f_amount))
+                entries.append(
+                    schemas.StatementEntry(
+                        date=payment.f_paid_at,
+                        entry_type="credit",
+                        amount=amount,
+                        description=f"Pagamento — {event_name}",
+                        source="payment",
+                        event_id=group.f_event_id,
+                        event_name=event_name,
+                        reservation_id=res.reservation_id,
+                    )
+                )
+                total_credit += amount
+
+    # ---- Ajustes manuais ----
+    for manual in list_ledger_entries(db, client_id):
+        amount = Decimal(str(manual.f_amount))
+        entries.append(
+            schemas.StatementEntry(
+                date=manual.f_date,
+                entry_type=manual.f_entry_type,
+                amount=amount,
+                description=manual.f_description,
+                source="manual",
+                ledger_entry_id=manual.id,
+            )
+        )
+        if manual.f_entry_type == "debit":
+            total_debit += amount
+        else:
+            total_credit += amount
+
+    entries.sort(key=lambda e: e.date or date.min)
+    return schemas.ClientStatementResponse(
+        client_id=client_id,
+        entries=entries,
+        total_debit=total_debit,
+        total_credit=total_credit,
+        balance=total_credit - total_debit,
+    )

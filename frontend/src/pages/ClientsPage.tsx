@@ -4,7 +4,9 @@ import {
   Client,
   ClientCreate,
   ClientEventLink,
+  ClientStatement,
   ClientUpdate,
+  LedgerEntryType,
   Person,
   PersonCreate,
   PersonUpdate,
@@ -69,6 +71,10 @@ export default function ClientsPage() {
 
   const [expandedId, setExpandedId] = useState<number | null>(null)
   const [eventsByClient, setEventsByClient] = useState<Record<number, ClientEventLink[]>>({})
+  const [statementByClient, setStatementByClient] = useState<Record<number, ClientStatement>>({})
+  const emptyLedger = { f_entry_type: 'credit' as LedgerEntryType, f_amount: '', f_date: '', f_description: '' }
+  const [newLedger, setNewLedger] = useState(emptyLedger)
+  const [savingLedger, setSavingLedger] = useState(false)
 
   const [addingPersonClientId, setAddingPersonClientId] = useState<number | null>(null)
   const [newPerson, setNewPerson] = useState<PersonCreate>(emptyPerson)
@@ -168,6 +174,7 @@ export default function ClientsPage() {
   const toggleExpand = async (clientId: number) => {
     const next = expandedId === clientId ? null : clientId
     setExpandedId(next)
+    setNewLedger(emptyLedger)
     if (next && !eventsByClient[clientId]) {
       try {
         const events = await clientService.getClientEvents(clientId)
@@ -176,6 +183,57 @@ export default function ClientsPage() {
         // eventos são complementares; se falhar, o resto segue
       }
     }
+    if (next) void refreshStatement(clientId)
+  }
+
+  const refreshStatement = async (clientId: number) => {
+    try {
+      const statement = await clientService.getClientStatement(clientId)
+      setStatementByClient((current) => ({ ...current, [clientId]: statement }))
+    } catch {
+      // extrato é complementar
+    }
+  }
+
+  const handleAddLedger = async (clientId: number, e: React.FormEvent) => {
+    e.preventDefault()
+    const amount = Number(newLedger.f_amount)
+    if (!newLedger.f_description.trim() || !amount || amount <= 0) {
+      setError('Informe uma descrição e um valor positivo para o lançamento')
+      return
+    }
+    try {
+      setSavingLedger(true)
+      setError('')
+      await clientService.createLedgerEntry(clientId, {
+        f_entry_type: newLedger.f_entry_type,
+        f_amount: amount,
+        f_date: newLedger.f_date || undefined,
+        f_description: newLedger.f_description.trim(),
+      })
+      setNewLedger(emptyLedger)
+      await refreshStatement(clientId)
+    } catch (err: any) {
+      setError(err.response?.data?.detail || 'Falha ao lançar na conta corrente')
+    } finally {
+      setSavingLedger(false)
+    }
+  }
+
+  const handleDeleteLedger = async (clientId: number, entryId: number) => {
+    if (!window.confirm('Excluir este lançamento manual?')) return
+    try {
+      setError('')
+      await clientService.deleteLedgerEntry(clientId, entryId)
+      await refreshStatement(clientId)
+    } catch (err: any) {
+      setError(err.response?.data?.detail || 'Falha ao excluir lançamento')
+    }
+  }
+
+  const formatMoney = (value: string | number | null | undefined) => {
+    const num = Number(value ?? 0)
+    return (Number.isNaN(num) ? 0 : num).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
   }
 
   const startAddPerson = (clientId: number) => {
@@ -448,6 +506,7 @@ export default function ClientsPage() {
                 {visibleClients.map((client) => {
                   const primary = client.persons.find((p) => p.f_is_primary)
                   const events = eventsByClient[client.id]
+                  const statement = statementByClient[client.id]
                   return (
                     <div key={client.id} className="bg-white rounded-lg shadow p-6">
                       {editingClientId === client.id ? (
@@ -726,6 +785,131 @@ export default function ClientsPage() {
                                     ))}
                                   </ul>
                                 )}
+                              </div>
+
+                              {/* Conta corrente (extrato) */}
+                              <div>
+                                <div className="flex flex-wrap items-center justify-between gap-2">
+                                  <h3 className="text-sm font-semibold text-gray-900">Conta corrente</h3>
+                                  {statement && (
+                                    <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
+                                      <span className="text-gray-500">Débitos: <span className="font-medium text-gray-800">{formatMoney(statement.total_debit)}</span></span>
+                                      <span className="text-gray-500">Créditos: <span className="font-medium text-emerald-700">{formatMoney(statement.total_credit)}</span></span>
+                                      <span className="text-gray-500">
+                                        Saldo:{' '}
+                                        <span className={`font-semibold ${Number(statement.balance) < 0 ? 'text-rose-700' : 'text-emerald-700'}`}>
+                                          {formatMoney(statement.balance)}
+                                        </span>
+                                      </span>
+                                    </div>
+                                  )}
+                                </div>
+
+                                {statement === undefined ? (
+                                  <p className="mt-2 text-sm text-gray-400">Carregando…</p>
+                                ) : (
+                                  <div className="mt-3 overflow-x-auto">
+                                    <table className="w-full text-sm">
+                                      <thead>
+                                        <tr className="text-left text-xs text-gray-400 border-b border-gray-100">
+                                          <th className="py-1.5 pr-3 font-medium">Data</th>
+                                          <th className="py-1.5 pr-3 font-medium">Descrição</th>
+                                          <th className="py-1.5 pr-3 font-medium text-right">Débito</th>
+                                          <th className="py-1.5 pr-3 font-medium text-right">Crédito</th>
+                                          <th className="py-1.5 font-medium"></th>
+                                        </tr>
+                                      </thead>
+                                      <tbody>
+                                        {statement.entries.length === 0 ? (
+                                          <tr>
+                                            <td colSpan={5} className="py-3 text-gray-500">
+                                              Sem lançamentos. Débitos e pagamentos aparecem automaticamente conforme reservas e pagamentos; adicione ajustes manuais abaixo.
+                                            </td>
+                                          </tr>
+                                        ) : (
+                                          statement.entries.map((entry, idx) => (
+                                            <tr key={idx} className="border-b border-gray-50">
+                                              <td className="py-1.5 pr-3 whitespace-nowrap text-gray-600">{formatDate(entry.date)}</td>
+                                              <td className="py-1.5 pr-3">
+                                                {entry.description}
+                                                {entry.source === 'manual' && (
+                                                  <span className="ml-1 text-xs text-amber-600">(manual)</span>
+                                                )}
+                                              </td>
+                                              <td className="py-1.5 pr-3 text-right text-rose-700">
+                                                {entry.entry_type === 'debit' ? formatMoney(entry.amount) : ''}
+                                              </td>
+                                              <td className="py-1.5 pr-3 text-right text-emerald-700">
+                                                {entry.entry_type === 'credit' ? formatMoney(entry.amount) : ''}
+                                              </td>
+                                              <td className="py-1.5 text-right">
+                                                {entry.source === 'manual' && entry.ledger_entry_id != null && (
+                                                  <button
+                                                    onClick={() => handleDeleteLedger(client.id, entry.ledger_entry_id as number)}
+                                                    className="text-xs text-red-600 hover:text-red-800"
+                                                  >
+                                                    excluir
+                                                  </button>
+                                                )}
+                                              </td>
+                                            </tr>
+                                          ))
+                                        )}
+                                      </tbody>
+                                    </table>
+                                  </div>
+                                )}
+
+                                {/* Lançamento manual */}
+                                <form
+                                  onSubmit={(e) => handleAddLedger(client.id, e)}
+                                  className="mt-3 flex flex-wrap items-end gap-2 rounded-lg border border-gray-100 bg-gray-50 p-3"
+                                >
+                                  <LabeledField label="Tipo">
+                                    <select
+                                      value={newLedger.f_entry_type}
+                                      onChange={(e) => setNewLedger((c) => ({ ...c, f_entry_type: e.target.value as LedgerEntryType }))}
+                                      className="px-3 py-2 border border-gray-300 rounded-md bg-white"
+                                    >
+                                      <option value="credit">Crédito (+)</option>
+                                      <option value="debit">Débito (−)</option>
+                                    </select>
+                                  </LabeledField>
+                                  <LabeledField label="Valor">
+                                    <input
+                                      type="number"
+                                      min="0"
+                                      step="0.01"
+                                      value={newLedger.f_amount}
+                                      onChange={(e) => setNewLedger((c) => ({ ...c, f_amount: e.target.value }))}
+                                      className="px-3 py-2 border border-gray-300 rounded-md w-32"
+                                    />
+                                  </LabeledField>
+                                  <LabeledField label="Data">
+                                    <input
+                                      type="date"
+                                      value={newLedger.f_date}
+                                      onChange={(e) => setNewLedger((c) => ({ ...c, f_date: e.target.value }))}
+                                      className="px-3 py-2 border border-gray-300 rounded-md"
+                                    />
+                                  </LabeledField>
+                                  <LabeledField label="Descrição" className="flex-1 min-w-[10rem]">
+                                    <input
+                                      type="text"
+                                      placeholder="ex.: Depósito, desconto, dívida anterior…"
+                                      value={newLedger.f_description}
+                                      onChange={(e) => setNewLedger((c) => ({ ...c, f_description: e.target.value }))}
+                                      className="px-3 py-2 border border-gray-300 rounded-md w-full"
+                                    />
+                                  </LabeledField>
+                                  <button
+                                    type="submit"
+                                    disabled={savingLedger}
+                                    className="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 text-sm disabled:opacity-50"
+                                  >
+                                    {savingLedger ? '...' : 'Lançar'}
+                                  </button>
+                                </form>
                               </div>
                             </div>
                           )}

@@ -1,3 +1,5 @@
+from decimal import Decimal
+
 import pytest
 from sqlalchemy.orm import Session
 
@@ -5,6 +7,8 @@ from app.modules.clients import schemas as client_schemas
 from app.modules.clients import service as client_service
 from app.modules.events import schemas as event_schemas
 from app.modules.events import service as event_service
+from app.modules.finance import schemas as finance_schemas
+from app.modules.finance import service as finance_service
 from app.modules.guests import schemas as guest_schemas
 from app.modules.guests import service as guest_service
 from app.modules.hotel import schemas as hotel_schemas
@@ -175,3 +179,69 @@ def test_promote_group_to_client(db_session: Session) -> None:
     # promover de novo o mesmo grupo é rejeitado
     with pytest.raises(ValueError):
         client_service.promote_group_to_client(db_session, group.id)
+
+
+def test_client_statement_derives_reservations_payments_and_manual(db_session: Session) -> None:
+    event_id = _create_event(db_session)
+    client = client_service.create_client(
+        db_session, client_schemas.ClientCreate(f_name="Família Zellerkraut")
+    )
+    result = client_service.import_client_to_event(db_session, client.id, event_id)
+    assert result is not None
+    group_id = result.group_id
+
+    # reserva com valor negociado -> débito de 2000
+    reservation = guest_service.create_reservation(
+        db_session,
+        event_id,
+        group_id,
+        guest_schemas.ReservationCreate(
+            f_event_id=event_id,
+            f_group_id=group_id,
+            f_start_date="2027-04-01",
+            f_end_date="2027-04-05",
+            f_amount_total=Decimal("2000.00"),
+        ),
+    )
+    # pagamento de 500 -> crédito
+    finance_service.create_payment(
+        db_session, reservation.id, finance_schemas.PaymentCreate(f_amount=Decimal("500.00"))
+    )
+    # ajuste manual: crédito de depósito 100
+    client_service.create_ledger_entry(
+        db_session,
+        client.id,
+        client_schemas.LedgerEntryCreate(
+            f_entry_type="credit", f_amount=Decimal("100.00"), f_description="Depósito"
+        ),
+    )
+
+    statement = client_service.get_client_statement(db_session, client.id)
+    assert statement is not None
+    assert statement.total_debit == Decimal("2000.00")
+    assert statement.total_credit == Decimal("600.00")  # 500 pagamento + 100 depósito
+    assert statement.balance == Decimal("-1400.00")
+
+    sources = sorted(e.source for e in statement.entries)
+    assert sources == ["manual", "payment", "reservation"]
+
+
+def test_ledger_entry_crud_and_delete(db_session: Session) -> None:
+    client = client_service.create_client(
+        db_session, client_schemas.ClientCreate(f_name="Família Cohen")
+    )
+    entry = client_service.create_ledger_entry(
+        db_session,
+        client.id,
+        client_schemas.LedgerEntryCreate(
+            f_entry_type="debit", f_amount=Decimal("300.00"), f_description="Multa"
+        ),
+    )
+    assert entry.f_date is not None  # default hoje
+
+    statement = client_service.get_client_statement(db_session, client.id)
+    assert statement is not None and statement.balance == Decimal("-300.00")
+
+    assert client_service.delete_ledger_entry(db_session, client.id, entry.id) is True
+    statement = client_service.get_client_statement(db_session, client.id)
+    assert statement is not None and statement.balance == Decimal("0")
