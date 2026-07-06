@@ -165,3 +165,13 @@ class ClientStatementResponse(BaseModel):
     total_debit: Decimal
     total_credit: Decimal
     balance: Decimal  # credit - debit (negativo = cliente deve)
+
+
+class ClientOpenReservation(BaseModel):
+    """Reserva do cliente com saldo em aberto — alvo para 'dar baixa' de um crédito."""
+    event_id: int
+    event_name: str
+    reservation_id: int
+    grand_total: Decimal
+    paid: Decimal
+    balance: Decimal

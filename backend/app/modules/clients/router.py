@@ -149,6 +149,20 @@ def get_client_statement(
     return statement
 
 
+@router.get(
+    "/clients/{client_id}/open-reservations",
+    response_model=List[schemas.ClientOpenReservation],
+)
+def list_client_open_reservations(
+    client_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+):
+    if not service.get_client(db, client_id):
+        raise HTTPException(status_code=404, detail="Client not found")
+    return service.get_client_open_reservations(db, client_id)
+
+
 @router.post(
     "/clients/{client_id}/ledger-entries",
     response_model=schemas.LedgerEntryResponse,

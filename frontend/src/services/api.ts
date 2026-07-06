@@ -862,6 +862,15 @@ export interface ClientStatement {
   balance: string | number
 }
 
+export interface ClientOpenReservation {
+  event_id: number
+  event_name: string
+  reservation_id: number
+  grand_total: string | number
+  paid: string | number
+  balance: string | number
+}
+
 export const clientService = {
   async getClients(search?: string): Promise<Client[]> {
     const response = await api.get<Client[]>('/clients', {
@@ -922,6 +931,11 @@ export const clientService = {
 
   async getClientStatement(clientId: number): Promise<ClientStatement> {
     const response = await api.get<ClientStatement>(`/clients/${clientId}/statement`)
+    return response.data
+  },
+
+  async getOpenReservations(clientId: number): Promise<ClientOpenReservation[]> {
+    const response = await api.get<ClientOpenReservation[]>(`/clients/${clientId}/open-reservations`)
     return response.data
   },
 

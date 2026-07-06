@@ -351,3 +351,33 @@ def get_client_statement(
         total_credit=total_credit,
         balance=total_credit - total_debit,
     )
+
+
+def get_client_open_reservations(
+    db: Session, client_id: int
+) -> List[schemas.ClientOpenReservation]:
+    """Reservas dos grupos do cliente que ainda têm saldo em aberto (para dar baixa)."""
+    open_reservations: List[schemas.ClientOpenReservation] = []
+    groups = db.query(GuestGroup).filter(GuestGroup.f_client_id == client_id).all()
+    for group in groups:
+        invoice = finance_service.get_group_invoice(db, group.f_event_id, group.id)
+        if not invoice:
+            continue
+        event = db.query(Event).filter(Event.id == group.f_event_id).first()
+        event_name = event.f_name if event else ""
+        for res in invoice.reservations:
+            grand = Decimal(str(res.grand_total)) if res.grand_total is not None else Decimal("0")
+            paid = Decimal(str(res.f_amount_paid))
+            balance = grand - paid
+            if balance > 0:
+                open_reservations.append(
+                    schemas.ClientOpenReservation(
+                        event_id=group.f_event_id,
+                        event_name=event_name,
+                        reservation_id=res.reservation_id,
+                        grand_total=grand,
+                        paid=paid,
+                        balance=balance,
+                    )
+                )
+    return open_reservations

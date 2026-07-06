@@ -73,6 +73,14 @@
 
 ---
 
+### Baixa de pagamento pelo cliente (vincula crédito → reserva) (2026-07-05)
+- [x] `GET /clients/{id}/open-reservations` — reservas do cliente com saldo em aberto (para o seletor)
+- [x] Na conta corrente, o lançamento manual ganhou seletor **"Aplicar a (dar baixa)"**: um **crédito** vinculado a uma reserva vira **Payment na reserva** (via finance) em vez de ajuste avulso — dá baixa no evento, status deriva para pago/parcial e a grade reflete
+- [x] Sem reserva selecionada (ou débito), continua como **ajuste avulso** (LedgerEntry manual). Botão vira "Registrar pagamento"; campo Descrição vira "Forma (PIX/dinheiro…)"
+- ⓘ Resolve a inconsistência: crédito solto no cliente zerava o saldo mas não dava baixa no evento; agora dá. Créditos avulsos antigos podem ser reaplicados (excluir + relançar com o seletor)
+
+---
+
 ### Fixes: 500 no extrato + status de pagamento derivado (2026-07-05)
 - [x] **Bug 500 no `/clients/{id}/statement`**: o campo `date` do `StatementEntry` fazia **shadowing** do tipo `date` → Pydantic inferia `NoneType` e qualquer data real quebrava. Corrigido com alias `date as date_type` no annotation (chave JSON continua `date`). Reproduzido e validado com pydantic isolado.
 - [x] **Grade vermelha apesar de pago parcial**: `f_payment_status` era manual e ficava "pending". Agora é **derivado ao vivo** (`_derive_payment_status`: pago vs. total geral) na **grade**, no **invoice** e no **financial-summary** — além de recalculado no `_recompute_amount_paid` ao registrar/excluir pagamento. Dados existentes passam a refletir sem re-tocar o pagamento.

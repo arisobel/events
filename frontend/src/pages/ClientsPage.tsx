@@ -4,6 +4,7 @@ import {
   Client,
   ClientCreate,
   ClientEventLink,
+  ClientOpenReservation,
   ClientStatement,
   ClientUpdate,
   LedgerEntryType,
@@ -11,6 +12,7 @@ import {
   PersonCreate,
   PersonUpdate,
   clientService,
+  financeService,
 } from '../services/api'
 import AdminLayout from '../components/AdminLayout'
 import CountryPicker from '../components/CountryPicker'
@@ -72,7 +74,8 @@ export default function ClientsPage() {
   const [expandedId, setExpandedId] = useState<number | null>(null)
   const [eventsByClient, setEventsByClient] = useState<Record<number, ClientEventLink[]>>({})
   const [statementByClient, setStatementByClient] = useState<Record<number, ClientStatement>>({})
-  const emptyLedger = { f_entry_type: 'credit' as LedgerEntryType, f_amount: '', f_date: '', f_description: '' }
+  const [openResByClient, setOpenResByClient] = useState<Record<number, ClientOpenReservation[]>>({})
+  const emptyLedger = { f_entry_type: 'credit' as LedgerEntryType, f_amount: '', f_date: '', f_description: '', applyTo: 0 }
   const [newLedger, setNewLedger] = useState(emptyLedger)
   const [savingLedger, setSavingLedger] = useState(false)
 
@@ -188,8 +191,12 @@ export default function ClientsPage() {
 
   const refreshStatement = async (clientId: number) => {
     try {
-      const statement = await clientService.getClientStatement(clientId)
+      const [statement, openRes] = await Promise.all([
+        clientService.getClientStatement(clientId),
+        clientService.getOpenReservations(clientId),
+      ])
       setStatementByClient((current) => ({ ...current, [clientId]: statement }))
+      setOpenResByClient((current) => ({ ...current, [clientId]: openRes }))
     } catch {
       // extrato é complementar
     }
@@ -198,19 +205,34 @@ export default function ClientsPage() {
   const handleAddLedger = async (clientId: number, e: React.FormEvent) => {
     e.preventDefault()
     const amount = Number(newLedger.f_amount)
-    if (!newLedger.f_description.trim() || !amount || amount <= 0) {
-      setError('Informe uma descrição e um valor positivo para o lançamento')
+    if (!amount || amount <= 0) {
+      setError('Informe um valor positivo para o lançamento')
+      return
+    }
+    const applyToReservation = newLedger.f_entry_type === 'credit' && newLedger.applyTo > 0
+    if (!applyToReservation && !newLedger.f_description.trim()) {
+      setError('Informe uma descrição para o ajuste manual')
       return
     }
     try {
       setSavingLedger(true)
       setError('')
-      await clientService.createLedgerEntry(clientId, {
-        f_entry_type: newLedger.f_entry_type,
-        f_amount: amount,
-        f_date: newLedger.f_date || undefined,
-        f_description: newLedger.f_description.trim(),
-      })
+      if (applyToReservation) {
+        // crédito vinculado a uma reserva vira PAGAMENTO na reserva (dá baixa no evento)
+        await financeService.createPayment(newLedger.applyTo, {
+          f_amount: amount,
+          f_paid_at: newLedger.f_date || undefined,
+          f_method: newLedger.f_description.trim() || undefined,
+        })
+      } else {
+        // ajuste avulso (não vincula a nenhum evento)
+        await clientService.createLedgerEntry(clientId, {
+          f_entry_type: newLedger.f_entry_type,
+          f_amount: amount,
+          f_date: newLedger.f_date || undefined,
+          f_description: newLedger.f_description.trim(),
+        })
+      }
       setNewLedger(emptyLedger)
       await refreshStatement(clientId)
     } catch (err: any) {
@@ -507,6 +529,7 @@ export default function ClientsPage() {
                   const primary = client.persons.find((p) => p.f_is_primary)
                   const events = eventsByClient[client.id]
                   const statement = statementByClient[client.id]
+                  const openRes = openResByClient[client.id] ?? []
                   return (
                     <div key={client.id} className="bg-white rounded-lg shadow p-6">
                       {editingClientId === client.id ? (
@@ -868,13 +891,29 @@ export default function ClientsPage() {
                                   <LabeledField label="Tipo">
                                     <select
                                       value={newLedger.f_entry_type}
-                                      onChange={(e) => setNewLedger((c) => ({ ...c, f_entry_type: e.target.value as LedgerEntryType }))}
+                                      onChange={(e) => setNewLedger((c) => ({ ...c, f_entry_type: e.target.value as LedgerEntryType, applyTo: e.target.value === 'credit' ? c.applyTo : 0 }))}
                                       className="px-3 py-2 border border-gray-300 rounded-md bg-white"
                                     >
                                       <option value="credit">Crédito (+)</option>
                                       <option value="debit">Débito (−)</option>
                                     </select>
                                   </LabeledField>
+                                  {newLedger.f_entry_type === 'credit' && openRes.length > 0 && (
+                                    <LabeledField label="Aplicar a (dar baixa)">
+                                      <select
+                                        value={newLedger.applyTo}
+                                        onChange={(e) => setNewLedger((c) => ({ ...c, applyTo: Number(e.target.value) }))}
+                                        className="px-3 py-2 border border-gray-300 rounded-md bg-white"
+                                      >
+                                        <option value={0}>— Ajuste avulso —</option>
+                                        {openRes.map((r) => (
+                                          <option key={r.reservation_id} value={r.reservation_id}>
+                                            {r.event_name} — saldo {formatMoney(r.balance)}
+                                          </option>
+                                        ))}
+                                      </select>
+                                    </LabeledField>
+                                  )}
                                   <LabeledField label="Valor">
                                     <input
                                       type="number"
@@ -893,10 +932,13 @@ export default function ClientsPage() {
                                       className="px-3 py-2 border border-gray-300 rounded-md"
                                     />
                                   </LabeledField>
-                                  <LabeledField label="Descrição" className="flex-1 min-w-[10rem]">
+                                  <LabeledField
+                                    label={newLedger.applyTo > 0 ? 'Forma (opcional)' : 'Descrição'}
+                                    className="flex-1 min-w-[10rem]"
+                                  >
                                     <input
                                       type="text"
-                                      placeholder="ex.: Depósito, desconto, dívida anterior…"
+                                      placeholder={newLedger.applyTo > 0 ? 'PIX, dinheiro, transferência…' : 'ex.: Depósito, desconto, dívida anterior…'}
                                       value={newLedger.f_description}
                                       onChange={(e) => setNewLedger((c) => ({ ...c, f_description: e.target.value }))}
                                       className="px-3 py-2 border border-gray-300 rounded-md w-full"
@@ -907,7 +949,7 @@ export default function ClientsPage() {
                                     disabled={savingLedger}
                                     className="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 text-sm disabled:opacity-50"
                                   >
-                                    {savingLedger ? '...' : 'Lançar'}
+                                    {savingLedger ? '...' : newLedger.applyTo > 0 ? 'Registrar pagamento' : 'Lançar'}
                                   </button>
                                 </form>
                               </div>
