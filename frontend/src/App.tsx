@@ -8,7 +8,9 @@ import GuestsPage from './pages/GuestsPage'
 import RoomsPage from './pages/RoomsPage'
 import RoomGridPage from './pages/RoomGridPage'
 import TasksPage from './pages/TasksPage'
+import UsersPage from './pages/UsersPage'
 import PrivateRoute from './components/PrivateRoute'
+import RoleRoute from './components/RoleRoute'
 import AppEntryRedirect from './components/AppEntryRedirect'
 
 function App() {
@@ -43,9 +45,14 @@ function App() {
             </PrivateRoute>
           } />
           <Route path="/events/:eventId/room-grid" element={
-            <PrivateRoute>
+            <RoleRoute access="financial">
               <RoomGridPage />
-            </PrivateRoute>
+            </RoleRoute>
+          } />
+          <Route path="/admin/users" element={
+            <RoleRoute access="admin">
+              <UsersPage />
+            </RoleRoute>
           } />
           <Route path="/events/:eventId/tasks" element={
             <PrivateRoute>

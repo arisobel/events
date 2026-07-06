@@ -133,16 +133,26 @@ class RoleChecker:
 def require_role(role_name: str):
     """
     Helper function to create a role checker dependency.
-    
+
     Args:
         role_name: Name of the required role
-        
+
     Returns:
         RoleChecker instance
-        
+
     Usage:
         @app.get("/admin")
         def admin_only(user: User = Depends(require_role("admin"))):
             ...
     """
     return RoleChecker([role_name])
+
+
+# Papéis padrão do RBAC (ver ensure_rbac_seed no service)
+ROLE_ADMIN = "admin"
+ROLE_FINANCE = "gestor_financeiro"
+ROLE_FIELD = "gestor_campo"
+
+# Dependências prontas: admin tem acesso total; financeiro vê valores.
+require_admin = RoleChecker([ROLE_ADMIN])
+require_financial_access = RoleChecker([ROLE_ADMIN, ROLE_FINANCE])

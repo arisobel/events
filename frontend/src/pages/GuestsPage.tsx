@@ -28,6 +28,7 @@ import {
 import AdminLayout from '../components/AdminLayout'
 import CountryPicker from '../components/CountryPicker'
 import Flag from '../components/Flag'
+import { useAuth } from '../contexts/AuthContext'
 
 const GUEST_GENDER_VALUES = new Set(GUEST_GENDER_OPTIONS.map((option) => option.value))
 const GUEST_TYPE_VALUES = new Set(GUEST_TYPE_OPTIONS.map((option) => option.value))
@@ -97,6 +98,7 @@ const emptyGuest: GuestCreate = {
 export default function GuestsPage() {
   const { eventId } = useParams<{ eventId: string }>()
   const navigate = useNavigate()
+  const { canSeeFinancials } = useAuth()
 
   const [event, setEvent] = useState<Event | null>(null)
   const [groups, setGroups] = useState<GuestGroup[]>([])
@@ -176,7 +178,7 @@ export default function GuestsPage() {
       ])
       setEvent(eventData)
       setGroups(groupsData)
-      void loadFinance(groupsData)
+      if (canSeeFinancials) void loadFinance(groupsData)
     } catch (err: any) {
       setError(err.response?.data?.detail || 'Failed to load guest groups')
     } finally {
@@ -1314,7 +1316,7 @@ export default function GuestsPage() {
                                     {reservation.f_notes && <p>Notes: {reservation.f_notes}</p>}
                                   </div>
 
-                                  {financeByReservation[reservation.id] && (() => {
+                                  {canSeeFinancials && financeByReservation[reservation.id] && (() => {
                                     const fin = financeByReservation[reservation.id]
                                     const balance = Number(fin.balance ?? 0)
                                     return (

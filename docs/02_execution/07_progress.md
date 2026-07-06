@@ -73,6 +73,19 @@
 
 ---
 
+### RBAC — Papéis e Gating Financeiro (2026-07-06) ⭐
+> 3 papéis: admin (tudo), gestor_financeiro (vê valores), gestor_campo (operação sem R$). Gate = "ver financeiro" (admin ou financeiro).
+- [x] `require_financial_access` e `require_admin` (RoleChecker) já com base pronta (Role/UserRole/get_user_roles existiam)
+- [x] **Seed no startup** (`ensure_rbac_seed`): cria os 3 papéis (idempotente) e promove o 1º usuário a admin no primeiro run — evita lockout ao ligar o gating
+- [x] **Enforcement backend**: finance router **inteiro** gated (room-grid, summary, invoice, preços, extras, pagamentos); em clients, gated statement/open-reservations/ledger. RoleChecker consulta o **banco** (não o JWT) → token antigo do admin não trava
+- [x] Endpoints admin: `GET /auth/users`, `GET /auth/roles`, `POST /auth/users`, `POST/DELETE /auth/users/{id}/roles/{role_id}` (todos admin-only)
+- [x] **Frontend**: `AuthContext` expõe `hasRole/isAdmin/canSeeFinancials`; gate do bloco financeiro na GuestsPage, da conta corrente na ClientsPage, e da rota+botões do Room Grid (`RoleRoute access="financial"`); sidebar "Usuários" só admin; entrada por papel (campo não cai no room-grid)
+- [x] **Página Usuários & Papéis** (`/admin/users`, admin-only): criar usuário, atribuir/remover papéis por toggle
+- [x] 4 testes novos (`test_rbac.py`): seed+bootstrap, gate nega sem papel/permite com, admin bypassa, assign/remove
+- ⓘ Usuário **sem papel** = campo-equivalente (opera, não vê R$). Papéis chegam no `/auth/me` e no JWT
+
+---
+
 ### Baixa de pagamento pelo cliente (vincula crédito → reserva) (2026-07-05)
 - [x] `GET /clients/{id}/open-reservations` — reservas do cliente com saldo em aberto (para o seletor)
 - [x] Na conta corrente, o lançamento manual ganhou seletor **"Aplicar a (dar baixa)"**: um **crédito** vinculado a uma reserva vira **Payment na reserva** (via finance) em vez de ajuste avulso — dá baixa no evento, status deriva para pago/parcial e a grade reflete

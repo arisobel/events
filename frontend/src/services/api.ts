@@ -510,6 +510,46 @@ export const authService = {
   },
 }
 
+// ---- Admin (usuários & papéis) ----
+export interface Role {
+  id: number
+  f_name: string
+  f_notes: string | null
+}
+
+export interface AdminUserCreate {
+  f_username: string
+  f_email?: string
+  password: string
+}
+
+export const adminService = {
+  async getUsers(): Promise<User[]> {
+    const response = await api.get<User[]>('/auth/users')
+    return response.data
+  },
+
+  async getRoles(): Promise<Role[]> {
+    const response = await api.get<Role[]>('/auth/roles')
+    return response.data
+  },
+
+  async createUser(user: AdminUserCreate): Promise<User> {
+    const response = await api.post<User>('/auth/users', user)
+    return response.data
+  },
+
+  async assignRole(userId: number, roleId: number): Promise<User> {
+    const response = await api.post<User>(`/auth/users/${userId}/roles/${roleId}`)
+    return response.data
+  },
+
+  async removeRole(userId: number, roleId: number): Promise<User> {
+    const response = await api.delete<User>(`/auth/users/${userId}/roles/${roleId}`)
+    return response.data
+  },
+}
+
 export const hotelService = {
   async getHotels(): Promise<Hotel[]> {
     const response = await api.get<Hotel[]>('/hotels')

@@ -80,6 +80,18 @@ async def startup_event():
     print(f"Docs available at: /docs")
     print(f"Database: {settings.DATABASE_URL.split('@')[-1] if '@' in settings.DATABASE_URL else 'configured'}")
 
+    # Garante papéis padrão do RBAC e promove o 1º usuário a admin no primeiro run
+    from app.db.session import SessionLocal
+    from app.modules.auth import service as auth_service
+    db = SessionLocal()
+    try:
+        auth_service.ensure_rbac_seed(db)
+        print("RBAC seed OK")
+    except Exception as exc:  # não bloqueia o boot da app
+        print(f"RBAC seed skipped: {exc}")
+    finally:
+        db.close()
+
 
 # Shutdown event
 @app.on_event("shutdown")

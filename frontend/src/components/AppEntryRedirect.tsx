@@ -6,7 +6,7 @@ import { eventService } from '../services/api'
 import { getDefaultEventPath } from '../utils/events'
 
 export default function AppEntryRedirect() {
-  const { isAuthenticated, loading } = useAuth()
+  const { isAuthenticated, loading, canSeeFinancials } = useAuth()
   const [targetPath, setTargetPath] = useState<string | null>(null)
 
   useEffect(() => {
@@ -17,7 +17,7 @@ export default function AppEntryRedirect() {
     const resolveTarget = async () => {
       try {
         const events = await eventService.getEvents()
-        setTargetPath(getDefaultEventPath(events))
+        setTargetPath(getDefaultEventPath(events, canSeeFinancials))
       } catch (error) {
         console.error('Failed to resolve entry path:', error)
         setTargetPath('/events')
@@ -25,7 +25,7 @@ export default function AppEntryRedirect() {
     }
 
     void resolveTarget()
-  }, [isAuthenticated])
+  }, [isAuthenticated, canSeeFinancials])
 
   if (loading) {
     return (

@@ -4,11 +4,24 @@ from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 from app.db.session import get_db
 from app.core.security import create_access_token, create_refresh_token, decode_token
+from typing import List
+
 from . import service, schemas, models
-from .dependencies import get_current_user
+from .dependencies import get_current_user, require_admin
 
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
+
+
+def _user_response(db: Session, user: models.User) -> schemas.UserResponse:
+    return schemas.UserResponse(
+        id=user.id,
+        f_username=user.f_username,
+        f_email=user.f_email,
+        f_is_active=user.f_is_active,
+        f_created_at=user.f_created_at,
+        roles=service.get_user_roles(db, user.id),
+    )
 
 
 @router.post("/login", response_model=schemas.Token)
@@ -195,3 +208,61 @@ def register_user(
         f_created_at=db_user.f_created_at,
         roles=[]
     )
+
+
+# ---- Administração de usuários e papéis (admin only) ----
+@router.get("/users", response_model=List[schemas.UserResponse])
+def list_users(
+    db: Session = Depends(get_db),
+    _admin: models.User = Depends(require_admin),
+):
+    return [_user_response(db, user) for user in service.list_users(db)]
+
+
+@router.post("/users", response_model=schemas.UserResponse, status_code=status.HTTP_201_CREATED)
+def admin_create_user(
+    user: schemas.UserCreate,
+    db: Session = Depends(get_db),
+    _admin: models.User = Depends(require_admin),
+):
+    if service.get_user_by_username(db, user.f_username):
+        raise HTTPException(status_code=400, detail="Username already registered")
+    db_user = service.create_user(db, user)
+    return _user_response(db, db_user)
+
+
+@router.get("/roles", response_model=List[schemas.RoleResponse])
+def list_roles(
+    db: Session = Depends(get_db),
+    _admin: models.User = Depends(require_admin),
+):
+    return service.list_roles(db)
+
+
+@router.post("/users/{user_id}/roles/{role_id}", response_model=schemas.UserResponse)
+def assign_role(
+    user_id: int,
+    role_id: int,
+    db: Session = Depends(get_db),
+    _admin: models.User = Depends(require_admin),
+):
+    user = service.get_user_by_id(db, user_id)
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    if not service.user_has_role(db, user_id, role_id):
+        service.assign_role_to_user(db, user_id, role_id)
+    return _user_response(db, user)
+
+
+@router.delete("/users/{user_id}/roles/{role_id}", response_model=schemas.UserResponse)
+def remove_role(
+    user_id: int,
+    role_id: int,
+    db: Session = Depends(get_db),
+    _admin: models.User = Depends(require_admin),
+):
+    user = service.get_user_by_id(db, user_id)
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    service.remove_role_from_user(db, user_id, role_id)
+    return _user_response(db, user)

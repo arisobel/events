@@ -17,6 +17,7 @@ import {
 import AdminLayout from '../components/AdminLayout'
 import CountryPicker from '../components/CountryPicker'
 import Flag from '../components/Flag'
+import { useAuth } from '../contexts/AuthContext'
 
 const normalizeText = (value: string) =>
   value.normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase()
@@ -60,6 +61,7 @@ function LabeledField({
 }
 
 export default function ClientsPage() {
+  const { canSeeFinancials } = useAuth()
   const [clients, setClients] = useState<Client[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -186,7 +188,7 @@ export default function ClientsPage() {
         // eventos são complementares; se falhar, o resto segue
       }
     }
-    if (next) void refreshStatement(clientId)
+    if (next && canSeeFinancials) void refreshStatement(clientId)
   }
 
   const refreshStatement = async (clientId: number) => {
@@ -810,7 +812,8 @@ export default function ClientsPage() {
                                 )}
                               </div>
 
-                              {/* Conta corrente (extrato) */}
+                              {/* Conta corrente (extrato) — só para alçada financeira */}
+                              {canSeeFinancials && (
                               <div>
                                 <div className="flex flex-wrap items-center justify-between gap-2">
                                   <h3 className="text-sm font-semibold text-gray-900">Conta corrente</h3>
@@ -953,6 +956,7 @@ export default function ClientsPage() {
                                   </button>
                                 </form>
                               </div>
+                              )}
                             </div>
                           )}
                         </>

@@ -255,16 +255,16 @@
 
 ---
 
-### 🔐 RBAC — Usuários e Papéis
-> Originado em sessão 2026-07-03; expande "Auth: Troca de Senha + Roles na UI"
-- [ ] Modelo de papéis (ex.: gestor_financeiro, gestor_campo, gestor_chef, admin) — tabelas já existem parcialmente (`Role`, `UserRole`)
-- [ ] Proteção de rotas/endpoints por papel (backend + frontend)
-- [ ] Tela de gestão de usuários e papéis
-- [ ] **Entrada automática configurável por papel**: o redirect para o Room Grid faz sentido para o Gestor Financeiro, não para todos — destino de entrada passa a depender do papel
-- [ ] **Visibilidade de dados financeiros por papel**: o resumo financeiro na página de Guests e no Room Grid deve ser gated por alçada (hoje visível a todos)
+### 🔐 RBAC — Usuários e Papéis ✅ IMPLEMENTADO (2026-07-06)
+> 3 papéis: admin, gestor_financeiro, gestor_campo. Gate financeiro ligado.
+- [x] Papéis + seed no startup (bootstrap admin no 1º usuário)
+- [x] Proteção de endpoints por papel (finance router + financeiro de clients) e rotas/UI no frontend (`RoleRoute`, `canSeeFinancials`)
+- [x] Tela de gestão de usuários e papéis (`/admin/users`, admin-only)
+- [x] Entrada por papel (campo não cai no room-grid)
+- [x] Visibilidade financeira gated (GuestsPage, ClientsPage conta corrente, Room Grid)
+- [ ] (Futuro) gestor_chef + módulo cozinha/mesas; troca de senha na UI; RBAC mais fino por ação
 
-**Estimativa**: 8-12h  
-**Valor**: segrega as 3 interfaces de gestão; personaliza a entrada por perfil
+**Valor entregue**: segrega financeiro de operação; produção deixa de expor R$ a todos os logins
 
 ---
 

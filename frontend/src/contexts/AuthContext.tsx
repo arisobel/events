@@ -7,6 +7,9 @@ interface AuthContextType {
   login: (username: string, password: string) => Promise<void>
   logout: () => void
   isAuthenticated: boolean
+  hasRole: (role: string) => boolean
+  isAdmin: boolean
+  canSeeFinancials: boolean
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
@@ -44,6 +47,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUser(null)
   }
 
+  const hasRole = (role: string) => Boolean(user?.roles?.includes(role))
+  const isAdmin = hasRole('admin')
+  const canSeeFinancials = isAdmin || hasRole('gestor_financeiro')
+
   return (
     <AuthContext.Provider
       value={{
@@ -52,6 +59,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         login,
         logout,
         isAuthenticated: !!user,
+        hasRole,
+        isAdmin,
+        canSeeFinancials,
       }}
     >
       {children}

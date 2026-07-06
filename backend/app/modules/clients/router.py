@@ -5,7 +5,7 @@ from fastapi import APIRouter, Depends, HTTPException, Response, status
 from sqlalchemy.orm import Session
 
 from app.db.session import get_db
-from app.modules.auth.dependencies import get_current_active_user
+from app.modules.auth.dependencies import get_current_active_user, require_financial_access
 from app.modules.auth.models import User
 
 from . import schemas, service
@@ -141,7 +141,7 @@ def list_client_events(
 def get_client_statement(
     client_id: int,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user),
+    current_user: User = Depends(require_financial_access),
 ):
     statement = service.get_client_statement(db, client_id)
     if statement is None:
@@ -156,7 +156,7 @@ def get_client_statement(
 def list_client_open_reservations(
     client_id: int,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user),
+    current_user: User = Depends(require_financial_access),
 ):
     if not service.get_client(db, client_id):
         raise HTTPException(status_code=404, detail="Client not found")
@@ -172,7 +172,7 @@ def create_ledger_entry(
     client_id: int,
     entry: schemas.LedgerEntryCreate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user),
+    current_user: User = Depends(require_financial_access),
 ):
     if not service.get_client(db, client_id):
         raise HTTPException(status_code=404, detail="Client not found")
@@ -186,7 +186,7 @@ def delete_ledger_entry(
     client_id: int,
     entry_id: int,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user),
+    current_user: User = Depends(require_financial_access),
 ):
     if not service.delete_ledger_entry(db, client_id, entry_id):
         raise HTTPException(status_code=404, detail="Ledger entry not found for client")

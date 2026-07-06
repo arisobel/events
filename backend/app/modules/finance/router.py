@@ -5,11 +5,12 @@ from fastapi import APIRouter, Depends, HTTPException, Response, status
 from sqlalchemy.orm import Session
 
 from app.db.session import get_db
-from app.modules.auth.dependencies import get_current_active_user
+from app.modules.auth.dependencies import get_current_active_user, require_financial_access
 from app.modules.auth.models import User
 from . import service, schemas
 
-router = APIRouter(tags=["Finance"])
+# Todo o módulo financeiro exige alçada financeira (admin ou gestor_financeiro).
+router = APIRouter(tags=["Finance"], dependencies=[Depends(require_financial_access)])
 
 
 @router.get("/events/{event_id}/room-grid", response_model=schemas.RoomGridResponse)

@@ -10,6 +10,7 @@ import {
   hotelService,
 } from '../services/api'
 import AdminLayout from '../components/AdminLayout'
+import { useAuth } from '../contexts/AuthContext'
 import { getTodayDateKey, isEventActiveOnDate } from '../utils/events'
 
 export default function EventsPage() {
@@ -33,6 +34,7 @@ export default function EventsPage() {
   })
 
   const navigate = useNavigate()
+  const { canSeeFinancials } = useAuth()
 
   useEffect(() => {
     loadData()
@@ -394,12 +396,14 @@ export default function EventsPage() {
                       >
                         Room Allocations
                       </button>
-                      <button
-                        onClick={() => navigate(`/events/${event.id}/room-grid`)}
-                        className="bg-amber-500 text-white px-3 md:px-4 py-2 rounded-md hover:bg-amber-600 text-xs md:text-sm font-medium md:whitespace-nowrap"
-                      >
-                        📅 Room Grid
-                      </button>
+                      {canSeeFinancials && (
+                        <button
+                          onClick={() => navigate(`/events/${event.id}/room-grid`)}
+                          className="bg-amber-500 text-white px-3 md:px-4 py-2 rounded-md hover:bg-amber-600 text-xs md:text-sm font-medium md:whitespace-nowrap"
+                        >
+                          📅 Room Grid
+                        </button>
+                      )}
                       <button
                         onClick={() => navigate(`/events/${event.id}/tasks`)}
                         className="col-span-2 md:col-span-1 bg-blue-600 text-white px-3 md:px-4 py-2 rounded-md hover:bg-blue-700 text-xs md:text-sm font-medium md:whitespace-nowrap"

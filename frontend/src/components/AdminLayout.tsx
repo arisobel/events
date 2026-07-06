@@ -11,10 +11,18 @@ interface IconProps {
   className?: string
 }
 
-const navLinks = [
+interface NavLink {
+  label: string
+  path: string
+  icon: (props: IconProps) => JSX.Element
+  adminOnly?: boolean
+}
+
+const navLinks: NavLink[] = [
   { label: 'Hotels', path: '/hotels', icon: HotelIcon },
   { label: 'Events', path: '/events', icon: CalendarDaysIcon },
   { label: 'Clientes', path: '/clients', icon: UsersIcon },
+  { label: 'Usuários', path: '/admin/users', icon: ShieldIcon, adminOnly: true },
 ]
 
 function HotelIcon({ className }: IconProps) {
@@ -28,6 +36,15 @@ function HotelIcon({ className }: IconProps) {
       <path d="M12 13h2" />
       <path d="M10 20v-3h4v3" />
       <path d="M3 20h18" />
+    </svg>
+  )
+}
+
+function ShieldIcon({ className }: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className={className}>
+      <path d="M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6l7-3z" />
+      <path d="M9.5 12l1.8 1.8L15 10" />
     </svg>
   )
 }
@@ -87,7 +104,7 @@ function XIcon({ className }: IconProps) {
 }
 
 export default function AdminLayout({ children, title }: AdminLayoutProps) {
-  const { user, logout } = useAuth()
+  const { user, logout, isAdmin } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
@@ -138,7 +155,7 @@ export default function AdminLayout({ children, title }: AdminLayoutProps) {
 
         {/* Navigation */}
         <nav className="flex-1 py-4 px-3 space-y-1 overflow-auto">
-          {navLinks.map(({ label, path, icon: Icon }) => (
+          {navLinks.filter((link) => !link.adminOnly || isAdmin).map(({ label, path, icon: Icon }) => (
             <a
               key={path}
               href="#"

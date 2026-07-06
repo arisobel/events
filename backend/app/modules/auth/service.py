@@ -82,6 +82,63 @@ def assign_role_to_user(db: Session, user_id: int, role_id: int) -> models.UserR
     return user_role
 
 
+def remove_role_from_user(db: Session, user_id: int, role_id: int) -> bool:
+    """Remove a atribuição de um papel a um usuário."""
+    link = (
+        db.query(models.UserRole)
+        .filter(models.UserRole.f_user_id == user_id, models.UserRole.f_role_id == role_id)
+        .first()
+    )
+    if not link:
+        return False
+    db.delete(link)
+    db.commit()
+    return True
+
+
+def user_has_role(db: Session, user_id: int, role_id: int) -> bool:
+    return (
+        db.query(models.UserRole)
+        .filter(models.UserRole.f_user_id == user_id, models.UserRole.f_role_id == role_id)
+        .first()
+        is not None
+    )
+
+
+def list_users(db: Session) -> List[models.User]:
+    return db.query(models.User).order_by(models.User.f_username).all()
+
+
+def list_roles(db: Session) -> List[models.Role]:
+    return db.query(models.Role).order_by(models.Role.f_name).all()
+
+
+# Papéis padrão + descrições
+DEFAULT_ROLES = {
+    "admin": "Acesso total",
+    "gestor_financeiro": "Vê e gerencia dados financeiros (valores, conta corrente, pagamentos)",
+    "gestor_campo": "Operação (hóspedes, quartos, tarefas) sem valores financeiros",
+}
+
+
+def ensure_rbac_seed(db: Session) -> None:
+    """Cria os papéis padrão (idempotente) e, no primeiro run, dá 'admin' ao 1º usuário.
+
+    Assim o sistema não fica sem ninguém com acesso após ligar o gating financeiro.
+    """
+    for name, notes in DEFAULT_ROLES.items():
+        if not get_role_by_name(db, name):
+            create_role(db, schemas.RoleCreate(f_name=name, f_notes=notes))
+
+    # bootstrap: se ninguém tem papel ainda, promove o usuário de menor id a admin
+    any_role = db.query(models.UserRole).first()
+    if any_role is None:
+        first_user = db.query(models.User).order_by(models.User.id).first()
+        admin_role = get_role_by_name(db, "admin")
+        if first_user and admin_role:
+            assign_role_to_user(db, first_user.id, admin_role.id)
+
+
 def log_audit(
     db: Session,
     entity_name: str,
