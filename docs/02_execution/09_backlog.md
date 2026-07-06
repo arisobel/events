@@ -298,6 +298,68 @@
 
 ---
 
+## 🧠 Bloco Estrutural — Espaços, Staff e Contabilidade do Evento (proposto 2026-07-06)
+> Origem: brain-dump do Michel (2026-07-06). Três ideias interligadas que fecham o ciclo operacional→financeiro do evento. Capturadas para não perder o raciocínio; **decisões de modelo antes de implementar**. Ver conexões com [Módulo Funcionários], [Organização de Mesas], [Schedule Module] abaixo e com o Financeiro já entregue.
+
+### 🏛️ Espaços Físicos como Recurso (Places/Spaces) — reaproveitar `t_hotel_space`
+> Atividades, tasks e refeições acontecem em lugares: Lobby, Restaurantes A/B/C, Piscina, Quadras, Praia, Salão da Sinagoga, salões de refeição. Hoje `Activity.f_location` e a task guardam **texto livre** — sem vínculo estruturado.
+
+**O que JÁ existe (não recriar):**
+- `t_hotel_space` (HotelSpace): `f_name`, `f_space_type` (hall/pool/gym/beach…), `f_capacity`, `f_floor`, `f_block` — vinculado ao Hotel
+- `t_event_space` (EventSpace): liga espaço↔evento com `f_usage_type`
+- `t_hotel_table` e `t_hotel_kitchen` já referenciam `f_space_id`
+
+**Falta:**
+- [ ] **UI de cadastro de espaços** por hotel (hoje não há tela; casa com o item "Implementar `HotelDetailPage.tsx`" do UX Polish)
+- [ ] FK opcional `f_space_id` em `Activity` e em `Task` (migração incremental, mantém o texto livre como fallback/legado)
+- [ ] Seletor de espaço no form de atividade (Cronograma) e de task, com autocomplete dos espaços do hotel do evento
+- [ ] (Decidir) refeições referenciam `HotelSpace` direto (salão/restaurante) ou via `EventSpace`? EventSpace dá "uso por evento"; Space direto é mais simples
+- [ ] (Futuro) agenda/ocupação por espaço: "o que está acontecendo no Salão Jequitibás agora?" — cruza Cronograma × Espaço
+
+**Valor**: liga cronograma/tasks/refeições a lugares reais; base para "onde é X?", conflito de espaço, e displays de TV por local
+
+---
+
+### 👷 Cadastro de Staff/Colaboradores — decidir vínculo com `Person` raiz
+> Colaboradores fazem parte da operação e da **despesa** do evento; alguns **recebem quartos** da estrutura.
+
+**Decisão central (antes de codar):** o colaborador é uma variação de `Person` (entidade raiz do módulo clients) ou um `Employee` separado que **opcionalmente** aponta para um `Person`?
+- Argumento a favor de ligar a `Person`: staff que recebe quarto precisa entrar na alocação de quartos, que hoje roda sobre `GuestGroup`/`Guest` → um staff-com-quarto viraria um Guest vinculado a um Person raiz, reaproveitando toda a máquina de alocação
+- Argumento a favor de separar: dados de RH (função, turnos, salário, período de trabalho) não pertencem ao hóspede; misturar polui a entidade
+
+**Proposta preliminar:** `Employee` próprio (função, período de trabalho, salário/custo, vínculo com evento) com FK **opcional** `f_person_id` → quando o staff recebe quarto, cria-se o Guest a partir desse Person. Assim RH fica isolado, mas a alocação reaproveita o que existe.
+
+- [ ] Decidir modelo Employee vs. Person estendido (recomendação: Employee + `f_person_id` opcional)
+- [ ] Backend: CRUD `Employee` + vínculo com evento + (turnos por evento — pode ser fatia 2)
+- [ ] Frontend: `StaffPage.tsx` — lista, cadastro, edição
+- [ ] Ponte com alocação de quarto para staff-com-quarto
+- [ ] Feeds o custo de salários no fechamento financeiro (abaixo)
+
+**Substitui/absorve** o item "Módulo Funcionários (Staff)" mais abaixo — mantê-los sincronizados.
+
+---
+
+### 📊 Fechamento Financeiro do Evento — mini-contabilidade (P&L por evento)
+> Objetivo: **lucro do evento** = receita − despesas. Receita já existe (créditos dos clientes = pagamentos das reservas). Falta o lado das **despesas/custos**.
+
+**O que JÁ existe (lado da receita):**
+- `Payment` por reserva + conta corrente por cliente (créditos derivados) → base da **receita** do evento
+
+**Falta (lado da despesa):**
+- [ ] Modelo `EventExpense` (t_event_expense): `f_event_id`, `f_category`, `f_description`, `f_amount`, `f_date`, `f_vendor?`, `f_notes`
+- [ ] Categorias de custo: **salários/staff**, **insumos/comida**, **transfers**, **sub-eventos**, **gerais/overhead** (livre + enum sugerido)
+- [ ] (Decidir) despesa de staff é lançada manualmente ou **derivada** do custo cadastrado em `Employee` × período? (paralelo ao "derivado + ajustes manuais" da conta corrente)
+- [ ] Endpoint de **P&L do evento**: receita (pagamentos) − despesas (por categoria) = resultado; % margem
+- [ ] Frontend: aba "Fechamento" no evento — receita total, despesas por categoria, lucro; gated por `require_financial_access`
+- [ ] (Futuro) consolidação multi-evento; comparar orçado × realizado
+
+**Conexões:** Staff (custo de salário) e sub-eventos/transfers/refeições alimentam as despesas; Espaços podem carregar custo por uso (aluguel de salão externo, etc.). Fecha o ciclo: operação (espaços/staff/cronograma) → custo → lucro.
+
+**Estimativa (as três, quando forem para execução)**: ~6-9h Espaços · ~8-12h Staff · ~8-12h P&L
+**Valor**: transforma o sistema de operacional em **ferramenta de gestão de resultado** do evento — visão de lucro real para a alta administração
+
+---
+
 ## Short Term - 3-6 semanas
 
 ### Auth: Troca de Senha + Roles na UI
@@ -311,6 +373,7 @@
 ---
 
 ### Módulo Funcionários (Staff)
+> ⚠️ Absorvido pelo bloco "👷 Cadastro de Staff/Colaboradores" (2026-07-06) acima — ver lá a decisão de vínculo com `Person` raiz e a ponte com alocação de quartos. Mantido aqui como referência das notas originais.
 > Originado nas notas de Michel (Gestão — Cadastro Funcionários)
 - [ ] Backend: modelo `Employee` — dados pessoais, função, períodos de trabalho, salário
 - [ ] Backend: CRUD + vínculo com evento
