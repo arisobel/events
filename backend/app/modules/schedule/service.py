@@ -34,10 +34,23 @@ def get_activity(db: Session, activity_id: int) -> Optional[models.Activity]:
     return db.query(models.Activity).filter(models.Activity.id == activity_id).first()
 
 
+def _validate_instructor(db: Session, instructor_id: Optional[int]) -> None:
+    """Ministrante é Employee raiz (decisão Fatia 4): basta existir e estar ativo —
+    pode ser agendado antes do engajamento formal do evento ser lançado."""
+    if instructor_id is None:
+        return
+    from app.modules.staff.models import Employee
+
+    employee = db.query(Employee).filter(Employee.id == instructor_id).first()
+    if not employee:
+        raise ValueError("Instructor (employee) not found")
+
+
 def create_activity(db: Session, event_id: int, data: schemas.ActivityCreate) -> models.Activity:
     from app.modules.hotel import service as hotel_service
 
     hotel_service.validate_space_for_event(db, event_id, data.f_space_id)
+    _validate_instructor(db, data.f_instructor_id)
     activity = models.Activity(f_event_id=event_id, **data.model_dump())
     db.add(activity)
     db.commit()
@@ -56,6 +69,8 @@ def update_activity(
     update_data = data.model_dump(exclude_unset=True)
     if "f_space_id" in update_data:
         hotel_service.validate_space_for_event(db, activity.f_event_id, update_data["f_space_id"])
+    if "f_instructor_id" in update_data:
+        _validate_instructor(db, update_data["f_instructor_id"])
     for field, value in update_data.items():
         setattr(activity, field, value)
     db.commit()

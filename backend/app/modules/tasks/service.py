@@ -10,12 +10,70 @@ def get_event_tasks(db: Session, event_id: int) -> List[models.Task]:
 def get_task(db: Session, task_id: int) -> Optional[models.Task]:
     return db.query(models.Task).filter(models.Task.id == task_id).first()
 
+def _validate_staff_assignment(db: Session, event_id: int, assignment_id: Optional[int], label: str) -> None:
+    """Executor/líder apontam para o ENGAJAMENTO (t_event_staff) — precisa existir
+    e pertencer ao mesmo evento da task (decisão Fatia 5)."""
+    if assignment_id is None:
+        return
+    from app.modules.staff.models import EventStaffAssignment
+
+    assignment = (
+        db.query(EventStaffAssignment)
+        .filter(EventStaffAssignment.id == assignment_id)
+        .first()
+    )
+    if not assignment:
+        raise ValueError(f"{label}: staff assignment not found")
+    if assignment.f_event_id != event_id:
+        raise ValueError(f"{label}: staff assignment does not belong to this event")
+
+
+def _validate_activity(db: Session, event_id: int, activity_id: Optional[int]) -> None:
+    if activity_id is None:
+        return
+    from app.modules.schedule.models import Activity
+
+    activity = db.query(Activity).filter(Activity.id == activity_id).first()
+    if not activity:
+        raise ValueError("Activity not found")
+    if activity.f_event_id != event_id:
+        raise ValueError("Activity does not belong to this event")
+
+
+def _validate_links(db: Session, event_id: int, data: dict) -> None:
+    if "f_assigned_to_staff_id" in data:
+        _validate_staff_assignment(db, event_id, data["f_assigned_to_staff_id"], "Executor")
+    if "f_leader_staff_id" in data:
+        _validate_staff_assignment(db, event_id, data["f_leader_staff_id"], "Leader")
+    if "f_activity_id" in data:
+        _validate_activity(db, event_id, data["f_activity_id"])
+
+
 def create_task(db: Session, task: schemas.TaskCreate) -> models.Task:
     from app.modules.hotel import service as hotel_service
 
     hotel_service.validate_space_for_event(db, task.f_event_id, task.f_space_id)
+    _validate_links(db, task.f_event_id, task.model_dump())
     db_task = models.Task(**task.model_dump())
     db.add(db_task)
+    db.commit()
+    db.refresh(db_task)
+    return db_task
+
+def update_task(db: Session, task_id: int, data: schemas.TaskUpdate) -> Optional[models.Task]:
+    """Atualização geral da task (status tem fluxo próprio em update_task_status)."""
+    from app.modules.hotel import service as hotel_service
+
+    db_task = get_task(db, task_id)
+    if not db_task:
+        return None
+    update_data = data.model_dump(exclude_unset=True)
+    update_data.pop("f_status", None)  # status muda via update_task_status (gera histórico)
+    if "f_space_id" in update_data:
+        hotel_service.validate_space_for_event(db, db_task.f_event_id, update_data["f_space_id"])
+    _validate_links(db, db_task.f_event_id, update_data)
+    for field, value in update_data.items():
+        setattr(db_task, field, value)
     db.commit()
     db.refresh(db_task)
     return db_task

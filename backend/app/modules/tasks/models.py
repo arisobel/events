@@ -18,7 +18,15 @@ class Task(Base):
     f_task_type = Column(String(50))
     # Espaço estruturado (Fatia 2 — antecipado da Fatia 5, não depende de Staff)
     f_space_id = Column(Integer, ForeignKey("t_hotel_space.id"))
-    f_assigned_to_staff_id = Column(Integer)
+    # Fatia 5 (início da fase de execução): executor e líder apontam para o
+    # ENGAJAMENTO (t_event_staff), não para o Employee raiz — garante que a pessoa
+    # está engajada neste evento. Líder = quem responde pela task para a alta
+    # gestão; distinto de quem executa.
+    f_assigned_to_staff_id = Column(Integer, ForeignKey("t_event_staff.id"))
+    f_leader_staff_id = Column(Integer, ForeignKey("t_event_staff.id"))
+    # Task de suporte/montagem de uma atividade do programa (Task ≠ Activity:
+    # task é trabalho interno; activity é o programa público do evento)
+    f_activity_id = Column(Integer, ForeignKey("t_activity.id"))
     f_due_datetime = Column(DateTime)
     f_started_at = Column(DateTime)
     f_completed_at = Column(DateTime)
@@ -27,10 +35,25 @@ class Task(Base):
     comments = relationship("TaskComment", back_populates="task")
     status_history = relationship("TaskStatusHistory", back_populates="task")
     space = relationship("HotelSpace")
+    assigned_staff = relationship("EventStaffAssignment", foreign_keys=[f_assigned_to_staff_id])
+    leader_staff = relationship("EventStaffAssignment", foreign_keys=[f_leader_staff_id])
+    activity = relationship("Activity")
 
     @property
     def space_name(self) -> Optional[str]:
         return self.space.f_name if self.space else None
+
+    @property
+    def assigned_staff_name(self) -> Optional[str]:
+        return self.assigned_staff.employee_name if self.assigned_staff else None
+
+    @property
+    def leader_staff_name(self) -> Optional[str]:
+        return self.leader_staff.employee_name if self.leader_staff else None
+
+    @property
+    def activity_title(self) -> Optional[str]:
+        return self.activity.f_title if self.activity else None
 
 
 class TaskComment(Base):

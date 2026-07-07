@@ -1,0 +1,21 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git -C /c/projetos/python/events log --oneline -15)",
+      "Bash(git -C /c/projetos/python/events status -sb)",
+      "Bash(git -C /c/projetos/python/events show --stat 23fd2a5 e39fd14 e4b2adc --format='%h %s')",
+      "Bash(git -C /c/projetos/python/events branch -a)",
+      "Bash(git -C /c/projetos/python/events status -s)",
+      "Bash(git -C /c/projetos/python/events checkout develop)",
+      "Bash(git -C /c/projetos/python/events log --oneline main..develop)",
+      "Bash(git -C /c/projetos/python/events rev-list --count main..develop)",
+      "Bash(git -C /c/projetos/python/events log -1 --format='%h %ad %s' --date=short develop)",
+      "Bash(git -C /c/projetos/python/events diff --stat main..develop)",
+      "Bash(git -C /c/projetos/python/events rev-list --count develop..main)",
+      "Bash(git -C /c/projetos/python/events log --oneline develop..main)",
+      "PowerShell(py -0p)",
+      "PowerShell(foreach \\($p in @\\('C:\\\\Users\\\\ari.sobel\\\\AppData\\\\Local\\\\Programs\\\\Python\\\\Python312\\\\python.exe','C:\\\\Users\\\\ari.sobel\\\\AppData\\\\Local\\\\miniconda3\\\\python.exe','C:\\\\Users\\\\ari.sobel\\\\AppData\\\\Local\\\\Programs\\\\Python\\\\Python310-32\\\\python.exe','C:\\\\Users\\\\ari.sobel\\\\AppData\\\\Local\\\\Programs\\\\Python\\\\Python39\\\\python.exe'\\)\\) { $r = & $p -c \"import pytest, fastapi, sqlalchemy; print\\('OK'\\)\" 2>$null; Write-Output \"$p => $r\" })",
+      "PowerShell(& 'C:\\\\Users\\\\ari.sobel\\\\AppData\\\\Local\\\\miniconda3\\\\envs\\\\visgpt\\\\python.exe' -m pytest --version 2>&1 | Select-Object -First 2; Get-ChildItem C:\\\\Users\\\\ari.sobel\\\\AppData\\\\Local\\\\Programs\\\\Python\\\\Python312\\\\Lib\\\\site-packages -Directory -ErrorAction SilentlyContinue | Where-Object { $_.Name -match 'pytest|fastapi' } | Select-Object Name; & 'C:\\\\Users\\\\ari.sobel\\\\AppData\\\\Local\\\\Programs\\\\Python\\\\Python312\\\\python.exe' -m site)"
+    ]
+  }
+}

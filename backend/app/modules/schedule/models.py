@@ -30,6 +30,9 @@ class Activity(Base):
     # Espaço estruturado (Fatia 2); f_location texto livre permanece como fallback/legado
     f_space_id = Column(Integer, ForeignKey("t_hotel_space.id"))
     f_location = Column(String(150))
+    # Ministrante (Fatia 4): rabino/palestrante/monitor/entertainer — FK para o
+    # Employee raiz (não o engajamento): permite agendar antes do engajamento formal
+    f_instructor_id = Column(Integer, ForeignKey("t_employee.id"))
     f_date = Column(Date, nullable=False, index=True)
     f_start_time = Column(String(5), nullable=False)  # "HH:MM"
     f_end_time = Column(String(5))                     # "HH:MM" (opcional)
@@ -38,7 +41,12 @@ class Activity(Base):
     f_created_at = Column(DateTime, default=datetime.utcnow)
 
     space = relationship("HotelSpace")
+    instructor = relationship("Employee")
 
     @property
     def space_name(self) -> Optional[str]:
         return self.space.f_name if self.space else None
+
+    @property
+    def instructor_name(self) -> Optional[str]:
+        return self.instructor.f_full_name if self.instructor else None

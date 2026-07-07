@@ -36,6 +36,7 @@ class ActivityBase(BaseModel):
     f_audience: Audience = "all"
     f_space_id: Optional[int] = None  # espaço estruturado; f_location vira fallback
     f_location: Optional[str] = None
+    f_instructor_id: Optional[int] = None  # ministrante (Employee raiz, Fatia 4)
     f_date: date_type
     f_start_time: str
     f_end_time: Optional[str] = None
@@ -66,6 +67,7 @@ class ActivityUpdate(BaseModel):
     f_audience: Optional[Audience] = None
     f_space_id: Optional[int] = None
     f_location: Optional[str] = None
+    f_instructor_id: Optional[int] = None
     f_date: Optional[date_type] = None
     f_start_time: Optional[str] = None
     f_end_time: Optional[str] = None
@@ -82,5 +84,6 @@ class ActivityResponse(ActivityBase):
     id: int
     f_event_id: int
     space_name: Optional[str] = None  # nome do espaço resolvido (property do model)
+    instructor_name: Optional[str] = None  # nome do ministrante resolvido
     f_created_at: Optional[datetime] = None
     model_config = ConfigDict(from_attributes=True)
