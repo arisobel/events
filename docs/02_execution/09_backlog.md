@@ -115,10 +115,12 @@
 
 ---
 
-### 🕎 Períodos do Evento no Grid + Importação hebcal
+### 🕎 Períodos do Evento no Grid e no Cronograma + Importação hebcal
 > Originado em sessão 2026-07-02: mostrar Yom Tov / Chol Hamoed abaixo da linha de dias do Room Grid
 >
-> Decisão de arquitetura: o grid lê `EventPeriod` (já existe modelo + rotas GET/POST); hebcal é **importador**, não dependência em tempo real
+> **Reforço 2026-07-07 (Michel):** a informação de qual dia é Yom Tov/Shabat é **fundamental também nas abas de dias do Cronograma** (SchedulePage) — o programa impresso real marca isso nas colunas. Alvo: badge/cor na aba do dia + horários-chave (velas/havdalá) como referência para as rezas. Candidato a fatia logo após a Fatia 3 de Staff.
+>
+> Decisão de arquitetura: o grid e o cronograma leem `EventPeriod` (já existe modelo + rotas GET/POST); hebcal é **importador**, não dependência em tempo real
 
 **Backend:**
 - [ ] Endpoint `POST /events/{id}/periods/import-jewish-holidays` — proxy para API hebcal.com (JSON), cria `EventPeriod`s no intervalo do evento
@@ -335,12 +337,16 @@ Fatia 5: Task → Space + Task → Staff   ← fronteira da fase de execução
 - [x] 7 testes novos (`test_space_links.py`) — **suíte total: 67 verdes**
 - [ ] (Futuro) agenda/ocupação por espaço: "o que está acontecendo no Salão Jequitibás agora?" — base para displays de TV por local
 
-### 👷 Fatia 3 — Employee raiz + engajamento por evento
+### 👷 Fatia 3 — Employee raiz + engajamento por evento ✅ **IMPLEMENTADO 2026-07-07**
 > **Decidido (2026-07-07):** `Employee` como entidade raiz (atravessa eventos) com `f_person_id` **opcional** → `Person`. Espelha o padrão Cliente+Pessoas: Person = identidade; Client = receita; Employee = custo. Função e custo ficam no **engajamento por evento** (função muda entre eventos); custo padrão no Employee com override no engajamento (mesmo padrão do preço de quarto).
-- [ ] Backend: `Employee` (raiz) + `EventStaffAssignment` (employee × evento × função × período × custo)
-- [ ] Frontend: `StaffPage.tsx` — lista, cadastro, edição, engajamentos por evento
-- [ ] **Staff hospedado**: criar `Guest` a partir do mesmo `Person` (reusa import do módulo clients) em grupo do evento — entra na alocação/room grid sem código novo; compatível com `GuestType = staff`
-- [ ] Custo do engajamento alimenta o P&L do evento (bloco 📊 abaixo)
+- [x] Backend: módulo `staff` — `Employee` (t_employee) + `EventStaffAssignment` (t_event_staff); migration `d6e8f0a2c374`
+- [x] **Custo derivado** para o P&L: total fechado (autoritativo) > diária efetiva (override > padrão do Employee) × dias trabalhados (inclusivo nas duas pontas — kasherização D-5 funciona); expostos `work_days`/`effective_daily_cost`/`derived_total_cost`
+- [x] **Gate financeiro em salários** (RBAC): campos de custo zerados na resposta sem acesso financeiro; escrita de custo exige papel financeiro (403). Operação (quem/quando/função) visível a todo usuário ativo
+- [x] **Staff hospedado**: `POST /staff/employees/{id}/lodge/{event_id}` — cria/reusa grupo "Staff" (`f_group_type=staff`) e adiciona o colaborador como `Guest` (GuestType=staff, `f_person_id` propagado quando houver) — entra na alocação/room grid sem código novo; idempotente
+- [x] Delete de employee bloqueado (409) se houver engajamentos (histórico de custo)
+- [x] Frontend: `StaffPage.tsx` (rota `/staff`, link "Staff" na sidebar) — busca, CRUD, engajamentos por evento com custos gated por `canSeeFinancials`, botão "🛏 Hospedar"
+- [x] 7 testes novos (`test_staff.py`) — **suíte total: 74 verdes**
+- [ ] (Próximas fatias) turnos dentro do engajamento; vínculo Employee↔Person via picker na UI (hoje só por API); despesa de staff no P&L (bloco 📊)
 
 ### 🎤 Fatia 4 — Ministrante na Activity
 - [ ] `Activity` ganha vínculo opcional com o ministrante (Employee): rabino/palestrante/monitor/entertainer — concretiza a decisão 2026-07-01
@@ -425,10 +431,18 @@ Fatia 5: Task → Space + Task → Staff   ← fronteira da fase de execução
 ---
 
 ### Organização de Mesas
-> Originado nas notas de Michel (Gestão — Organização Mesas/Salas)
+> Originado nas notas de Michel (Gestão — Organização Mesas/Salas). Nota 2026-07-07 (Michel): a montagem de mesas é atividade-base das refeições — crítica nos **Sedarim** de Pessach, mas necessária em todo dia importante (Chaguim, Shabat).
+>
+> **Duas abordagens em avaliação (decidir antes de implementar):**
+> 1. **Vínculo simples**: grupo ↔ número de mesa por refeição/período (rápido de entregar, resolve "em qual mesa minha família está?")
+> 2. **Montagem visual**: arrastar e vincular mesas num layout do salão — tem mais charme e apelo (preferência do Michel); `t_hotel_table` já tem `f_space_id` (salão) e `f_shape`, faltaria posição x/y
+>
+> Caminho provável: entregar (1) como base de dados e evoluir para (2) como camada visual sobre os mesmos dados — o vínculo não é jogado fora.
 - [ ] Backend: modelo `TableAssignment` — mesa, família/grupo, refeição/período
 - [ ] Frontend: `TablesPage.tsx` — atribuição de mesas por família
 - [ ] “Em qual mesa minha família está?” — query por grupo
+- [ ] (Fase 2) layout visual do salão com posição das mesas e drag-and-drop
+- [ ] Conexão com Tasks: a montagem física das mesas vira task (ligada ao espaço do salão; e à refeição via Task↔Activity da Fatia 5)
 
 **Valor**: resolve uma das perguntas mais frequentes em eventos desse tipo
 

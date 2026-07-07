@@ -13,6 +13,7 @@ from app.modules.tasks import router as tasks_router
 from app.modules.finance import router as finance_router
 from app.modules.clients import router as clients_router
 from app.modules.schedule import router as schedule_router
+from app.modules.staff import router as staff_router
 
 
 # Create FastAPI application
@@ -72,6 +73,7 @@ app.include_router(tasks_router.router)
 app.include_router(finance_router.router)
 app.include_router(clients_router.router)
 app.include_router(schedule_router.router)
+app.include_router(staff_router.router)
 
 
 # Startup event

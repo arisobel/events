@@ -3,7 +3,7 @@
 ## Current State
 
 - **Phase**: Phase 1 - Core Backend + Internal MVP Slice ✅ **IMPLEMENTADO** | Financeiro Backend Phase 1 ✅
-- **Last Update**: 07 de Julho de 2026 - Facilities Fatias 1 e 2 implementadas (espaços + Activity/Task → Space); próxima: Fatia 3 (Employee raiz + engajamento)
+- **Last Update**: 07 de Julho de 2026 - Facilities+Staff Fatias 1, 2 e 3 implementadas (espaços, Activity/Task → Space, Employee + engajamento); próximas: Fatias 4/5 (ministrante e reconexão das tasks)
 - **Status**: Fluxo core disponível na UI: Hotels → Events → Guests/Reservations → Room Allocations → Tasks
 - **Environment**: GitHub Codespaces + Docker
 - **Recent**: Módulo `finance` criado — precificação de quartos, pagamento por reserva, endpoints room-grid / financial-summary / invoice (migration `9d2f5c1e7a34`)
@@ -13,6 +13,19 @@
 ---
 
 ## Completed ✅
+
+### Staff — Fatia 3: Employee raiz + Engajamento por Evento (2026-07-07) ⭐ ESTRUTURAL
+> Lado do CUSTO do evento, espelhando o padrão Cliente+Pessoas (Person = identidade; Client = receita; Employee = custo).
+- [x] Módulo `staff` novo: `Employee` (t_employee, raiz, `f_person_id` opcional → Person) + `EventStaffAssignment` (t_event_staff: evento × função × período × custo); migration `d6e8f0a2c374`
+- [x] Custo derivado p/ P&L: total fechado > diária efetiva (override > padrão) × dias (inclusivo — kasherização D-5 funciona); `work_days`/`effective_daily_cost`/`derived_total_cost` nas respostas
+- [x] **Gate financeiro em salários**: custos zerados na resposta sem papel financeiro; escrita de custo exige papel financeiro (403); operação visível a todos os ativos
+- [x] **Staff hospedado**: lodge cria/reusa grupo "Staff" do evento e adiciona o colaborador como Guest (GuestType=staff, Person propagado) — reusa toda a máquina de alocação; idempotente
+- [x] Delete de employee com engajamentos → 409 (preserva histórico de custo)
+- [x] Frontend: `StaffPage` (rota `/staff` + "Staff" na sidebar) — busca, CRUD, engajamentos, custos gated, botão "🛏 Hospedar"
+- [x] 7 testes novos (`test_staff.py`) — **suíte total: 74 verdes, validada localmente**
+- ⓘ Destrava as Fatias 4 (ministrante na Activity) e 5 (executor/líder na Task) e o custo de salários no P&L
+
+---
 
 ### Facilities — Fatia 2: Activity → Space, Task → Space (2026-07-07) ⭐ ESTRUTURAL
 > Cronograma e tasks ancorados em lugares reais. "Onde é a reza/o jantar?" vira resposta estruturada.
@@ -328,12 +341,11 @@
 
 ## Next Actions (Short Horizon) 📋
 
-### Priority 1: Facilities + Staff — Fatia 3 (Employee raiz + engajamento por evento)
-> Fatias 1 e 2 entregues em 2026-07-07 (ver Completed); decisões no 08_decisions_log.md; fatias no 09_backlog.md
-- [ ] Backend: `Employee` (entidade raiz, `f_person_id` opcional → Person) + `EventStaffAssignment` (função, período, custo)
-- [ ] Frontend: `StaffPage.tsx` — lista, cadastro, edição, engajamentos por evento
-- [ ] Staff hospedado: criar Guest a partir do mesmo Person (reusa import do módulo clients)
-- [ ] Custo do engajamento alimenta o P&L futuro
+### Priority 1: Facilities + Staff — Fatias 4 e 5 (Ministrante + reconexão das Tasks)
+> Fatias 1, 2 e 3 entregues em 2026-07-07 (ver Completed); decisões no 08_decisions_log.md; fatias no 09_backlog.md
+- [ ] Fatia 4: `Activity` ganha vínculo opcional com ministrante (Employee)
+- [ ] Fatia 5: `Task.f_assigned_to_staff_id` vira FK real (executor) + líder/ponto focal + link Task↔Activity
+- [ ] Candidato paralelo: 🕎 hebcal/EventPeriod nas abas do Cronograma (reforçado pelo Michel em 2026-07-07)
 
 ### Priority 1: Deploy CapRover
 - [ ] Criar apps no CapRover: `events-postgres` (one-click), `events-api`, `events-web`
@@ -403,7 +415,7 @@
 ## Metrics
 
 ### Verification
-- Backend automated tests: **67 passing** (validado localmente em 2026-07-07 — pytest agora roda na estação Windows)
+- Backend automated tests: **74 passing** (validado localmente em 2026-07-07 — pytest agora roda na estação Windows)
 - Frontend build: **pendente de validação** (node indisponível localmente; validar no build CapRover/Codespaces)
 
 ### Module Completion

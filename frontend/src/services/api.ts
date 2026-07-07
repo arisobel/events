@@ -1104,3 +1104,119 @@ export const scheduleService = {
     await api.delete(`/activities/${activityId}`)
   },
 }
+
+// ---- Staff (colaboradores raiz + engajamento por evento) ----
+// Custos (salário) são gated por RBAC no backend: chegam null sem acesso financeiro
+export interface Employee {
+  id: number
+  f_person_id?: number | null
+  f_full_name: string
+  f_default_role?: string | null
+  f_document?: string | null
+  f_phone?: string | null
+  f_email?: string | null
+  f_default_daily_cost?: string | number | null
+  f_notes?: string | null
+  f_is_active: string
+  f_created_at?: string | null
+}
+
+export interface EmployeeCreate {
+  f_full_name: string
+  f_default_role?: string
+  f_document?: string
+  f_phone?: string
+  f_email?: string
+  f_default_daily_cost?: string | number | null
+  f_notes?: string
+  f_person_id?: number | null
+}
+
+export type EmployeeUpdate = Partial<EmployeeCreate> & { f_is_active?: string }
+
+export interface StaffAssignment {
+  id: number
+  f_event_id: number
+  f_employee_id: number
+  f_role?: string | null
+  f_start_date?: string | null
+  f_end_date?: string | null
+  f_daily_cost?: string | number | null
+  f_total_cost?: string | number | null
+  f_notes?: string | null
+  employee_name?: string | null
+  work_days?: number | null
+  effective_daily_cost?: string | number | null
+  derived_total_cost?: string | number | null
+  f_created_at?: string | null
+}
+
+export interface StaffAssignmentCreate {
+  f_employee_id: number
+  f_role?: string
+  f_start_date?: string | null
+  f_end_date?: string | null
+  f_daily_cost?: string | number | null
+  f_total_cost?: string | number | null
+  f_notes?: string
+}
+
+export type StaffAssignmentUpdate = Partial<Omit<StaffAssignmentCreate, 'f_employee_id'>>
+
+export interface LodgeResult {
+  group_id: number
+  guest_id: number
+  created_guest: boolean
+}
+
+export const staffService = {
+  async getEmployees(search?: string): Promise<Employee[]> {
+    const response = await api.get<Employee[]>('/staff/employees', {
+      params: search ? { search } : undefined,
+    })
+    return response.data
+  },
+
+  async createEmployee(employee: EmployeeCreate): Promise<Employee> {
+    const response = await api.post<Employee>('/staff/employees', employee)
+    return response.data
+  },
+
+  async updateEmployee(employeeId: number, employee: EmployeeUpdate): Promise<Employee> {
+    const response = await api.put<Employee>(`/staff/employees/${employeeId}`, employee)
+    return response.data
+  },
+
+  async deleteEmployee(employeeId: number): Promise<void> {
+    await api.delete(`/staff/employees/${employeeId}`)
+  },
+
+  async getEmployeeAssignments(employeeId: number): Promise<StaffAssignment[]> {
+    const response = await api.get<StaffAssignment[]>(`/staff/employees/${employeeId}/assignments`)
+    return response.data
+  },
+
+  async getEventStaff(eventId: number): Promise<StaffAssignment[]> {
+    const response = await api.get<StaffAssignment[]>(`/events/${eventId}/staff`)
+    return response.data
+  },
+
+  async createAssignment(eventId: number, assignment: StaffAssignmentCreate): Promise<StaffAssignment> {
+    const response = await api.post<StaffAssignment>(`/events/${eventId}/staff`, assignment)
+    return response.data
+  },
+
+  async updateAssignment(assignmentId: number, assignment: StaffAssignmentUpdate): Promise<StaffAssignment> {
+    const response = await api.put<StaffAssignment>(`/staff/assignments/${assignmentId}`, assignment)
+    return response.data
+  },
+
+  async deleteAssignment(assignmentId: number): Promise<void> {
+    await api.delete(`/staff/assignments/${assignmentId}`)
+  },
+
+  async lodgeEmployee(employeeId: number, eventId: number): Promise<LodgeResult> {
+    const response = await api.post<LodgeResult>(`/staff/employees/${employeeId}/lodge/${eventId}`)
+    return response.data
+  },
+}
