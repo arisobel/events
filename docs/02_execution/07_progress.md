@@ -3,7 +3,7 @@
 ## Current State
 
 - **Phase**: Phase 1 - Core Backend + Internal MVP Slice ✅ **IMPLEMENTADO** | Financeiro Backend Phase 1 ✅
-- **Last Update**: 02 de Julho de 2026 - Módulo Financeiro Backend Phase 1 implementado
+- **Last Update**: 07 de Julho de 2026 - Decisão estrutural Facilities + Staff registrada; Fatia 1 (Facilities) é a próxima implementação
 - **Status**: Fluxo core disponível na UI: Hotels → Events → Guests/Reservations → Room Allocations → Tasks
 - **Environment**: GitHub Codespaces + Docker
 - **Recent**: Módulo `finance` criado — precificação de quartos, pagamento por reserva, endpoints room-grid / financial-summary / invoice (migration `9d2f5c1e7a34`)
@@ -305,6 +305,13 @@
 ---
 
 ## Next Actions (Short Horizon) 📋
+
+### Priority 1: Facilities + Staff — Fatia 1 (decisão 2026-07-07)
+> Modelo decidido e registrado no 08_decisions_log.md; fatias 1–5 no 09_backlog.md (bloco estrutural)
+- [ ] PUT/DELETE de `HotelSpace` (GET/POST já existem)
+- [ ] Retipar `f_space_type` com vocabulário do domínio (sinagoga, restaurante, salao_refeicao, …)
+- [ ] UI de cadastro de espaços por hotel (casa com `HotelDetailPage.tsx` do UX Polish)
+- [ ] Testes backend do CRUD de espaços
 
 ### Priority 1: Deploy CapRover
 - [ ] Criar apps no CapRover: `events-postgres` (one-click), `events-api`, `events-web`

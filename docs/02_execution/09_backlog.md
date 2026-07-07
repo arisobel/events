@@ -298,42 +298,55 @@
 
 ---
 
-## 🧠 Bloco Estrutural — Espaços, Staff e Contabilidade do Evento (proposto 2026-07-06)
-> Origem: brain-dump do Michel (2026-07-06). Três ideias interligadas que fecham o ciclo operacional→financeiro do evento. Capturadas para não perder o raciocínio; **decisões de modelo antes de implementar**. Ver conexões com [Módulo Funcionários], [Organização de Mesas], [Schedule Module] abaixo e com o Financeiro já entregue.
+## 🧠 Bloco Estrutural — Espaços, Staff e Contabilidade do Evento — 🔴 PRIORIDADE ATUAL
+> Origem: brain-dump do Michel (2026-07-06). **Decisões de modelo tomadas em 2026-07-07** — ver entrada "Facilities + Staff — Modelo Estrutural e Sequenciamento" no 08_decisions_log.md. Facilities e Staff são os dois últimos pilares da fundação; a Fatia 5 marca o início formal da fase de execução (Tasks). Ver conexões com [Organização de Mesas], [Schedule Module] e com o Financeiro já entregue.
 
-### 🏛️ Espaços Físicos como Recurso (Places/Spaces) — reaproveitar `t_hotel_space`
-> Atividades, tasks e refeições acontecem em lugares: Lobby, Restaurantes A/B/C, Piscina, Quadras, Praia, Salão da Sinagoga, salões de refeição. Hoje `Activity.f_location` e a task guardam **texto livre** — sem vínculo estruturado.
+**Sequenciamento decidido:**
+```
+Fatia 1: Facilities CRUD + UI          ← PRÓXIMA — sem decisões pendentes
+Fatia 2: Activity → Space              ← cronograma ancorado em lugares
+Fatia 3: Employee raiz + engajamento   ← inclui staff hospedado via Person→Guest
+Fatia 4: Ministrante na Activity       ← une os dois cadastros no cronograma
+Fatia 5: Task → Space + Task → Staff   ← fronteira da fase de execução
+```
+
+### 🏛️ Fatia 1 — Facilities: dar vida ao `t_hotel_space` existente
+> Atividades, tasks e refeições acontecem em lugares: Lobby, Restaurantes A/B/C, Piscina, Quadras, Praia, Salão da Sinagoga, salões de refeição. Hoje `Activity.f_location` guarda **texto livre** — sem vínculo estruturado.
 
 **O que JÁ existe (não recriar):**
-- `t_hotel_space` (HotelSpace): `f_name`, `f_space_type` (hall/pool/gym/beach…), `f_capacity`, `f_floor`, `f_block` — vinculado ao Hotel
-- `t_event_space` (EventSpace): liga espaço↔evento com `f_usage_type`
+- `t_hotel_space` (HotelSpace): `f_name`, `f_space_type`, `f_capacity`, `f_floor`, `f_block` — vinculado ao Hotel, **com GET/POST `/hotels/{id}/spaces` funcionando**
+- `t_event_space` (EventSpace): liga espaço↔evento com `f_usage_type` (modelado, sem endpoints/UI)
 - `t_hotel_table` e `t_hotel_kitchen` já referenciam `f_space_id`
 
-**Falta:**
-- [ ] **UI de cadastro de espaços** por hotel (hoje não há tela; casa com o item "Implementar `HotelDetailPage.tsx`" do UX Polish)
-- [ ] FK opcional `f_space_id` em `Activity` e em `Task` (migração incremental, mantém o texto livre como fallback/legado)
-- [ ] Seletor de espaço no form de atividade (Cronograma) e de task, com autocomplete dos espaços do hotel do evento
-- [ ] (Decidir) refeições referenciam `HotelSpace` direto (salão/restaurante) ou via `EventSpace`? EventSpace dá "uso por evento"; Space direto é mais simples
-- [ ] (Futuro) agenda/ocupação por espaço: "o que está acontecendo no Salão Jequitibás agora?" — cruza Cronograma × Espaço
+**Fazer:**
+- [ ] PUT/DELETE de espaços (hoje só GET/POST)
+- [ ] Retipar `f_space_type` com vocabulário do domínio (decisão 2026-07-07): sinagoga, restaurante, salao_refeicao, salao_shows, sala_aula, piscina, quadra, praia, lobby, academia, outro
+- [ ] **UI de cadastro de espaços** por hotel (casa com o item "Implementar `HotelDetailPage.tsx`" do UX Polish)
+- [ ] Testes backend (CRUD + validação de tipo)
 
-**Valor**: liga cronograma/tasks/refeições a lugares reais; base para "onde é X?", conflito de espaço, e displays de TV por local
+### 📅 Fatia 2 — Cronograma ancorado em lugares
+> **Decidido (2026-07-07):** `Activity.f_space_id` FK **direto** para `t_hotel_space`; `f_location` texto livre vira fallback/legado. `EventSpace` não é pré-requisito — é filtro complementar do picker quando existir.
+- [ ] FK opcional `f_space_id` em `Activity` (migração incremental)
+- [ ] Seletor de espaço no form do SchedulePage, com autocomplete dos espaços do hotel do evento
+- [ ] Exibir espaço na lista do cronograma (resolve "onde é a reza/o jantar?")
+- [ ] Warning **não-bloqueante** de conflito de espaço (duas atividades no mesmo lugar/horário)
+- [ ] (Futuro) agenda/ocupação por espaço: "o que está acontecendo no Salão Jequitibás agora?" — base para displays de TV por local
 
----
+### 👷 Fatia 3 — Employee raiz + engajamento por evento
+> **Decidido (2026-07-07):** `Employee` como entidade raiz (atravessa eventos) com `f_person_id` **opcional** → `Person`. Espelha o padrão Cliente+Pessoas: Person = identidade; Client = receita; Employee = custo. Função e custo ficam no **engajamento por evento** (função muda entre eventos); custo padrão no Employee com override no engajamento (mesmo padrão do preço de quarto).
+- [ ] Backend: `Employee` (raiz) + `EventStaffAssignment` (employee × evento × função × período × custo)
+- [ ] Frontend: `StaffPage.tsx` — lista, cadastro, edição, engajamentos por evento
+- [ ] **Staff hospedado**: criar `Guest` a partir do mesmo `Person` (reusa import do módulo clients) em grupo do evento — entra na alocação/room grid sem código novo; compatível com `GuestType = staff`
+- [ ] Custo do engajamento alimenta o P&L do evento (bloco 📊 abaixo)
 
-### 👷 Cadastro de Staff/Colaboradores — decidir vínculo com `Person` raiz
-> Colaboradores fazem parte da operação e da **despesa** do evento; alguns **recebem quartos** da estrutura.
+### 🎤 Fatia 4 — Ministrante na Activity
+- [ ] `Activity` ganha vínculo opcional com o ministrante (Employee): rabino/palestrante/monitor/entertainer — concretiza a decisão 2026-07-01
 
-**Decisão central (antes de codar):** o colaborador é uma variação de `Person` (entidade raiz do módulo clients) ou um `Employee` separado que **opcionalmente** aponta para um `Person`?
-- Argumento a favor de ligar a `Person`: staff que recebe quarto precisa entrar na alocação de quartos, que hoje roda sobre `GuestGroup`/`Guest` → um staff-com-quarto viraria um Guest vinculado a um Person raiz, reaproveitando toda a máquina de alocação
-- Argumento a favor de separar: dados de RH (função, turnos, salário, período de trabalho) não pertencem ao hóspede; misturar polui a entidade
-
-**Proposta preliminar:** `Employee` próprio (função, período de trabalho, salário/custo, vínculo com evento) com FK **opcional** `f_person_id` → quando o staff recebe quarto, cria-se o Guest a partir desse Person. Assim RH fica isolado, mas a alocação reaproveita o que existe.
-
-- [ ] Decidir modelo Employee vs. Person estendido (recomendação: Employee + `f_person_id` opcional)
-- [ ] Backend: CRUD `Employee` + vínculo com evento + (turnos por evento — pode ser fatia 2)
-- [ ] Frontend: `StaffPage.tsx` — lista, cadastro, edição
-- [ ] Ponte com alocação de quarto para staff-com-quarto
-- [ ] Feeds o custo de salários no fechamento financeiro (abaixo)
+### 🔗 Fatia 5 — Reconexão das Tasks (início da fase de execução)
+> `Task.f_assigned_to_staff_id`, `TaskComment.f_staff_member_id` e `TaskStatusHistory.f_changed_by_staff_id` são Integers **sem FK** desde a criação — o esqueleto sempre esperou este cadastro.
+- [ ] `Task.f_assigned_to_staff_id` vira FK real (para o engajamento)
+- [ ] FK opcional `f_space_id` em `Task` + seletor de espaço no form
+- [ ] A partir daqui: task = "este trabalho, neste lugar, desta pessoa" — turnos, PWA do staff e supervisão constroem em cima
 
 **Substitui/absorve** o item "Módulo Funcionários (Staff)" mais abaixo — mantê-los sincronizados.
 
@@ -348,7 +361,7 @@
 **Falta (lado da despesa):**
 - [ ] Modelo `EventExpense` (t_event_expense): `f_event_id`, `f_category`, `f_description`, `f_amount`, `f_date`, `f_vendor?`, `f_notes`
 - [ ] Categorias de custo: **salários/staff**, **insumos/comida**, **transfers**, **sub-eventos**, **gerais/overhead** (livre + enum sugerido)
-- [ ] (Decidir) despesa de staff é lançada manualmente ou **derivada** do custo cadastrado em `Employee` × período? (paralelo ao "derivado + ajustes manuais" da conta corrente)
+- [ ] Despesa de staff **derivada** do custo dos engajamentos (`EventStaffAssignment`) + ajustes manuais — mesmo padrão "derivado + ajustes manuais" da conta corrente (decorre da decisão 2026-07-07; depende da Fatia 3)
 - [ ] Endpoint de **P&L do evento**: receita (pagamentos) − despesas (por categoria) = resultado; % margem
 - [ ] Frontend: aba "Fechamento" no evento — receita total, despesas por categoria, lucro; gated por `require_financial_access`
 - [ ] (Futuro) consolidação multi-evento; comparar orçado × realizado

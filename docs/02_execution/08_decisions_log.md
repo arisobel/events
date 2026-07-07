@@ -1,5 +1,36 @@
 # Decisions Log
 
+## [2026-07-07] Facilities + Staff — Modelo Estrutural e Sequenciamento (fundação antes do motor de execução)
+
+**Context:**
+Análise arquitetural (2026-07-07) confirmou que a camada de Tasks nunca foi endereçada de fato: `Task.f_assigned_to_staff_id`, `TaskComment.f_staff_member_id` e `TaskStatusHistory.f_changed_by_staff_id` são Integers **sem FK** — o esqueleto de tasks já esperava um cadastro de staff que não existe; `Activity.f_location` é texto livre. Michel definiu a direção: montar o cadastro de Facilities (espaços físicos do hotel) e a camada de Staff, para que tasks fiquem ligadas a **locais físicos** e a **pessoas** que as executam. Também confirmou o sequenciamento: o financeiro/ocupação foi fundação deliberada; Tasks continua sendo o destino do produto.
+
+**Decisions (confirmadas pelo Michel):**
+1. **Sequenciamento oficial**: a ordem de entrega segue as camadas do produto (Structure → Planning → Execution, cf. PRODUCT_OVERVIEW). Facilities e Staff são os dois últimos pilares da fundação; a reconexão das tasks (item 8) marca o **início formal da fase de execução**. Tasks+Staff permanece o core de longo prazo.
+2. **Facilities reaproveita `t_hotel_space`** (não criar modelo novo): completar CRUD (faltam PUT/DELETE) + primeira UI de espaços por hotel. Retipar `f_space_type` com o vocabulário real do domínio: sinagoga, restaurante, salao_refeicao, salao_shows, sala_aula, piscina, quadra, praia, lobby, academia, outro (hoje sugere hall/pool/gym — hotel genérico).
+3. **Activity → HotelSpace direto**: `Activity.f_space_id` FK **opcional** para `t_hotel_space`; `f_location` (texto livre) permanece como fallback/legado. `EventSpace` **não** é pré-requisito para agendar: entra como camada complementar (declara os espaços ativos no evento + papel via `f_usage_type`) e o picker do cronograma usa isso para filtrar/ordenar quando existir.
+4. **`Employee` como entidade raiz** (permanente, atravessa eventos) com `f_person_id` **opcional** → `t_person`. Espelha o padrão Cliente+Pessoas já validado: `Person` é a identidade; `Client` = lado da receita; `Employee` = lado do custo. Staff recorre entre eventos como clientes recorrem.
+5. **Engajamento por evento** (`EventStaffAssignment` ou nome equivalente): employee × evento × **função** × período × custo. A função fica no engajamento, não no Employee (a mesma pessoa é monitor num evento e ministrante em outro). Custo: **padrão no Employee com override no engajamento** — mesmo padrão preço base do quarto + override por evento. O custo do engajamento alimenta o P&L do evento (bloco estrutural 2026-07-06).
+6. **Staff hospedado**: quando o colaborador dorme no hotel, cria-se `Guest` a partir do mesmo `Person` (reusa a máquina de import do módulo clients) dentro de um grupo do evento — entra na alocação de quartos, no room grid e no "em qual quarto está fulano?" sem código novo de alocação. Compatível com `GuestType = staff` (decisão 2026-05-11).
+7. **Ministrante da atividade**: quando `Employee` existir, `Activity` ganha vínculo opcional com o ministrante (rabino/palestrante/monitor/entertainer) — concretiza a decisão 2026-07-01 (atividades têm espaço + horário + ministrante + público).
+8. **Fronteira da fase de execução**: `Task.f_assigned_to_staff_id` vira FK real (para o engajamento) e `Task` ganha `f_space_id` opcional. A partir daí, task = "este trabalho, **neste lugar**, **desta pessoa**" — a definição do core documentado. Turnos, PWA do staff e supervisão constroem em cima disso.
+
+**Rationale:**
+- `HotelSpace`/`EventSpace` já estão modelados (com GET/POST de spaces funcionando) e `HotelKitchen`/`HotelTable` já referenciam `f_space_id` — falta conectar e dar UI, não criar
+- FKs opcionais + fallback = migração incremental sem quebrar nada (padrão já validado em `f_client_id`/`f_person_id`)
+- Simetria receita/custo sobre `Person` evita duplicar identidade e prepara o P&L
+- Conflito de espaço (duas atividades no mesmo lugar/horário) será **warning não-bloqueante**, coerente com a filosofia do produto
+
+**Impact:**
+- Backlog: bloco estrutural reorganizado em fatias 1–5 com sequenciamento explícito (ver 09_backlog.md)
+- Fatia 1 (Facilities CRUD + UI) é a próxima implementação — sem decisões pendentes
+- Camada `01_definition/` segue pendente de revisão (PRD/DOMAIN_MODEL/ARCHITECTURE ainda descrevem o estado antigo) — gap registrado na análise de 2026-07-06/07
+
+**Participants:** Product (Michel) + Engineering (análise arquitetural)
+**Status:** ✅ Decidido / ⏳ Implementação a iniciar pela Fatia 1
+
+---
+
 ## [2026-07-03] Financeiro Phase 2 — Extras e Pagamentos Múltiplos
 
 **Context:**
