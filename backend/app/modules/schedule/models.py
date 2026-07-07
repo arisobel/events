@@ -9,8 +9,10 @@ Modelagem de tempo: `f_date` (dia) + `f_start_time`/`f_end_time` como "HH:MM"
 displays combina data+hora on-the-fly.
 """
 from datetime import datetime
+from typing import Optional
 
 from sqlalchemy import Column, Date, DateTime, ForeignKey, Integer, String, Text
+from sqlalchemy.orm import relationship
 
 from app.db.base import Base
 
@@ -25,6 +27,8 @@ class Activity(Base):
     f_activity_type = Column(String(30), nullable=False, default="geral")
     # all | men | women | children | youth
     f_audience = Column(String(20), nullable=False, default="all")
+    # Espaço estruturado (Fatia 2); f_location texto livre permanece como fallback/legado
+    f_space_id = Column(Integer, ForeignKey("t_hotel_space.id"))
     f_location = Column(String(150))
     f_date = Column(Date, nullable=False, index=True)
     f_start_time = Column(String(5), nullable=False)  # "HH:MM"
@@ -32,3 +36,9 @@ class Activity(Base):
     f_description = Column(Text)
     f_sort_order = Column(Integer, nullable=False, default=0)
     f_created_at = Column(DateTime, default=datetime.utcnow)
+
+    space = relationship("HotelSpace")
+
+    @property
+    def space_name(self) -> Optional[str]:
+        return self.space.f_name if self.space else None

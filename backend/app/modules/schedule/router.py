@@ -42,7 +42,10 @@ def create_activity(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):
-    return service.create_activity(db, event_id, activity)
+    try:
+        return service.create_activity(db, event_id, activity)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
 
 
 @router.put("/activities/{activity_id}", response_model=schemas.ActivityResponse)
@@ -52,7 +55,10 @@ def update_activity(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):
-    updated = service.update_activity(db, activity_id, activity)
+    try:
+        updated = service.update_activity(db, activity_id, activity)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
     if not updated:
         raise HTTPException(status_code=404, detail="Activity not found")
     return updated

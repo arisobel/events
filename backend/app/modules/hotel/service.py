@@ -48,6 +48,25 @@ def create_hotel_space(db: Session, space: schemas.HotelSpaceCreate) -> models.H
     return db_space
 
 
+def validate_space_for_event(db: Session, event_id: int, space_id: Optional[int]) -> None:
+    """Valida que o espaço existe e pertence ao hotel do evento (usado por schedule/tasks).
+
+    space_id None é válido (espaço é opcional). Levanta ValueError em caso inválido.
+    """
+    if space_id is None:
+        return
+
+    from app.modules.events import models as event_models
+
+    space = db.query(models.HotelSpace).filter(models.HotelSpace.id == space_id).first()
+    if not space:
+        raise ValueError("Space not found")
+
+    event = db.query(event_models.Event).filter(event_models.Event.id == event_id).first()
+    if event and space.f_hotel_id != event.f_hotel_id:
+        raise ValueError("Space does not belong to the event hotel")
+
+
 def get_hotel_space(db: Session, hotel_id: int, space_id: int) -> Optional[models.HotelSpace]:
     return (
         db.query(models.HotelSpace)

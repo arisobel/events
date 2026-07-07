@@ -8,7 +8,9 @@ import {
   ActivityType,
   Audience,
   Event,
+  HotelSpace,
   eventService,
+  hotelService,
   scheduleService,
 } from '../services/api'
 
@@ -36,6 +38,7 @@ const emptyForm = (date: string): ActivityCreate => ({
   f_title: '',
   f_activity_type: 'geral',
   f_audience: 'all',
+  f_space_id: null,
   f_location: '',
   f_date: date,
   f_start_time: '',
@@ -76,6 +79,7 @@ export default function SchedulePage() {
 
   const [event, setEvent] = useState<Event | null>(null)
   const [activities, setActivities] = useState<Activity[]>([])
+  const [spaces, setSpaces] = useState<HotelSpace[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [saving, setSaving] = useState(false)
@@ -109,6 +113,11 @@ export default function SchedulePage() {
       ])
       setEvent(ev)
       setActivities(acts)
+      try {
+        setSpaces(await hotelService.getHotelSpaces(ev.f_hotel_id))
+      } catch {
+        // espaços são opcionais — sem eles o form cai no texto livre
+      }
       // seleciona o primeiro dia com atividade, senão o primeiro dia do evento
       const evDays = buildDays(ev.f_start_date, ev.f_end_date)
       const firstWithActivity = evDays.find((d) => acts.some((a) => a.f_date === d))
@@ -132,6 +141,7 @@ export default function SchedulePage() {
       f_title: activity.f_title,
       f_activity_type: activity.f_activity_type,
       f_audience: activity.f_audience,
+      f_space_id: activity.f_space_id ?? null,
       f_location: activity.f_location ?? '',
       f_date: activity.f_date,
       f_start_time: activity.f_start_time,
@@ -161,7 +171,8 @@ export default function SchedulePage() {
       setError('')
       const payload: ActivityCreate = {
         ...form,
-        f_location: form.f_location?.trim() || null,
+        // com espaço estruturado escolhido, o texto livre é limpo (evita informação dupla/estale)
+        f_location: form.f_space_id != null ? null : form.f_location?.trim() || null,
         f_end_time: form.f_end_time || null,
         f_description: form.f_description?.trim() || null,
       }
@@ -203,6 +214,28 @@ export default function SchedulePage() {
   }, [activities, selectedDay, typeFilter])
 
   const countForDay = (dayKey: string) => activities.filter((a) => a.f_date === dayKey).length
+
+  // Conflito de espaço (warning não-bloqueante): mesmo espaço estruturado + horários sobrepostos
+  // no mesmo dia. Atividade sem fim conta como pontual (fim = início). Considera o dia inteiro,
+  // ignorando o filtro de tipo, para o aviso não sumir ao filtrar.
+  const conflictIds = useMemo(() => {
+    const dayActs = activities.filter((a) => a.f_date === selectedDay && a.f_space_id != null)
+    const ids = new Set<number>()
+    for (let i = 0; i < dayActs.length; i += 1) {
+      for (let j = i + 1; j < dayActs.length; j += 1) {
+        const a = dayActs[i]
+        const b = dayActs[j]
+        if (a.f_space_id !== b.f_space_id) continue
+        const aEnd = a.f_end_time || a.f_start_time
+        const bEnd = b.f_end_time || b.f_start_time
+        if (a.f_start_time <= bEnd && b.f_start_time <= aEnd) {
+          ids.add(a.id)
+          ids.add(b.id)
+        }
+      }
+    }
+    return ids
+  }, [activities, selectedDay])
 
   return (
     <AdminLayout title="Cronograma">
@@ -323,16 +356,32 @@ export default function SchedulePage() {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Local</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Espaço</label>
+                  <select
+                    value={form.f_space_id ?? ''}
+                    onChange={(e) => setForm({ ...form, f_space_id: e.target.value ? Number(e.target.value) : null })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="">— texto livre —</option>
+                    {spaces.map((s) => (
+                      <option key={s.id} value={s.id}>{s.f_name}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              {form.f_space_id == null && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Local (texto livre)</label>
                   <input
                     type="text"
                     value={form.f_location ?? ''}
                     onChange={(e) => setForm({ ...form, f_location: e.target.value })}
-                    placeholder="Ex.: Sinagoga"
+                    placeholder="Ex.: Sinagoga — prefira cadastrar o espaço no hotel e selecioná-lo acima"
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
-              </div>
+              )}
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Observação</label>
@@ -453,9 +502,19 @@ export default function SchedulePage() {
                               {AUDIENCE_META[activity.f_audience]}
                             </span>
                           )}
+                          {conflictIds.has(activity.id) && (
+                            <span
+                              title="Outra atividade usa o mesmo espaço em horário sobreposto neste dia"
+                              className="px-2 py-0.5 rounded-full text-[11px] font-medium bg-amber-100 text-amber-900 border border-amber-300"
+                            >
+                              ⚠ Conflito de espaço
+                            </span>
+                          )}
                         </div>
-                        {activity.f_location && (
-                          <div className="text-sm text-slate-500 mt-0.5">📍 {activity.f_location}</div>
+                        {(activity.space_name || activity.f_location) && (
+                          <div className="text-sm text-slate-500 mt-0.5">
+                            📍 {activity.space_name || activity.f_location}
+                          </div>
                         )}
                         {activity.f_description && (
                           <div className="text-sm text-slate-600 mt-1">{activity.f_description}</div>

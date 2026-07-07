@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { taskService, Task, TaskCreate } from '../services/api'
+import { taskService, eventService, hotelService, Task, TaskCreate, HotelSpace } from '../services/api'
 import AdminLayout from '../components/AdminLayout'
 
 export default function TasksPage() {
@@ -8,6 +8,7 @@ export default function TasksPage() {
   const navigate = useNavigate()
 
   const [tasks, setTasks] = useState<Task[]>([])
+  const [spaces, setSpaces] = useState<HotelSpace[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [showCreateForm, setShowCreateForm] = useState(false)
@@ -20,13 +21,24 @@ export default function TasksPage() {
     f_description: '',
     f_priority: 'medium',
     f_task_type: '',
+    f_space_id: null,
   })
 
   useEffect(() => {
     if (eventId) {
       loadTasks()
+      loadSpaces()
     }
   }, [eventId])
+
+  const loadSpaces = async () => {
+    try {
+      const ev = await eventService.getEvent(Number(eventId))
+      setSpaces(await hotelService.getHotelSpaces(ev.f_hotel_id))
+    } catch {
+      // espaços são opcionais — sem eles o form simplesmente não mostra opções
+    }
+  }
 
   const loadTasks = async () => {
     try {
@@ -57,6 +69,7 @@ export default function TasksPage() {
         f_description: '',
         f_priority: 'medium',
         f_task_type: '',
+        f_space_id: null,
       })
       setShowCreateForm(false)
       await loadTasks()
@@ -216,7 +229,7 @@ export default function TasksPage() {
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
                 <div>
                   <label htmlFor="priority" className="block text-sm font-medium text-gray-700 mb-1">
                     Priority
@@ -245,6 +258,23 @@ export default function TasksPage() {
                     placeholder="e.g., setup, cleaning, maintenance"
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
+                </div>
+
+                <div>
+                  <label htmlFor="space" className="block text-sm font-medium text-gray-700 mb-1">
+                    Space
+                  </label>
+                  <select
+                    id="space"
+                    value={newTask.f_space_id ?? ''}
+                    onChange={(e) => setNewTask({ ...newTask, f_space_id: e.target.value ? Number(e.target.value) : null })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="">— none —</option>
+                    {spaces.map((s) => (
+                      <option key={s.id} value={s.id}>{s.f_name}</option>
+                    ))}
+                  </select>
                 </div>
               </div>
 
@@ -340,6 +370,11 @@ export default function TasksPage() {
                   {task.f_task_type && (
                     <span className="px-3 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-700">
                       {task.f_task_type}
+                    </span>
+                  )}
+                  {task.space_name && (
+                    <span className="px-3 py-1 rounded-full text-xs font-medium bg-violet-50 text-violet-700 border border-violet-200">
+                      📍 {task.space_name}
                     </span>
                   )}
                 </div>

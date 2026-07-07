@@ -325,13 +325,14 @@ Fatia 5: Task → Space + Task → Staff   ← fronteira da fase de execução
 - [x] 9 testes novos (`test_spaces.py`): CRUD, tipo fora do vocabulário rejeitado, update parcial, delete bloqueado por referência (kitchen e event space) — **suíte total: 60 verdes**
 - ⓘ pytest agora roda na estação Windows local (deps instaladas; bcrypt fixado em 4.0.1 local por incompatibilidade passlib×bcrypt 5); build TS continua só no CapRover/Codespaces
 
-### 📅 Fatia 2 — Cronograma ancorado em lugares
+### 📅 Fatia 2 — Cronograma ancorado em lugares ✅ **IMPLEMENTADO 2026-07-07**
 > **Decidido (2026-07-07):** `Activity.f_space_id` FK **direto** para `t_hotel_space`; `f_location` texto livre vira fallback/legado. `EventSpace` não é pré-requisito — é filtro complementar do picker quando existir.
-- [ ] FK opcional `f_space_id` em `Activity` (migração incremental)
-- [ ] **Antecipado da Fatia 5 (2026-07-07):** FK opcional `f_space_id` em `Task` + seletor de espaço no form de task — não depende de Staff, é a mesma mecânica da Activity
-- [ ] Seletor de espaço no form do SchedulePage, com autocomplete dos espaços do hotel do evento
-- [ ] Exibir espaço na lista do cronograma (resolve "onde é a reza/o jantar?")
-- [ ] Warning **não-bloqueante** de conflito de espaço (duas atividades no mesmo lugar/horário)
+- [x] FK opcional `f_space_id` em `Activity` e em `Task` (antecipado da Fatia 5) — migration `b4c6d8e0f152`; backend valida que o espaço pertence ao hotel do evento (`validate_space_for_event` no hotel service; 400 se inválido)
+- [x] Respostas de Activity/Task expõem `space_name` resolvido (relationship + property no model)
+- [x] SchedulePage: seletor "Espaço" no form (texto livre só aparece sem espaço selecionado; escolher espaço limpa o texto livre); lista mostra 📍 nome do espaço
+- [x] TasksPage: seletor "Space" no form de criação; chip 📍 do espaço na lista
+- [x] Warning **não-bloqueante** de conflito: badge "⚠ Conflito de espaço" quando duas atividades do dia usam o mesmo espaço em horários sobrepostos (atividade sem fim = pontual; ignora filtro de tipo)
+- [x] 7 testes novos (`test_space_links.py`) — **suíte total: 67 verdes**
 - [ ] (Futuro) agenda/ocupação por espaço: "o que está acontecendo no Salão Jequitibás agora?" — base para displays de TV por local
 
 ### 👷 Fatia 3 — Employee raiz + engajamento por evento

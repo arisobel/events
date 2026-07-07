@@ -222,6 +222,8 @@ export interface Task {
   f_status: 'pending' | 'in_progress' | 'completed' | 'cancelled'
   f_priority: 'low' | 'medium' | 'high'
   f_task_type: string | null
+  f_space_id?: number | null
+  space_name?: string | null
   f_created_at: string
 }
 
@@ -230,6 +232,7 @@ export interface TaskCreate {
   f_description?: string
   f_priority: 'low' | 'medium' | 'high'
   f_task_type?: string
+  f_space_id?: number | null
 }
 
 export interface TaskComment {
@@ -1052,6 +1055,8 @@ export interface Activity {
   f_title: string
   f_activity_type: ActivityType
   f_audience: Audience
+  f_space_id?: number | null
+  space_name?: string | null
   f_location: string | null
   f_date: string          // YYYY-MM-DD
   f_start_time: string    // HH:MM
@@ -1065,6 +1070,7 @@ export interface ActivityCreate {
   f_title: string
   f_activity_type: ActivityType
   f_audience: Audience
+  f_space_id?: number | null
   f_location?: string | null
   f_date: string
   f_start_time: string

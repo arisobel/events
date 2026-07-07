@@ -3,7 +3,7 @@
 ## Current State
 
 - **Phase**: Phase 1 - Core Backend + Internal MVP Slice ✅ **IMPLEMENTADO** | Financeiro Backend Phase 1 ✅
-- **Last Update**: 07 de Julho de 2026 - Facilities Fatia 1 implementada (CRUD + UI de espaços); próxima: Fatia 2 (Activity → Space)
+- **Last Update**: 07 de Julho de 2026 - Facilities Fatias 1 e 2 implementadas (espaços + Activity/Task → Space); próxima: Fatia 3 (Employee raiz + engajamento)
 - **Status**: Fluxo core disponível na UI: Hotels → Events → Guests/Reservations → Room Allocations → Tasks
 - **Environment**: GitHub Codespaces + Docker
 - **Recent**: Módulo `finance` criado — precificação de quartos, pagamento por reserva, endpoints room-grid / financial-summary / invoice (migration `9d2f5c1e7a34`)
@@ -13,6 +13,17 @@
 ---
 
 ## Completed ✅
+
+### Facilities — Fatia 2: Activity → Space, Task → Space (2026-07-07) ⭐ ESTRUTURAL
+> Cronograma e tasks ancorados em lugares reais. "Onde é a reza/o jantar?" vira resposta estruturada.
+- [x] Migration `b4c6d8e0f152`: FK opcional `f_space_id` em `t_activity` e `t_task` (Task antecipado da Fatia 5 — não depende de Staff); `f_location` texto livre vira fallback/legado
+- [x] `validate_space_for_event` (hotel service): espaço deve existir e pertencer ao hotel do evento — usado por schedule e tasks; routers devolvem 400
+- [x] Respostas expõem `space_name` resolvido (relationship + property nos models)
+- [x] SchedulePage: seletor "Espaço" (texto livre só sem espaço; escolher espaço limpa o texto livre); 📍 nome na lista; **badge "⚠ Conflito de espaço"** não-bloqueante quando duas atividades do dia sobrepõem horário no mesmo espaço
+- [x] TasksPage: seletor "Space" no form; chip 📍 na lista (carrega espaços via evento → hotel)
+- [x] 7 testes novos (`test_space_links.py`) — **suíte total: 67 verdes, validada localmente**
+
+---
 
 ### Facilities — Fatia 1: CRUD + UI de Espaços do Hotel (2026-07-07) ⭐ ESTRUTURAL
 > Primeira fatia do bloco Facilities+Staff (decisão 2026-07-07). Reaproveita `t_hotel_space` existente — sem migration.
@@ -317,13 +328,12 @@
 
 ## Next Actions (Short Horizon) 📋
 
-### Priority 1: Facilities + Staff — Fatia 2 (Activity → Space, Task → Space)
-> Fatia 1 entregue em 2026-07-07 (ver seção em Completed); decisões no 08_decisions_log.md; fatias no 09_backlog.md
-- [ ] FK opcional `f_space_id` em `Activity` (migration incremental; `f_location` vira fallback)
-- [ ] FK opcional `f_space_id` em `Task` + seletor no form (antecipado da Fatia 5 — não depende de Staff)
-- [ ] Seletor de espaço no form do SchedulePage (autocomplete dos espaços do hotel do evento)
-- [ ] Exibir espaço na lista do cronograma
-- [ ] Warning não-bloqueante de conflito de espaço (mesmo lugar/horário)
+### Priority 1: Facilities + Staff — Fatia 3 (Employee raiz + engajamento por evento)
+> Fatias 1 e 2 entregues em 2026-07-07 (ver Completed); decisões no 08_decisions_log.md; fatias no 09_backlog.md
+- [ ] Backend: `Employee` (entidade raiz, `f_person_id` opcional → Person) + `EventStaffAssignment` (função, período, custo)
+- [ ] Frontend: `StaffPage.tsx` — lista, cadastro, edição, engajamentos por evento
+- [ ] Staff hospedado: criar Guest a partir do mesmo Person (reusa import do módulo clients)
+- [ ] Custo do engajamento alimenta o P&L futuro
 
 ### Priority 1: Deploy CapRover
 - [ ] Criar apps no CapRover: `events-postgres` (one-click), `events-api`, `events-web`
@@ -393,7 +403,7 @@
 ## Metrics
 
 ### Verification
-- Backend automated tests: **60 passing** (validado localmente em 2026-07-07 — pytest agora roda na estação Windows)
+- Backend automated tests: **67 passing** (validado localmente em 2026-07-07 — pytest agora roda na estação Windows)
 - Frontend build: **pendente de validação** (node indisponível localmente; validar no build CapRover/Codespaces)
 
 ### Module Completion

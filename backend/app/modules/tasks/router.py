@@ -16,7 +16,10 @@ def list_event_tasks(event_id: int, db: Session = Depends(get_db), current_user:
 @router.post("/events/{event_id}/tasks", response_model=schemas.TaskResponse, status_code=status.HTTP_201_CREATED)
 def create_task(event_id: int, task: schemas.TaskBase, db: Session = Depends(get_db), current_user: User = Depends(get_current_active_user)):
     task_create = schemas.TaskCreate(**task.model_dump(), f_event_id=event_id)
-    return service.create_task(db, task_create)
+    try:
+        return service.create_task(db, task_create)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
 
 @router.get("/tasks/{task_id}", response_model=schemas.TaskResponse)
 def get_task(task_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_active_user)):

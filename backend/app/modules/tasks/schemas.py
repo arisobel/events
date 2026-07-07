@@ -8,6 +8,7 @@ class TaskBase(BaseModel):
     f_description: Optional[str] = None
     f_priority: str = 'medium'
     f_task_type: Optional[str] = None
+    f_space_id: Optional[int] = None  # espaço estruturado (Fatia 2)
 
 class TaskCreate(TaskBase):
     f_event_id: int
@@ -15,6 +16,7 @@ class TaskCreate(TaskBase):
 class TaskUpdate(BaseModel):
     f_status: Optional[str] = None
     f_description: Optional[str] = None
+    f_space_id: Optional[int] = None
 
 class TaskStatusUpdate(BaseModel):
     new_status: str
@@ -23,6 +25,7 @@ class TaskResponse(TaskBase):
     id: int
     f_event_id: int
     f_status: str
+    space_name: Optional[str] = None  # nome do espaço resolvido (property do model)
     f_created_at: datetime
     model_config = ConfigDict(from_attributes=True)
 

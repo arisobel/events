@@ -11,6 +11,9 @@ def get_task(db: Session, task_id: int) -> Optional[models.Task]:
     return db.query(models.Task).filter(models.Task.id == task_id).first()
 
 def create_task(db: Session, task: schemas.TaskCreate) -> models.Task:
+    from app.modules.hotel import service as hotel_service
+
+    hotel_service.validate_space_for_event(db, task.f_event_id, task.f_space_id)
     db_task = models.Task(**task.model_dump())
     db.add(db_task)
     db.commit()

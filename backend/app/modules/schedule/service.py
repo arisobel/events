@@ -35,6 +35,9 @@ def get_activity(db: Session, activity_id: int) -> Optional[models.Activity]:
 
 
 def create_activity(db: Session, event_id: int, data: schemas.ActivityCreate) -> models.Activity:
+    from app.modules.hotel import service as hotel_service
+
+    hotel_service.validate_space_for_event(db, event_id, data.f_space_id)
     activity = models.Activity(f_event_id=event_id, **data.model_dump())
     db.add(activity)
     db.commit()
@@ -45,10 +48,15 @@ def create_activity(db: Session, event_id: int, data: schemas.ActivityCreate) ->
 def update_activity(
     db: Session, activity_id: int, data: schemas.ActivityUpdate
 ) -> Optional[models.Activity]:
+    from app.modules.hotel import service as hotel_service
+
     activity = get_activity(db, activity_id)
     if not activity:
         return None
-    for field, value in data.model_dump(exclude_unset=True).items():
+    update_data = data.model_dump(exclude_unset=True)
+    if "f_space_id" in update_data:
+        hotel_service.validate_space_for_event(db, activity.f_event_id, update_data["f_space_id"])
+    for field, value in update_data.items():
         setattr(activity, field, value)
     db.commit()
     db.refresh(activity)

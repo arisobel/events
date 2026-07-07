@@ -2,12 +2,13 @@
 from sqlalchemy import Column, Integer, String, DateTime, Text, ForeignKey
 from sqlalchemy.orm import relationship
 from datetime import datetime
+from typing import Optional
 from app.db.base import Base
 
 
 class Task(Base):
     __tablename__ = "t_task"
-    
+
     id = Column(Integer, primary_key=True, index=True)
     f_event_id = Column(Integer, ForeignKey("t_event.id"), nullable=False)
     f_title = Column(String(200), nullable=False)
@@ -15,14 +16,21 @@ class Task(Base):
     f_priority = Column(String(20), default='medium')
     f_status = Column(String(30), default='pending')
     f_task_type = Column(String(50))
+    # Espaço estruturado (Fatia 2 — antecipado da Fatia 5, não depende de Staff)
+    f_space_id = Column(Integer, ForeignKey("t_hotel_space.id"))
     f_assigned_to_staff_id = Column(Integer)
     f_due_datetime = Column(DateTime)
     f_started_at = Column(DateTime)
     f_completed_at = Column(DateTime)
     f_created_at = Column(DateTime, default=datetime.utcnow)
-    
+
     comments = relationship("TaskComment", back_populates="task")
     status_history = relationship("TaskStatusHistory", back_populates="task")
+    space = relationship("HotelSpace")
+
+    @property
+    def space_name(self) -> Optional[str]:
+        return self.space.f_name if self.space else None
 
 
 class TaskComment(Base):
