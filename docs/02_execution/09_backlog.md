@@ -310,23 +310,25 @@ Fatia 4: Ministrante na Activity       ← une os dois cadastros no cronograma
 Fatia 5: Task → Space + Task → Staff   ← fronteira da fase de execução
 ```
 
-### 🏛️ Fatia 1 — Facilities: dar vida ao `t_hotel_space` existente
+### 🏛️ Fatia 1 — Facilities: dar vida ao `t_hotel_space` existente ✅ **IMPLEMENTADO 2026-07-07**
 > Atividades, tasks e refeições acontecem em lugares: Lobby, Restaurantes A/B/C, Piscina, Quadras, Praia, Salão da Sinagoga, salões de refeição. Hoje `Activity.f_location` guarda **texto livre** — sem vínculo estruturado.
 
-**O que JÁ existe (não recriar):**
+**O que JÁ existia (não recriar):**
 - `t_hotel_space` (HotelSpace): `f_name`, `f_space_type`, `f_capacity`, `f_floor`, `f_block` — vinculado ao Hotel, **com GET/POST `/hotels/{id}/spaces` funcionando**
 - `t_event_space` (EventSpace): liga espaço↔evento com `f_usage_type` (modelado, sem endpoints/UI)
 - `t_hotel_table` e `t_hotel_kitchen` já referenciam `f_space_id`
 
-**Fazer:**
-- [ ] PUT/DELETE de espaços (hoje só GET/POST)
-- [ ] Retipar `f_space_type` com vocabulário do domínio (decisão 2026-07-07): sinagoga, restaurante, salao_refeicao, salao_shows, sala_aula, piscina, quadra, praia, lobby, academia, outro
-- [ ] **UI de cadastro de espaços** por hotel (casa com o item "Implementar `HotelDetailPage.tsx`" do UX Polish)
-- [ ] Testes backend (CRUD + validação de tipo)
+**Entregue (2026-07-07):**
+- [x] PUT/DELETE `/hotels/{id}/spaces/{space_id}`; DELETE bloqueia com 409 se o espaço estiver em uso (kitchens, tables, event spaces)
+- [x] `f_space_type` retipado com vocabulário do domínio via Literal no schema (sinagoga, restaurante, salao_refeicao, salao_shows, sala_aula, piscina, quadra, praia, lobby, academia, outro); Response mantém `str` para não travar leitura de linhas legadas — **sem migration** (coluna já era String(50))
+- [x] **UI de espaços na HotelsPage**: botão "+ Add Space", "View Spaces" por hotel, lista com tipo/capacidade/andar/bloco, criar/editar/excluir; `utils/spaces.ts` com vocabulário + rótulos PT
+- [x] 9 testes novos (`test_spaces.py`): CRUD, tipo fora do vocabulário rejeitado, update parcial, delete bloqueado por referência (kitchen e event space) — **suíte total: 60 verdes**
+- ⓘ pytest agora roda na estação Windows local (deps instaladas; bcrypt fixado em 4.0.1 local por incompatibilidade passlib×bcrypt 5); build TS continua só no CapRover/Codespaces
 
 ### 📅 Fatia 2 — Cronograma ancorado em lugares
 > **Decidido (2026-07-07):** `Activity.f_space_id` FK **direto** para `t_hotel_space`; `f_location` texto livre vira fallback/legado. `EventSpace` não é pré-requisito — é filtro complementar do picker quando existir.
 - [ ] FK opcional `f_space_id` em `Activity` (migração incremental)
+- [ ] **Antecipado da Fatia 5 (2026-07-07):** FK opcional `f_space_id` em `Task` + seletor de espaço no form de task — não depende de Staff, é a mesma mecânica da Activity
 - [ ] Seletor de espaço no form do SchedulePage, com autocomplete dos espaços do hotel do evento
 - [ ] Exibir espaço na lista do cronograma (resolve "onde é a reza/o jantar?")
 - [ ] Warning **não-bloqueante** de conflito de espaço (duas atividades no mesmo lugar/horário)
@@ -344,9 +346,13 @@ Fatia 5: Task → Space + Task → Staff   ← fronteira da fase de execução
 
 ### 🔗 Fatia 5 — Reconexão das Tasks (início da fase de execução)
 > `Task.f_assigned_to_staff_id`, `TaskComment.f_staff_member_id` e `TaskStatusHistory.f_changed_by_staff_id` são Integers **sem FK** desde a criação — o esqueleto sempre esperou este cadastro.
-- [ ] `Task.f_assigned_to_staff_id` vira FK real (para o engajamento)
-- [ ] FK opcional `f_space_id` em `Task` + seletor de espaço no form
-- [ ] A partir daqui: task = "este trabalho, neste lugar, desta pessoa" — turnos, PWA do staff e supervisão constroem em cima
+>
+> ⓘ Conceito confirmado com Michel (2026-07-07): **Task ≠ Activity**. Activity = programa público do evento (hóspede/displays); Task = trabalho interno da equipe (nunca vai ao público). Isso resolve "tasks públicas vs. privadas" por arquitetura, sem flag de visibilidade. Ex.: kasherização D-5 = tasks puras (due_datetime não é preso à janela do evento); montagem de um jantar = task **ligada** à activity.
+- [ ] `Task.f_assigned_to_staff_id` vira FK real (para o engajamento) — **executor**
+- [ ] **Líder/ponto focal da task** (ideia Michel 2026-07-07): FK opcional `f_leader_staff_id` — quem responde pela task para a alta gestão, distinto de quem executa; comentários + histórico de status viram o "andamento" que o focal reporta
+- [ ] **Link Task ↔ Activity** (ideia Michel 2026-07-07): FK opcional `Task.f_activity_id` — tasks de suporte/montagem de uma atividade do programa; permite ver "o jantar de Yom Tov tem 3 tasks, 1 atrasada"
+- [ ] ~~FK opcional `f_space_id` em `Task`~~ → **antecipado para a Fatia 2** (não depende de Staff)
+- [ ] A partir daqui: task = "este trabalho, neste lugar, desta pessoa, (opcionalmente) para aquela atividade" — turnos, PWA do staff e supervisão constroem em cima
 
 **Substitui/absorve** o item "Módulo Funcionários (Staff)" mais abaixo — mantê-los sincronizados.
 

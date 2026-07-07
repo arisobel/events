@@ -1,8 +1,25 @@
 """Hotel module - Pydantic schemas."""
 from pydantic import BaseModel, ConfigDict
-from typing import Optional
+from typing import Literal, Optional
 from datetime import datetime
 from decimal import Decimal
+
+
+# Vocabulário de tipos de espaço do domínio (decisão 2026-07-07).
+# Response mantém str para não quebrar leitura de linhas legadas (hall/pool/gym...).
+SpaceType = Literal[
+    "sinagoga",
+    "restaurante",
+    "salao_refeicao",
+    "salao_shows",
+    "sala_aula",
+    "piscina",
+    "quadra",
+    "praia",
+    "lobby",
+    "academia",
+    "outro",
+]
 
 
 # Hotel schemas
@@ -49,7 +66,7 @@ class HotelResponse(HotelBase):
 # HotelSpace schemas
 class HotelSpaceBase(BaseModel):
     f_name: str
-    f_space_type: str
+    f_space_type: SpaceType
     f_capacity: Optional[int] = None
     f_floor: Optional[str] = None
     f_block: Optional[str] = None
@@ -60,11 +77,22 @@ class HotelSpaceCreate(HotelSpaceBase):
     f_hotel_id: int
 
 
+class HotelSpaceUpdate(BaseModel):
+    f_name: Optional[str] = None
+    f_space_type: Optional[SpaceType] = None
+    f_capacity: Optional[int] = None
+    f_floor: Optional[str] = None
+    f_block: Optional[str] = None
+    f_notes: Optional[str] = None
+    f_is_active: Optional[str] = None
+
+
 class HotelSpaceResponse(HotelSpaceBase):
     id: int
     f_hotel_id: int
+    f_space_type: str  # legado pode ter tipos fora do vocabulário; leitura não trava
     f_is_active: str
-    
+
     model_config = ConfigDict(from_attributes=True)
 
 

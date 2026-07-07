@@ -48,6 +48,60 @@ def create_hotel_space(db: Session, space: schemas.HotelSpaceCreate) -> models.H
     return db_space
 
 
+def get_hotel_space(db: Session, hotel_id: int, space_id: int) -> Optional[models.HotelSpace]:
+    return (
+        db.query(models.HotelSpace)
+        .filter(models.HotelSpace.id == space_id, models.HotelSpace.f_hotel_id == hotel_id)
+        .first()
+    )
+
+
+def update_hotel_space(
+    db: Session,
+    hotel_id: int,
+    space_id: int,
+    space: schemas.HotelSpaceUpdate,
+) -> Optional[models.HotelSpace]:
+    db_space = get_hotel_space(db, hotel_id, space_id)
+    if not db_space:
+        return None
+
+    update_data = space.model_dump(exclude_unset=True)
+    for key, value in update_data.items():
+        setattr(db_space, key, value)
+
+    db.commit()
+    db.refresh(db_space)
+    return db_space
+
+
+def delete_hotel_space(db: Session, hotel_id: int, space_id: int) -> Optional[bool]:
+    """Remove um espaço. Retorna None se não existir; levanta ValueError se estiver em uso."""
+    db_space = get_hotel_space(db, hotel_id, space_id)
+    if not db_space:
+        return None
+
+    # Espaço referenciado não pode sumir — cozinhas, mesas e usos por evento apontam para ele
+    from app.modules.events import models as event_models
+
+    references = []
+    if db.query(models.HotelKitchen).filter(models.HotelKitchen.f_space_id == space_id).first():
+        references.append("kitchens")
+    if db.query(models.HotelTable).filter(models.HotelTable.f_space_id == space_id).first():
+        references.append("tables")
+    if db.query(event_models.EventSpace).filter(event_models.EventSpace.f_space_id == space_id).first():
+        references.append("event spaces")
+
+    if references:
+        raise ValueError(
+            f"Space is in use by: {', '.join(references)}. Remove the references first."
+        )
+
+    db.delete(db_space)
+    db.commit()
+    return True
+
+
 # HotelRoom services  
 def get_hotel_rooms(db: Session, hotel_id: int) -> List[models.HotelRoom]:
     return db.query(models.HotelRoom).filter(models.HotelRoom.f_hotel_id == hotel_id).all()

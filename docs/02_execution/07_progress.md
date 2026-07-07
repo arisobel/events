@@ -3,7 +3,7 @@
 ## Current State
 
 - **Phase**: Phase 1 - Core Backend + Internal MVP Slice ✅ **IMPLEMENTADO** | Financeiro Backend Phase 1 ✅
-- **Last Update**: 07 de Julho de 2026 - Decisão estrutural Facilities + Staff registrada; Fatia 1 (Facilities) é a próxima implementação
+- **Last Update**: 07 de Julho de 2026 - Facilities Fatia 1 implementada (CRUD + UI de espaços); próxima: Fatia 2 (Activity → Space)
 - **Status**: Fluxo core disponível na UI: Hotels → Events → Guests/Reservations → Room Allocations → Tasks
 - **Environment**: GitHub Codespaces + Docker
 - **Recent**: Módulo `finance` criado — precificação de quartos, pagamento por reserva, endpoints room-grid / financial-summary / invoice (migration `9d2f5c1e7a34`)
@@ -13,6 +13,17 @@
 ---
 
 ## Completed ✅
+
+### Facilities — Fatia 1: CRUD + UI de Espaços do Hotel (2026-07-07) ⭐ ESTRUTURAL
+> Primeira fatia do bloco Facilities+Staff (decisão 2026-07-07). Reaproveita `t_hotel_space` existente — sem migration.
+- [x] Backend: PUT/DELETE `/hotels/{id}/spaces/{space_id}` (GET/POST já existiam); DELETE retorna **409** se o espaço estiver em uso por kitchens/tables/event spaces
+- [x] `f_space_type` validado por Literal com vocabulário do domínio: sinagoga, restaurante, salao_refeicao, salao_shows, sala_aula, piscina, quadra, praia, lobby, academia, outro; `HotelSpaceResponse` mantém `str` (linhas legadas hall/pool/gym não travam leitura)
+- [x] Frontend: `utils/spaces.ts` (vocabulário + rótulos PT); HotelsPage ganhou "+ Add Space", "View Spaces" por hotel, lista de espaços (tipo/capacidade/andar/bloco) com editar/excluir — mesmo padrão visual da seção de quartos
+- [x] 9 testes novos (`test_spaces.py`) — **suíte total: 60 verdes, validada localmente**
+- ⓘ pytest agora roda na estação Windows (deps instaladas; bcrypt local fixado em 4.0.1 por incompatibilidade passlib 1.7.4 × bcrypt 5.x — em produção o requirements do container manda)
+- ⓘ Build TS não validado localmente (node indisponível) — revisão manual contra strict/noUnusedLocals feita; validar no build do CapRover
+
+---
 
 ### Backend Modules (6/6 Phase 1)
 - [x] **Auth Module** - JWT authentication, registro, login completo
@@ -306,12 +317,13 @@
 
 ## Next Actions (Short Horizon) 📋
 
-### Priority 1: Facilities + Staff — Fatia 1 (decisão 2026-07-07)
-> Modelo decidido e registrado no 08_decisions_log.md; fatias 1–5 no 09_backlog.md (bloco estrutural)
-- [ ] PUT/DELETE de `HotelSpace` (GET/POST já existem)
-- [ ] Retipar `f_space_type` com vocabulário do domínio (sinagoga, restaurante, salao_refeicao, …)
-- [ ] UI de cadastro de espaços por hotel (casa com `HotelDetailPage.tsx` do UX Polish)
-- [ ] Testes backend do CRUD de espaços
+### Priority 1: Facilities + Staff — Fatia 2 (Activity → Space, Task → Space)
+> Fatia 1 entregue em 2026-07-07 (ver seção em Completed); decisões no 08_decisions_log.md; fatias no 09_backlog.md
+- [ ] FK opcional `f_space_id` em `Activity` (migration incremental; `f_location` vira fallback)
+- [ ] FK opcional `f_space_id` em `Task` + seletor no form (antecipado da Fatia 5 — não depende de Staff)
+- [ ] Seletor de espaço no form do SchedulePage (autocomplete dos espaços do hotel do evento)
+- [ ] Exibir espaço na lista do cronograma
+- [ ] Warning não-bloqueante de conflito de espaço (mesmo lugar/horário)
 
 ### Priority 1: Deploy CapRover
 - [ ] Criar apps no CapRover: `events-postgres` (one-click), `events-api`, `events-web`
@@ -381,8 +393,8 @@
 ## Metrics
 
 ### Verification
-- Backend automated tests: **34 passing** (+1 novo p/ nacionalidade → 35 esperado, validar no Codespaces)
-- Frontend build: **passing** (validado por último em Codespaces; node/docker indisponíveis na estação Windows atual)
+- Backend automated tests: **60 passing** (validado localmente em 2026-07-07 — pytest agora roda na estação Windows)
+- Frontend build: **pendente de validação** (node indisponível localmente; validar no build CapRover/Codespaces)
 
 ### Module Completion
 - Phase 0 (Bootstrap): **100%** ✅

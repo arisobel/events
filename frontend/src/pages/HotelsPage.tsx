@@ -6,8 +6,11 @@ import {
   HotelCreate,
   HotelRoom,
   HotelRoomCreate,
+  HotelSpace,
+  HotelSpaceCreate,
   hotelService,
 } from '../services/api'
+import { SPACE_TYPES, spaceTypeLabel } from '../utils/spaces'
 import AdminLayout from '../components/AdminLayout'
 
 // Pequeno rótulo acima do campo — evita depender só do placeholder, que some ao digitar
@@ -73,6 +76,26 @@ const emptyRoomForm: RoomFormState = {
   f_notes: '',
 }
 
+type SpaceFormState = {
+  hotelId: number | ''
+  f_name: string
+  f_space_type: string
+  f_capacity: string
+  f_floor: string
+  f_block: string
+  f_notes: string
+}
+
+const emptySpaceForm: SpaceFormState = {
+  hotelId: '',
+  f_name: '',
+  f_space_type: 'salao_refeicao',
+  f_capacity: '',
+  f_floor: '',
+  f_block: '',
+  f_notes: '',
+}
+
 export default function HotelsPage() {
   const [hotels, setHotels] = useState<Hotel[]>([])
   const [roomsByHotel, setRoomsByHotel] = useState<Record<number, HotelRoom[]>>({})
@@ -93,8 +116,15 @@ export default function HotelsPage() {
   const [bulkStep, setBulkStep] = useState(1)
   const [bulkQuantity, setBulkQuantity] = useState(1)
 
+  const [spacesByHotel, setSpacesByHotel] = useState<Record<number, HotelSpace[]>>({})
+  const [selectedHotelForSpaces, setSelectedHotelForSpaces] = useState<number | null>(null)
+  const [showSpaceForm, setShowSpaceForm] = useState(false)
+  const [savingSpace, setSavingSpace] = useState(false)
+  const [editingSpaceId, setEditingSpaceId] = useState<number | null>(null)
+
   const [hotelForm, setHotelForm] = useState<HotelFormState>(emptyHotelForm)
   const [roomForm, setRoomForm] = useState<RoomFormState>(emptyRoomForm)
+  const [spaceForm, setSpaceForm] = useState<SpaceFormState>(emptySpaceForm)
 
   const navigate = useNavigate()
 
@@ -128,6 +158,19 @@ export default function HotelsPage() {
       setSelectedHotelForRooms(hotelId)
     } catch (err: any) {
       setError(err.response?.data?.detail || 'Failed to load hotel rooms')
+    }
+  }
+
+  const loadSpaces = async (hotelId: number) => {
+    try {
+      const spaces = await hotelService.getHotelSpaces(hotelId)
+      setSpacesByHotel((current) => ({
+        ...current,
+        [hotelId]: spaces,
+      }))
+      setSelectedHotelForSpaces(hotelId)
+    } catch (err: any) {
+      setError(err.response?.data?.detail || 'Failed to load hotel spaces')
     }
   }
 
@@ -322,6 +365,89 @@ export default function HotelsPage() {
     }
   }
 
+  // ---- Space form (create + edit) ----
+
+  const openNewSpaceForm = (hotelId?: number) => {
+    setEditingSpaceId(null)
+    setSpaceForm({
+      ...emptySpaceForm,
+      hotelId: hotelId ?? (hotels[0]?.id ?? ''),
+    })
+    setShowSpaceForm(true)
+    setError('')
+  }
+
+  const openEditSpaceForm = (hotelId: number, space: HotelSpace) => {
+    setEditingSpaceId(space.id)
+    setSpaceForm({
+      hotelId,
+      f_name: space.f_name || '',
+      f_space_type: space.f_space_type || 'outro',
+      f_capacity: space.f_capacity != null ? String(space.f_capacity) : '',
+      f_floor: space.f_floor || '',
+      f_block: space.f_block || '',
+      f_notes: space.f_notes || '',
+    })
+    setShowSpaceForm(true)
+    setError('')
+  }
+
+  const closeSpaceForm = () => {
+    setShowSpaceForm(false)
+    setEditingSpaceId(null)
+    setSpaceForm((current) => ({ ...emptySpaceForm, hotelId: current.hotelId }))
+  }
+
+  const handleSubmitSpace = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!spaceForm.hotelId) {
+      setError('Select a hotel before saving a space')
+      return
+    }
+    if (!spaceForm.f_name.trim()) {
+      setError('Space name is required')
+      return
+    }
+
+    const payload = {
+      f_name: spaceForm.f_name,
+      f_space_type: spaceForm.f_space_type,
+      f_capacity: spaceForm.f_capacity !== '' ? Number(spaceForm.f_capacity) : undefined,
+      f_floor: spaceForm.f_floor || undefined,
+      f_block: spaceForm.f_block || undefined,
+      f_notes: spaceForm.f_notes || undefined,
+    }
+
+    try {
+      setSavingSpace(true)
+      setError('')
+      const hotelId = Number(spaceForm.hotelId)
+      if (editingSpaceId) {
+        await hotelService.updateHotelSpace(hotelId, editingSpaceId, payload)
+      } else {
+        await hotelService.createHotelSpace(hotelId, payload as HotelSpaceCreate)
+      }
+      closeSpaceForm()
+      await loadSpaces(hotelId)
+    } catch (err: any) {
+      setError(err.response?.data?.detail || 'Failed to save space')
+    } finally {
+      setSavingSpace(false)
+    }
+  }
+
+  const handleDeleteSpace = async (hotelId: number, space: HotelSpace) => {
+    if (!window.confirm(`Delete space "${space.f_name}"?`)) return
+    try {
+      setError('')
+      await hotelService.deleteHotelSpace(hotelId, space.id)
+      await loadSpaces(hotelId)
+    } catch (err: any) {
+      // 409 quando o espaço está em uso por cozinhas/mesas/eventos
+      setError(err.response?.data?.detail || 'Failed to delete space')
+    }
+  }
+
   const formatPrice = (value?: string | null) => {
     if (value == null || value === '') return null
     const num = Number(value)
@@ -349,6 +475,12 @@ export default function HotelsPage() {
               className="bg-emerald-600 text-white px-4 py-2 rounded-md hover:bg-emerald-700 text-sm"
             >
               + Add Room
+            </button>
+            <button
+              onClick={() => openNewSpaceForm()}
+              className="bg-violet-600 text-white px-4 py-2 rounded-md hover:bg-violet-700 text-sm"
+            >
+              + Add Space
             </button>
             <button
               onClick={() => navigate('/events')}
@@ -567,6 +699,105 @@ export default function HotelsPage() {
           </div>
         )}
 
+        {showSpaceForm && (
+          <div className="bg-white rounded-lg shadow p-6 mb-6">
+            <h2 className="text-lg font-semibold text-gray-900 mb-4">
+              {editingSpaceId ? 'Edit space' : 'Create space'}
+            </h2>
+            <form onSubmit={handleSubmitSpace} className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <Field label="Hotel">
+                <select
+                  value={spaceForm.hotelId}
+                  onChange={(e) => setSpaceForm((current) => ({ ...current, hotelId: Number(e.target.value) || '' }))}
+                  className="px-3 py-2 border border-gray-300 rounded-md disabled:bg-gray-100 w-full"
+                  required
+                  disabled={editingSpaceId != null}
+                >
+                  <option value="">Select hotel</option>
+                  {hotels.map((hotel) => (
+                    <option key={hotel.id} value={hotel.id}>
+                      {hotel.f_name}
+                    </option>
+                  ))}
+                </select>
+              </Field>
+              <Field label="Space name *">
+                <input
+                  type="text"
+                  placeholder="ex: Salão Jequitibás"
+                  value={spaceForm.f_name}
+                  onChange={(e) => setSpaceForm((current) => ({ ...current, f_name: e.target.value }))}
+                  className="px-3 py-2 border border-gray-300 rounded-md w-full"
+                  required
+                />
+              </Field>
+              <Field label="Space type *">
+                <select
+                  value={spaceForm.f_space_type}
+                  onChange={(e) => setSpaceForm((current) => ({ ...current, f_space_type: e.target.value }))}
+                  className="px-3 py-2 border border-gray-300 rounded-md w-full"
+                  required
+                >
+                  {SPACE_TYPES.map((type) => (
+                    <option key={type} value={type}>
+                      {spaceTypeLabel(type)}
+                    </option>
+                  ))}
+                </select>
+              </Field>
+              <Field label="Capacity">
+                <input
+                  type="number"
+                  min={0}
+                  value={spaceForm.f_capacity}
+                  onChange={(e) => setSpaceForm((current) => ({ ...current, f_capacity: e.target.value }))}
+                  className="px-3 py-2 border border-gray-300 rounded-md w-full"
+                />
+              </Field>
+              <Field label="Floor">
+                <input
+                  type="text"
+                  value={spaceForm.f_floor}
+                  onChange={(e) => setSpaceForm((current) => ({ ...current, f_floor: e.target.value }))}
+                  className="px-3 py-2 border border-gray-300 rounded-md w-full"
+                />
+              </Field>
+              <Field label="Block">
+                <input
+                  type="text"
+                  value={spaceForm.f_block}
+                  onChange={(e) => setSpaceForm((current) => ({ ...current, f_block: e.target.value }))}
+                  className="px-3 py-2 border border-gray-300 rounded-md w-full"
+                />
+              </Field>
+              <Field label="Notes" className="md:col-span-2">
+                <input
+                  type="text"
+                  value={spaceForm.f_notes}
+                  onChange={(e) => setSpaceForm((current) => ({ ...current, f_notes: e.target.value }))}
+                  className="px-3 py-2 border border-gray-300 rounded-md w-full"
+                />
+              </Field>
+              <div className="md:col-span-2 flex gap-3">
+                <button
+                  type="submit"
+                  disabled={savingSpace}
+                  className="bg-violet-600 text-white px-5 py-2 rounded-md hover:bg-violet-700 disabled:opacity-50"
+                >
+                  {savingSpace ? 'Saving...' : editingSpaceId ? 'Save changes' : 'Create space'}
+                </button>
+                <button
+                  type="button"
+                  onClick={closeSpaceForm}
+                  className="bg-gray-200 text-gray-700 px-5 py-2 rounded-md hover:bg-gray-300"
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
+          </div>
+        )}
+
         {loading && (
           <div className="text-center text-gray-600 py-12">Loading hotels...</div>
         )}
@@ -582,6 +813,7 @@ export default function HotelsPage() {
           <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
             {hotels.map((hotel) => {
               const rooms = roomsByHotel[hotel.id] || []
+              const spaces = spacesByHotel[hotel.id] || []
 
               return (
                 <div
@@ -611,6 +843,12 @@ export default function HotelsPage() {
                         className="bg-gray-100 text-gray-800 px-3 py-2 rounded-md hover:bg-gray-200 text-sm"
                       >
                         {selectedHotelForRooms === hotel.id ? 'Refresh Rooms' : 'View Rooms'}
+                      </button>
+                      <button
+                        onClick={() => loadSpaces(hotel.id)}
+                        className="bg-violet-50 text-violet-700 px-3 py-2 rounded-md hover:bg-violet-100 text-sm"
+                      >
+                        {selectedHotelForSpaces === hotel.id ? 'Refresh Spaces' : 'View Spaces'}
                       </button>
                     </div>
                   </div>
@@ -705,6 +943,60 @@ export default function HotelsPage() {
                               </div>
                             )
                           })}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {selectedHotelForSpaces === hotel.id && (
+                    <div className="mt-5">
+                      <div className="flex items-center justify-between mb-2 gap-3">
+                        <h3 className="text-sm font-semibold text-gray-900 whitespace-nowrap">
+                          Spaces ({spaces.length})
+                        </h3>
+                        <button
+                          onClick={() => openNewSpaceForm(hotel.id)}
+                          className="text-xs text-violet-700 hover:text-violet-900 whitespace-nowrap"
+                        >
+                          + Add space here
+                        </button>
+                      </div>
+                      {spaces.length === 0 ? (
+                        <div className="text-sm text-gray-500 bg-gray-50 rounded-md p-3">
+                          No spaces yet. Register where activities happen: synagogue, dining halls, pool...
+                        </div>
+                      ) : (
+                        <div className="space-y-2">
+                          {spaces.map((space) => (
+                            <div
+                              key={space.id}
+                              className="flex items-center justify-between rounded-md border border-gray-200 px-3 py-2 text-sm"
+                            >
+                              <div>
+                                <p className="font-medium text-gray-900">{space.f_name}</p>
+                                <p className="text-gray-500">
+                                  {spaceTypeLabel(space.f_space_type)}
+                                  {space.f_capacity != null ? ` · Capacity ${space.f_capacity}` : ''}
+                                  {space.f_floor ? ` · Floor ${space.f_floor}` : ''}
+                                  {space.f_block ? ` · Block ${space.f_block}` : ''}
+                                </p>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <button
+                                  onClick={() => openEditSpaceForm(hotel.id, space)}
+                                  className="text-xs text-blue-700 hover:text-blue-900"
+                                >
+                                  Edit
+                                </button>
+                                <button
+                                  onClick={() => handleDeleteSpace(hotel.id, space)}
+                                  className="text-xs text-red-600 hover:text-red-800"
+                                >
+                                  Delete
+                                </button>
+                              </div>
+                            </div>
+                          ))}
                         </div>
                       )}
                     </div>

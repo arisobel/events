@@ -143,6 +143,37 @@ export interface HotelRoomUpdate {
   f_notes?: string
 }
 
+export interface HotelSpace {
+  id: number
+  f_hotel_id: number
+  f_name: string
+  f_space_type: string
+  f_capacity?: number | null
+  f_floor?: string | null
+  f_block?: string | null
+  f_notes?: string | null
+  f_is_active: string
+}
+
+export interface HotelSpaceCreate {
+  f_name: string
+  f_space_type: string
+  f_capacity?: number
+  f_floor?: string
+  f_block?: string
+  f_notes?: string
+}
+
+export interface HotelSpaceUpdate {
+  f_name?: string
+  f_space_type?: string
+  f_capacity?: number
+  f_floor?: string
+  f_block?: string
+  f_notes?: string
+  f_is_active?: string
+}
+
 export interface Event {
   id: number
   f_hotel_id: number
@@ -588,6 +619,29 @@ export const hotelService = {
   ): Promise<HotelRoom> {
     const response = await api.put<HotelRoom>(`/hotels/${hotelId}/rooms/${roomId}`, room)
     return response.data
+  },
+
+  async getHotelSpaces(hotelId: number): Promise<HotelSpace[]> {
+    const response = await api.get<HotelSpace[]>(`/hotels/${hotelId}/spaces`)
+    return response.data
+  },
+
+  async createHotelSpace(hotelId: number, space: HotelSpaceCreate): Promise<HotelSpace> {
+    const response = await api.post<HotelSpace>(`/hotels/${hotelId}/spaces`, space)
+    return response.data
+  },
+
+  async updateHotelSpace(
+    hotelId: number,
+    spaceId: number,
+    space: HotelSpaceUpdate,
+  ): Promise<HotelSpace> {
+    const response = await api.put<HotelSpace>(`/hotels/${hotelId}/spaces/${spaceId}`, space)
+    return response.data
+  },
+
+  async deleteHotelSpace(hotelId: number, spaceId: number): Promise<void> {
+    await api.delete(`/hotels/${hotelId}/spaces/${spaceId}`)
   },
 }
 

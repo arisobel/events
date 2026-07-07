@@ -82,6 +82,37 @@ def create_space(
     return service.create_hotel_space(db, space_create)
 
 
+@router.put("/{hotel_id}/spaces/{space_id}", response_model=schemas.HotelSpaceResponse)
+def update_space(
+    hotel_id: int,
+    space_id: int,
+    space: schemas.HotelSpaceUpdate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
+):
+    """Update a space's data (name, type, capacity, floor, block, notes)."""
+    updated_space = service.update_hotel_space(db, hotel_id, space_id, space)
+    if not updated_space:
+        raise HTTPException(status_code=404, detail="Space not found for hotel")
+    return updated_space
+
+
+@router.delete("/{hotel_id}/spaces/{space_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_space(
+    hotel_id: int,
+    space_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
+):
+    """Delete a space. Fails with 409 if the space is referenced by kitchens, tables or event spaces."""
+    try:
+        deleted = service.delete_hotel_space(db, hotel_id, space_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(exc))
+    if deleted is None:
+        raise HTTPException(status_code=404, detail="Space not found for hotel")
+
+
 @router.get("/{hotel_id}/rooms", response_model=List[schemas.HotelRoomResponse])
 def get_hotel_rooms(
     hotel_id: int,
