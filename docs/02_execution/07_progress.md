@@ -3,7 +3,7 @@
 ## Current State
 
 - **Phase**: Phase 1 - Core Backend + Internal MVP Slice ✅ **IMPLEMENTADO** | Financeiro Backend Phase 1 ✅
-- **Last Update**: 07 de Julho de 2026 - Facilities+Staff Fatias 1, 2 e 3 implementadas (espaços, Activity/Task → Space, Employee + engajamento); próximas: Fatias 4/5 (ministrante e reconexão das tasks)
+- **Last Update**: 09 de Agosto de 2026 - Fase A1 (i18n PT/EN/HE + RTL + idioma por usuário) implementada; próxima: extração contínua de strings + Fase A2 (Voucher PDF)
 - **Status**: Fluxo core disponível na UI: Hotels → Events → Guests/Reservations → Room Allocations → Tasks
 - **Environment**: GitHub Codespaces + Docker
 - **Recent**: Módulo `finance` criado — precificação de quartos, pagamento por reserva, endpoints room-grid / financial-summary / invoice (migration `9d2f5c1e7a34`)
@@ -13,6 +13,19 @@
 ---
 
 ## Completed ✅
+
+### i18n — Fase A1: Infraestrutura Multi-idiomas PT/EN/HE com RTL (2026-08-09) ⭐ ESTRUTURAL
+> Primeiro entregável do bloco Agência/Voucher. Implementado **sem react-i18next** (build usa `npm ci` + lockfile; sem npm local para regenerar — dependência nova quebraria o deploy): i18n próprio tipado em `src/i18n/`.
+- [x] Dicionários tipados: `ptBR` é a fonte das chaves; `en`/`he` são `Record<TranslationKey, string>` — **tradução faltando é erro de compilação**
+- [x] `I18nProvider` + `useI18n()` + `t(chave, {vars})`: interpolação, fallback pt-BR, persistência localStorage, detecção do navegador
+- [x] **RTL**: `document.documentElement.dir/lang` dinâmicos (hebraico → rtl); flex flipa naturalmente; smoke visual em produção pendente
+- [x] **Idioma por usuário (cross-device)**: `t_user.f_language` (migration `e8f0a2b4c596`), `PUT /auth/me/language`, `/auth/me` expõe; AuthContext aplica a preferência salva no login
+- [x] Seletor de idioma na sidebar (persiste no usuário) e na LoginPage (pré-login, localStorage)
+- [x] Extração inicial: AdminLayout (nav, logout, rodapé) + LoginPage completa nas 3 línguas
+- [x] 3 testes novos (`test_language_pref.py`) — **suíte total: 87 verdes, validada localmente**
+- ⓘ Extração das demais páginas segue incremental (ordem: fluxo do voucher — Clients, Guests/Reservations); novas telas nascem traduzidas
+
+---
 
 ### Staff — Fatia 3: Employee raiz + Engajamento por Evento (2026-07-07) ⭐ ESTRUTURAL
 > Lado do CUSTO do evento, espelhando o padrão Cliente+Pessoas (Person = identidade; Client = receita; Employee = custo).
@@ -341,8 +354,14 @@
 
 ## Next Actions (Short Horizon) 📋
 
-### Priority 1: Facilities + Staff — Fatias 4 e 5 (Ministrante + reconexão das Tasks)
-> Fatias 1, 2 e 3 entregues em 2026-07-07 (ver Completed); decisões no 08_decisions_log.md; fatias no 09_backlog.md
+### Priority 1: Agência + Voucher + i18n — Fase A (decisão 2026-08-09)
+> Expansão para o eixo comercial (proxy de vendas). Decisões na entrada 2026-08-09 do 08_decisions_log.md; bloco 🎫 no 09_backlog.md
+- [x] **Fase A1 — i18n (infra)**: i18n próprio tipado (sem lib — restrição npm ci/lockfile), PT-BR + EN + **HE (RTL)**, idioma por usuário (`f_language` + `PUT /auth/me/language`), seletores na sidebar e no login, AdminLayout + LoginPage extraídos
+- [ ] Fase A1 (contínuo): extrair strings das demais páginas (Clients → Guests → resto); smoke visual RTL em produção
+- [ ] **Fase A2 — Voucher v1 (PDF)**: entidade `Agency` (múltiplas emissoras), numeração por template, booking/provider reference na Reservation, PDF servidor com suporte RTL, sem R$
+
+### Priority 2: Facilities + Staff — Fatias 4 e 5 (Ministrante + reconexão das Tasks)
+> Fatias 1, 2 e 3 entregues em 2026-07-07 (ver Completed); pequenas — fechar quando tocarem no caminho ou em intervalo
 - [ ] Fatia 4: `Activity` ganha vínculo opcional com ministrante (Employee)
 - [ ] Fatia 5: `Task.f_assigned_to_staff_id` vira FK real (executor) + líder/ponto focal + link Task↔Activity
 - [ ] Candidato paralelo: 🕎 hebcal/EventPeriod nas abas do Cronograma (reforçado pelo Michel em 2026-07-07)
@@ -415,7 +434,7 @@
 ## Metrics
 
 ### Verification
-- Backend automated tests: **74 passing** (validado localmente em 2026-07-07 — pytest agora roda na estação Windows)
+- Backend automated tests: **87 passing** (validado localmente em 2026-08-09)
 - Frontend build: **pendente de validação** (node indisponível localmente; validar no build CapRover/Codespaces)
 
 ### Module Completion

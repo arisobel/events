@@ -63,6 +63,7 @@ export interface User {
   f_email: string
   f_is_active: string
   f_created_at: string
+  f_language?: string | null
   roles: string[]
 }
 
@@ -531,6 +532,11 @@ export const authService = {
 
   async getCurrentUser(): Promise<User> {
     const response = await api.get<User>('/auth/me')
+    return response.data
+  },
+
+  async updateMyLanguage(language: string): Promise<User> {
+    const response = await api.put<User>('/auth/me/language', { f_language: language })
     return response.data
   },
 

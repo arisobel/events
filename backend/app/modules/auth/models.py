@@ -13,6 +13,7 @@ class User(Base):
     f_username = Column(String(100), unique=True, nullable=False, index=True)
     f_password_hash = Column(Text, nullable=False)
     f_email = Column(String(150))
+    f_language = Column(String(10))  # preferência de idioma da UI: pt-BR | en | he
     f_is_active = Column(CHAR(1), default='T')
     f_created_at = Column(DateTime, default=datetime.utcnow)
     

@@ -1,6 +1,6 @@
 """Authentication module - Pydantic schemas."""
 from pydantic import BaseModel, ConfigDict, EmailStr
-from typing import Optional, List
+from typing import Literal, Optional, List
 from datetime import datetime
 
 
@@ -28,9 +28,15 @@ class UserResponse(UserBase):
     id: int
     f_is_active: str
     f_created_at: datetime
+    f_language: Optional[str] = None
     roles: List[str] = []
-    
+
     model_config = ConfigDict(from_attributes=True)
+
+
+class LanguagePreference(BaseModel):
+    """Preferência de idioma da UI (i18n Fase A1)."""
+    f_language: Literal["pt-BR", "en", "he"]
 
 
 # Auth schemas

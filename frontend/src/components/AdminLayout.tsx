@@ -1,6 +1,9 @@
 import { ReactElement, ReactNode, useState } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
+import { LANGUAGES, isLanguage, useI18n } from '../i18n'
+import type { TranslationKey } from '../i18n/locales/ptBR'
+import { authService } from '../services/api'
 
 interface AdminLayoutProps {
   children: ReactNode
@@ -12,18 +15,18 @@ interface IconProps {
 }
 
 interface NavLink {
-  label: string
+  labelKey: TranslationKey
   path: string
   icon: (props: IconProps) => ReactElement
   adminOnly?: boolean
 }
 
 const navLinks: NavLink[] = [
-  { label: 'Hotels', path: '/hotels', icon: HotelIcon },
-  { label: 'Events', path: '/events', icon: CalendarDaysIcon },
-  { label: 'Clientes', path: '/clients', icon: UsersIcon },
-  { label: 'Staff', path: '/staff', icon: BriefcaseIcon },
-  { label: 'Usuários', path: '/admin/users', icon: ShieldIcon, adminOnly: true },
+  { labelKey: 'nav.hotels', path: '/hotels', icon: HotelIcon },
+  { labelKey: 'nav.events', path: '/events', icon: CalendarDaysIcon },
+  { labelKey: 'nav.clients', path: '/clients', icon: UsersIcon },
+  { labelKey: 'nav.staff', path: '/staff', icon: BriefcaseIcon },
+  { labelKey: 'nav.users', path: '/admin/users', icon: ShieldIcon, adminOnly: true },
 ]
 
 function BriefcaseIcon({ className }: IconProps) {
@@ -116,10 +119,20 @@ function XIcon({ className }: IconProps) {
 }
 
 export default function AdminLayout({ children, title }: AdminLayoutProps) {
-  const { user, logout, isAdmin } = useAuth()
+  const { user, logout, isAdmin, isAuthenticated } = useAuth()
+  const { language, setLanguage, t } = useI18n()
   const navigate = useNavigate()
   const location = useLocation()
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
+
+  const handleLanguageChange = (value: string) => {
+    if (!isLanguage(value)) return
+    setLanguage(value)
+    if (isAuthenticated) {
+      // persiste no usuário (cross-device); falha silenciosa não bloqueia a troca local
+      authService.updateMyLanguage(value).catch(() => {})
+    }
+  }
 
   const isActive = (path: string) => location.pathname === path
 
@@ -167,7 +180,7 @@ export default function AdminLayout({ children, title }: AdminLayoutProps) {
 
         {/* Navigation */}
         <nav className="flex-1 py-4 px-3 space-y-1 overflow-auto">
-          {navLinks.filter((link) => !link.adminOnly || isAdmin).map(({ label, path, icon: Icon }) => (
+          {navLinks.filter((link) => !link.adminOnly || isAdmin).map(({ labelKey, path, icon: Icon }) => (
             <a
               key={path}
               href="#"
@@ -175,10 +188,26 @@ export default function AdminLayout({ children, title }: AdminLayoutProps) {
               className={['sidebar-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm', isActive(path) ? 'active' : ''].filter(Boolean).join(' ')}
             >
               <Icon className="w-4 h-4 flex-shrink-0" />
-              {label}
+              {t(labelKey)}
             </a>
           ))}
         </nav>
+
+        {/* Language selector */}
+        <div className="px-4 pb-3">
+          <label className="block text-[11px] uppercase tracking-wide text-slate-500 mb-1">
+            {t('lang.label')}
+          </label>
+          <select
+            value={language}
+            onChange={(e) => handleLanguageChange(e.target.value)}
+            className="w-full bg-slate-800 border border-slate-700 rounded-md px-2 py-1.5 text-sm text-slate-200"
+          >
+            {LANGUAGES.map((lang) => (
+              <option key={lang.code} value={lang.code}>{lang.label}</option>
+            ))}
+          </select>
+        </div>
 
         {/* User footer */}
         <div className="p-4 border-t border-slate-700">
@@ -188,11 +217,11 @@ export default function AdminLayout({ children, title }: AdminLayoutProps) {
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium truncate">{user?.f_username}</p>
-              <p className="text-xs text-slate-400">Administrator</p>
+              <p className="text-xs text-slate-400">{t('layout.administrator')}</p>
             </div>
             <button
               onClick={logout}
-              title="Logout"
+              title={t('layout.logout')}
               className="text-slate-400 hover:text-white transition-colors flex-shrink-0"
             >
               <LogOutIcon className="w-4 h-4" />
@@ -225,7 +254,7 @@ export default function AdminLayout({ children, title }: AdminLayoutProps) {
 
         {/* Footer */}
         <footer className="bg-white border-t border-slate-200 px-6 py-2 flex-shrink-0">
-          <p className="text-xs text-slate-400">© 2025 Event Operations Platform</p>
+          <p className="text-xs text-slate-400">{t('layout.footer')}</p>
         </footer>
       </div>
     </div>

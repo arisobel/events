@@ -1,5 +1,51 @@
 # Backlog
 
+## 🎫 Bloco Estrutural — Agência, Voucher e i18n — 🔴 PRIORIDADE ATUAL (decidido 2026-08-09)
+> Expansão do produto para o eixo comercial: proxy/gateway de vendas entre agência(s), hotéis e party-planners. Decisões na entrada 2026-08-09 do 08_decisions_log.md. Voucher real de agência usado como spec (dois números: Booking Reference da agência + Provider Reference do fornecedor; voucher sem R$; branding da agência).
+
+### 🌐 Fase A1 — i18n (PT-BR, EN, HE com RTL) — 🟢 INFRA ENTREGUE 2026-08-09
+> Absorve o item "Multi-idiomas (i18n)" decidido em 2026-07-01 e parado desde então. Pré-requisito do Voucher.
+>
+> ⚠️ **Ajuste técnico registrado**: implementado **sem react-i18next** — o build usa `npm ci` com package-lock e não há node/npm local para regenerar o lock (adicionar dependência quebraria o deploy). i18n próprio em `src/i18n/` (~100 linhas): dicionários **tipados** (ptBR = fonte das chaves; en/he são `Record<TranslationKey, string>` → **tradução faltando é erro de compilação**), interpolação `{var}`, fallback pt-BR. Chamadas `t('chave', {vars})` migram fácil se a lib entrar um dia.
+- [x] Infra: `src/i18n/` (provider + `useI18n` + `t` tipado); detecção navegador → localStorage → **preferência salva no usuário** (`t_user.f_language`, migration `e8f0a2b4c596`; `PUT /auth/me/language`; AuthContext aplica no login — cross-device)
+- [x] Seletor de idioma na sidebar (persiste no usuário) e na LoginPage (pré-login)
+- [x] **RTL base**: `document.documentElement.dir/lang` dinâmicos (he → rtl); layouts flex flipam automaticamente — smoke visual em produção pendente
+- [x] Extração inicial: AdminLayout (nav/rodapé/logout) + LoginPage completa em PT/EN/**HE**
+- [x] 3 testes backend (`test_language_pref.py`) — suíte total: 87 verdes
+- [ ] Extrair strings das demais páginas (próximas: Clients, Guests/Reservations — fluxo do voucher; depois incrementalmente)
+- [ ] Revisar layouts críticos em RTL após smoke visual (drawer mobile da sidebar fica à esquerda em RTL — ajustar se incomodar)
+- [ ] Novas telas nascem traduzidas (regra de desenvolvimento)
+- [ ] (Decidir) mensagens de erro do backend: traduzir no front por código de erro vs. backend multilíngue
+
+### 🎫 Fase A2 — Voucher v1 (PDF, sobre a Reservation atual)
+> Entrega o documento do exemplo real em cima do fluxo existente; migra naturalmente para o Booking na Fase B.
+- [ ] Entidade `Agency` (emissora): nome, logo, contatos, e-mail/telefone de emergência, blocos de texto padrão (front desk / emergency / remarks / T&C) **por idioma**, template de numeração
+- [ ] **Numeração por template configurável** por agência (ex.: `{PREFIX}-{YYYY}-{SEQ}`; fallback sequencial); sequência atômica por agência
+- [ ] Campos novos na `Reservation`: `f_booking_reference` (da agência), `f_provider_reference` (do hotel/fornecedor), `f_board_type` (B/B, HB, FB — avaliar reuso de `f_package_type`), `f_agency_id`
+- [ ] **Geração de PDF no servidor** (para anexo de e-mail futuro): escolher lib (candidata WeasyPrint/HTML→PDF); fontes com suporte a hebraico; layout RTL quando idioma = HE
+- [ ] Conteúdo: hotel + endereço, arrival/departure, noites, quartos, hóspedes nominais, room type comercial, board type, provider reference, notes/emergency/remarks/T&C da agência — **sem valores financeiros**
+- [ ] Idioma do voucher escolhido na emissão (independente do idioma do operador)
+- [ ] Reemissão: mesma referência + versão (v2, v3…) — confirmar comportamento
+- [ ] UI: botão "Emitir voucher" na reserva (GuestsPage/detalhe) + download do PDF
+- [ ] Endpoint autenticado de download; audit de emissão (quem/quando) — candidato a estrear o `AuditLog`
+
+**Estimativa**: 10-16h (Agency + numeração + PDF + UI)
+
+### 🏦 Fase B — Contexto Comercial (Booking / Provider / Margem) — decisões antes de implementar
+- [ ] **Escopo por agência (tenancy entre agências)**: usuário pertence a uma Agency; bookings/clientes visíveis só à agência dona — **definir regras antes de qualquer tabela nova** (⚠️ implicação de "múltiplas agências emissoras")
+- [ ] `Provider`: hotel interno (aponta para t_hotel) / hotel externo / serviço (flores, banda, passeio…)
+- [ ] `Booking` (agência ↔ cliente, referência própria) + `BookingItem` (serviço × provider × provider_reference × custo × **preço de venda** → margem)
+- [ ] Item de hotel interno aponta para a `Reservation` operacional (os dois mundos se ligam sem se fundir); venda avulsa **não** cria Event (decisão 8)
+- [ ] Lado "a pagar" ao fornecedor + margem por booking (primo do P&L de evento); conta corrente do cliente passa a enxergar bookings
+- [ ] Papel RBAC "agente de vendas"; voucher passa a ser emitido do Booking
+- [ ] Status do booking (requested/confirmed/paid/cancelled) + política de cancelamento
+
+### 🎪 Fase C — Party-Planner e Parceiros
+- [ ] Party-planner como organizadora que compõe bookings de múltiplos fornecedores num evento (conexão com Event + EventExpense/P&L)
+- [ ] Login de parceiros (hotel confirma reserva, planner monta pacote) **só se houver demanda real** — modelo de dados já preparado
+
+---
+
 ## Immediate (Next Cycle) - 1-2 semanas
 
 ### CapRover Deployment Readiness
@@ -246,14 +292,7 @@
 ---
 
 ### 🌐 Multi-idiomas (i18n)
-> Decisão de 2026-07-01 previa i18n desde o início; agora registrado como item
-- [ ] Escolher lib (react-i18next) e estrutura de mensagens
-- [ ] Extrair strings da gestão para chaves de tradução
-- [ ] PT-BR + EN inicialmente; base para o app do hóspede internacional
-- [ ] (Decidir) idioma por usuário vs. por navegador
-
-**Estimativa**: 6-10h (setup) + esforço contínuo  
-**Valor**: mercado internacional; pré-requisito do app do hóspede multi-idioma
+> ⚠️ **Absorvido pela Fase A1 do bloco "🎫 Agência, Voucher e i18n" (2026-08-09)** — ver lá o escopo atual (inclui **HE/RTL** e idioma por usuário, decididos). Mantido aqui só como referência histórica da decisão de 2026-07-01.
 
 ---
 

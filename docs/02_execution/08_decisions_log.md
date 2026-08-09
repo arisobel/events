@@ -1,5 +1,28 @@
 # Decisions Log
 
+## [2026-08-09] Expansão Agência/Proxy de Vendas — Voucher, i18n e Direção Comercial
+
+**Context:**
+Michel definiu a expansão do produto: além da operação de eventos (eixo atual), o sistema passa a cobrir o eixo **comercial** — proxy/gateway de vendas individualizadas entre agência(s) e hotéis, com a figura ocasional do "party-planner" (organizador que sub-contrata serviços: flores, banda, hotéis, passeios). O relacionamento com o cliente final fica com a agência/party-planner; a operação hoteleira fica com o hotel. Voucher real de agência (Jerusalem1stClass) analisado como especificação: **dois números** (Booking Reference da agência + Provider Reference do hotel), voucher com branding da agência, **sem valores financeiros** ("prepaid, do not charge"), blocos de texto padronizados (front desk / emergency / T&C), board type, hóspedes nominais.
+
+**Decisions (confirmadas pelo Michel, 2026-08-09):**
+1. **Objetivo imediato (Fase A): i18n + Voucher v1.** Nesta ordem/junto — o voucher precisa sair no idioma do cliente.
+2. **i18n inclui Hebraico (RTL) desde o início**, além de PT-BR e EN. Implicação aceita: suporte right-to-left na UI (direção por idioma, ajustes de layout).
+3. **Login: apenas agências** (modelo "proxy operado pela agência"). Hotéis e party-planners são **cadastros** (Provider), não usuários — sem multi-tenancy de parceiros. Modelo de dados nasce preparado para logins de parceiros no futuro, implementação só quando houver demanda real.
+4. **Múltiplas agências emissoras** → entidade `Agency` desde o início: branding (logo), contatos, blocos de texto do voucher, template de numeração. ⚠️ Implicação registrada: múltiplas agências com usuários = **tenancy entre agências** (cada agência vê os próprios bookings/clientes) — regras de escopo de dados a definir na Fase B, antes do contexto Booking.
+5. **Numeração de booking por template configurável por agência** (ex.: `{PREFIX}-{YYYY}-{SEQ}`), com fallback sequencial simples. Reemissão de voucher: mesma referência com versão — confirmar na spec da implementação.
+6. **Voucher em PDF gerado no servidor** (requisito: envio como anexo de e-mail no futuro). Sem valores financeiros. Idioma escolhido na emissão, independente do idioma do operador. Lib a escolher na implementação (candidata: HTML→PDF tipo WeasyPrint; atenção a fontes hebraicas + RTL).
+7. **Fases B e C registradas como direção**: B = contexto comercial `Provider` + `Booking` + `BookingItem` (serviço × fornecedor × provider_reference × custo × preço → margem; reserva de hotel interno aponta para a Reservation operacional — os dois mundos se ligam sem se fundir); C = party-planner (compõe bookings num evento; primo do P&L olhando para fora) e eventual login de parceiros.
+8. **Venda individualizada não vira "Event"**: Reservation hoje é filha de Event (correto para o eixo operacional); o eixo comercial nasce como contexto próprio (Booking) em vez de esticar o Event.
+
+**Sequenciamento:**
+- Fase A assume a Priority 1. Fatias 4/5 do bloco Facilities+Staff (ministrante, reconexão das tasks) e hebcal permanecem no backlog, pequenas, para fechar quando tocarem no caminho ou em intervalo.
+
+**Participants:** Product (Michel) + Engineering  
+**Status:** ✅ Decidido / ⏳ Fase A a iniciar (i18n → Voucher v1)
+
+---
+
 ## [2026-07-07] Facilities + Staff — Modelo Estrutural e Sequenciamento (fundação antes do motor de execução)
 
 **Context:**

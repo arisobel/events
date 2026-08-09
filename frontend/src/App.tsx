@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { AuthProvider } from './contexts/AuthContext'
+import { I18nProvider } from './i18n'
 import LoginPage from './pages/LoginPage'
 import HotelsPage from './pages/HotelsPage'
 import EventsPage from './pages/EventsPage'
@@ -17,6 +18,7 @@ import AppEntryRedirect from './components/AppEntryRedirect'
 
 function App() {
   return (
+    <I18nProvider>
     <AuthProvider>
       <BrowserRouter>
         <Routes>
@@ -75,6 +77,7 @@ function App() {
         </Routes>
       </BrowserRouter>
     </AuthProvider>
+    </I18nProvider>
   )
 }
 

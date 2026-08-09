@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react'
 import { authService, User } from '../services/api'
+import { isLanguage, useI18n } from '../i18n'
 
 interface AuthContextType {
   user: User | null
@@ -17,6 +18,14 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined)
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
+  const { setLanguage } = useI18n()
+
+  // Preferência salva no usuário vence a detecção local (cross-device)
+  const applyUserLanguage = (currentUser: User) => {
+    if (isLanguage(currentUser.f_language)) {
+      setLanguage(currentUser.f_language)
+    }
+  }
 
   useEffect(() => {
     // Verificar se há token e carregar usuário
@@ -25,6 +34,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         try {
           const currentUser = await authService.getCurrentUser()
           setUser(currentUser)
+          applyUserLanguage(currentUser)
         } catch (error) {
           console.error('Failed to load user:', error)
           authService.logout()
@@ -34,12 +44,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
 
     loadUser()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const login = async (username: string, password: string) => {
     await authService.login({ username, password })
     const currentUser = await authService.getCurrentUser()
     setUser(currentUser)
+    applyUserLanguage(currentUser)
   }
 
   const logout = () => {

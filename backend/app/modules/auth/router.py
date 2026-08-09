@@ -158,6 +158,29 @@ def get_current_user_info(
         f_email=current_user.f_email,
         f_is_active=current_user.f_is_active,
         f_created_at=current_user.f_created_at,
+        f_language=current_user.f_language,
+        roles=user_roles
+    )
+
+
+@router.put("/me/language", response_model=schemas.UserResponse)
+def update_my_language(
+    preference: schemas.LanguagePreference,
+    current_user: models.User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Salva a preferência de idioma da UI do próprio usuário (pt-BR | en | he)."""
+    current_user.f_language = preference.f_language
+    db.commit()
+    db.refresh(current_user)
+    user_roles = service.get_user_roles(db, current_user.id)
+    return schemas.UserResponse(
+        id=current_user.id,
+        f_username=current_user.f_username,
+        f_email=current_user.f_email,
+        f_is_active=current_user.f_is_active,
+        f_created_at=current_user.f_created_at,
+        f_language=current_user.f_language,
         roles=user_roles
     )
 
