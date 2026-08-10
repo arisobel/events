@@ -33,5 +33,4 @@ export const he: Record<TranslationKey, string> = {
   'login.submit': 'כניסה לאזור הניהול',
   'login.submitting': 'מתחבר...',
   'login.failed': 'ההתחברות נכשלה. נסו שוב.',
-  'login.devCredsTitle': 'פרטי גישה לפיתוח',
 }

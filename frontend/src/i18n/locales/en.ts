@@ -32,5 +32,4 @@ export const en: Record<TranslationKey, string> = {
   'login.submit': 'Enter Admin Area',
   'login.submitting': 'Logging in...',
   'login.failed': 'Login failed. Please try again.',
-  'login.devCredsTitle': 'Default development credentials',
 }

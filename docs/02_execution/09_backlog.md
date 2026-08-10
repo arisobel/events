@@ -32,7 +32,10 @@
 **Estimativa**: 10-16h (Agency + numeração + PDF + UI)
 
 ### 🏦 Fase B — Contexto Comercial (Booking / Provider / Margem) — decisões antes de implementar
+> 📚 **Referência de RBAC estudada (2026-08-10): `arisobel-labs/pwa-fair`** — ver `docs/10_migration/W0_AUTH_AUDIT_RBAC_CONTRACT.md` daquele repo. Padrões a importar: (1) capacidades derivadas `permissions_for(role)` serializadas no `/auth/me` (front deixa de hardcodar papéis); (2) **escopo contextual no usuário** (`nucleo_id`/`current_fair_id` ≈ nosso futuro `f_agency_id`): papel = "o quê", escopo = "onde"; (3) contrato W0 (matriz operação×papel + códigos de erro) escrito e aprovado ANTES do DDL; (4) auth events append-only (estreia do nosso AuditLog); (5) hardening: lockout, reset de senha, sessões revogáveis/token hasheado. Manter nosso N:N de papéis (mais flexível que o papel único deles).
+- [ ] **Contrato RBAC/tenancy no formato W0** (matriz operação × papel × escopo-agência) — aprovar antes de qualquer tabela nova
 - [ ] **Escopo por agência (tenancy entre agências)**: usuário pertence a uma Agency; bookings/clientes visíveis só à agência dona — **definir regras antes de qualquer tabela nova** (⚠️ implicação de "múltiplas agências emissoras")
+- [ ] `permissions_for` + capacidades no `/auth/me` (pode ser antecipado — independe do Booking)
 - [ ] `Provider`: hotel interno (aponta para t_hotel) / hotel externo / serviço (flores, banda, passeio…)
 - [ ] `Booking` (agência ↔ cliente, referência própria) + `BookingItem` (serviço × provider × provider_reference × custo × **preço de venda** → margem)
 - [ ] Item de hotel interno aponta para a `Reservation` operacional (os dois mundos se ligam sem se fundir); venda avulsa **não** cria Event (decisão 8)
@@ -339,7 +342,7 @@
 
 ---
 
-## 🧠 Bloco Estrutural — Espaços, Staff e Contabilidade do Evento — 🔴 PRIORIDADE ATUAL
+## 🧠 Bloco Estrutural — Espaços, Staff e Contabilidade do Evento — 🟢 FATIAS 1-5 ENTREGUES (backend completo; UI das fatias 4/5 pendente)
 > Origem: brain-dump do Michel (2026-07-06). **Decisões de modelo tomadas em 2026-07-07** — ver entrada "Facilities + Staff — Modelo Estrutural e Sequenciamento" no 08_decisions_log.md. Facilities e Staff são os dois últimos pilares da fundação; a Fatia 5 marca o início formal da fase de execução (Tasks). Ver conexões com [Organização de Mesas], [Schedule Module] e com o Financeiro já entregue.
 
 **Sequenciamento decidido:**
@@ -387,18 +390,20 @@ Fatia 5: Task → Space + Task → Staff   ← fronteira da fase de execução
 - [x] 7 testes novos (`test_staff.py`) — **suíte total: 74 verdes**
 - [ ] (Próximas fatias) turnos dentro do engajamento; vínculo Employee↔Person via picker na UI (hoje só por API); despesa de staff no P&L (bloco 📊)
 
-### 🎤 Fatia 4 — Ministrante na Activity
-- [ ] `Activity` ganha vínculo opcional com o ministrante (Employee): rabino/palestrante/monitor/entertainer — concretiza a decisão 2026-07-01
+### 🎤 Fatia 4 — Ministrante na Activity — 🟢 BACKEND IMPLEMENTADO (sessão paralela BH, migration `e7a9c1b3d586`)
+- [x] `Activity.f_instructor_id` FK opcional → Employee + `instructor_name` na resposta — concretiza a decisão 2026-07-01
+- [ ] **UI pendente**: picker de ministrante no form do SchedulePage + exibição na lista do cronograma
 
-### 🔗 Fatia 5 — Reconexão das Tasks (início da fase de execução)
+### 🔗 Fatia 5 — Reconexão das Tasks (início da fase de execução) — 🟢 BACKEND IMPLEMENTADO (sessão paralela BH, migration `e7a9c1b3d586`)
 > `Task.f_assigned_to_staff_id`, `TaskComment.f_staff_member_id` e `TaskStatusHistory.f_changed_by_staff_id` são Integers **sem FK** desde a criação — o esqueleto sempre esperou este cadastro.
 >
 > ⓘ Conceito confirmado com Michel (2026-07-07): **Task ≠ Activity**. Activity = programa público do evento (hóspede/displays); Task = trabalho interno da equipe (nunca vai ao público). Isso resolve "tasks públicas vs. privadas" por arquitetura, sem flag de visibilidade. Ex.: kasherização D-5 = tasks puras (due_datetime não é preso à janela do evento); montagem de um jantar = task **ligada** à activity.
-- [ ] `Task.f_assigned_to_staff_id` vira FK real (para o engajamento) — **executor**
-- [ ] **Líder/ponto focal da task** (ideia Michel 2026-07-07): FK opcional `f_leader_staff_id` — quem responde pela task para a alta gestão, distinto de quem executa; comentários + histórico de status viram o "andamento" que o focal reporta
-- [ ] **Link Task ↔ Activity** (ideia Michel 2026-07-07): FK opcional `Task.f_activity_id` — tasks de suporte/montagem de uma atividade do programa; permite ver "o jantar de Yom Tov tem 3 tasks, 1 atrasada"
-- [ ] ~~FK opcional `f_space_id` em `Task`~~ → **antecipado para a Fatia 2** (não depende de Staff)
-- [ ] A partir daqui: task = "este trabalho, neste lugar, desta pessoa, (opcionalmente) para aquela atividade" — turnos, PWA do staff e supervisão constroem em cima
+- [x] `Task.f_assigned_to_staff_id` virou FK real → `t_event_staff` (**executor**); valores órfãos anulados na migration antes da constraint
+- [x] **Líder/ponto focal**: `Task.f_leader_staff_id` FK opcional → engajamento; `leader_staff_name` na resposta
+- [x] **Link Task ↔ Activity**: `Task.f_activity_id` FK opcional; `activity_title` na resposta
+- [x] ~~FK opcional `f_space_id` em `Task`~~ → antecipado para a Fatia 2 (entregue)
+- [ ] **UI pendente**: seletores de executor/líder (engajamentos do evento) e de atividade no form da TasksPage; exibição de executor/líder/atividade nos cards; "tasks da atividade" no cronograma
+- [ ] A partir daqui: turnos, PWA do staff e supervisão constroem em cima
 
 **Substitui/absorve** o item "Módulo Funcionários (Staff)" mais abaixo — mantê-los sincronizados.
 

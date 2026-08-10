@@ -1,7 +1,7 @@
 """Add user UI language preference (i18n Fase A1)
 
 Revision ID: e8f0a2b4c596
-Revises: d6e8f0a2c374
+Revises: e7a9c1b3d586
 Create Date: 2026-08-09 12:00:00.000000
 
 """
@@ -13,7 +13,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision: str = 'e8f0a2b4c596'
-down_revision: Union[str, Sequence[str], None] = 'd6e8f0a2c374'
+down_revision: Union[str, Sequence[str], None] = 'e7a9c1b3d586'
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 

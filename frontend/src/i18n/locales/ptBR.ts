@@ -35,7 +35,6 @@ export const ptBR = {
   'login.submit': 'Entrar na área administrativa',
   'login.submitting': 'Entrando...',
   'login.failed': 'Falha no login. Tente novamente.',
-  'login.devCredsTitle': 'Credenciais de desenvolvimento',
 } as const
 
 export type TranslationKey = keyof typeof ptBR
